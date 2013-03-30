@@ -1,0 +1,19 @@
+#Mac OS X files
+.DS_Store
+*.dSYM
+
+#bin files
+*.a
+*.o
+*.exe
+
+#temporary files
+*.cache
+*~
+
+#Eclipse files
+.cproject
+.project
+
+#other
+optimer
