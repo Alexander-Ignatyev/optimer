@@ -1,34 +1,15 @@
 #include <iostream>
 #include <string>
 #include <fstream>
-#include "sequence_bnb.hpp"
-//#include "parallel_bnb.hpp"
-//#include "openmp_bnb.hpp"
-#include "solver_provider.hpp"
-#include "tsp.hpp"
+
 #include <boost/progress.hpp>
 
-void load_data(std::istream &is, value_type *&data, size_t &rank)
-{
-	is >> rank;
-	data = new value_type[rank*rank];
-	std::string str;
-	for(size_t i = 0; i < rank; ++i)
-	{
-		for(size_t j = 0; j < rank; ++j)
-		{
-			if(i != j)
-			{
-				is >> data[i*rank+j];
-			}
-			else
-			{
-				is >> str;
-				data[i*rank+j] = M_VAL;
-			}
-		}
-	}
-}
+
+#include "sequence_bnb.hpp"
+#include "solver_provider.hpp"
+#include "tsp.hpp"
+
+#include "data_loader.h"
 
 /*int parallel()
 {
@@ -61,8 +42,8 @@ int sequnce()
 {
 	value_type *matrix;
 	size_t rank;
-	std::ifstream ifs("ftv33.data");
-	load_data(ifs, matrix, rank);
+	std::ifstream ifs("data/ftv38.atsp");
+	load_tsplib_problem(ifs, matrix, rank);
 	ifs.close();
 
 	TspInitialData data(matrix, rank);
