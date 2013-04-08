@@ -4,19 +4,19 @@
 
 #include <boost/progress.hpp>
 
-
+#include "parallel_bnb.hpp"
 #include "sequence_bnb.hpp"
 #include "solver_provider.hpp"
 #include "tsp.hpp"
 
 #include "data_loader.h"
 
-/*int parallel()
+int parallel(const std::string &problem_path)
 {
 	value_type *matrix;
 	size_t rank;
-	std::ifstream ifs("ftv38.data");
-	load_data(ifs, matrix, rank);
+	std::ifstream ifs(problem_path);
+	load_tsplib_problem(ifs, matrix, rank);
 	ifs.close();
 
 	TspInitialData data(matrix, rank);
@@ -36,13 +36,13 @@
 	}
 	delete[] matrix;
 	return 0;
-}*/
+}
 
-int sequnce()
+int sequnce(const std::string &problem_path)
 {
 	value_type *matrix;
 	size_t rank;
-	std::ifstream ifs("data/ftv38.atsp");
+	std::ifstream ifs(problem_path);
 	load_tsplib_problem(ifs, matrix, rank);
 	ifs.close();
 
@@ -62,13 +62,17 @@ int sequnce()
 		return 2;
 	}
 	delete[] matrix;
-	std::cout << "End program he" << std::endl;
 	return 0;
 }
 
 int main(int argc, char *argv[])
 {
 	std::cout << "starting..." << std::endl;
-	return sequnce();
-	//return parallel();
+	std::string problem_path = "data/ftv38.atsp";
+	if (argc > 1)
+	{
+		problem_path = argv[1];
+	}
+	//return sequnce(problem_path);
+	return parallel(problem_path);
 }

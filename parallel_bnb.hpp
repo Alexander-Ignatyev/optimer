@@ -1,32 +1,19 @@
 #ifndef __PARALLEL_BNB__
 #define __PARALLEL_BNB__
 
-#include <pthread.h>
 #include <iostream>
+#include <vector>
+#include <stack>
+#include <algorithm>
+
+#include <thread>
+
+#include "defs.h"
+#include "tree.hpp"
 #include "load_balancer.h"
 
-
-class mthreads_support
-{
-public:
-	virtual void start(unsigned threadID) = 0;
-};
-
-struct thread_params
-{
-	mthreads_support *ptr;
-	unsigned threadID;
-};
-
-void *task(void *ptr)
-{
-	thread_params *params = (thread_params *)ptr;
-	params->ptr->start(params->threadID);
-	return NULL;
-}
-
 template <typename SolverFactory>
-class ParallelBNB: private mthreads_support
+class ParallelBNB
 {
 	typedef typename SolverFactory::Solver Solver;
 	typedef typename Solver::Set Set;
@@ -112,23 +99,17 @@ public:
 			m_nodes_list[i % num_threads].push(nodes.top());
 			nodes.pop();
 		}
-		pthread_t *threads = new pthread_t[num_threads];
-		thread_params *params = new thread_params[num_threads];
+		
+		std::vector<std::thread> threads(num_threads);
 		for (unsigned i = 0; i < num_threads; ++i)
 		{
-			params[i].ptr = this;
-			params[i].threadID = i;
-			pthread_create(&threads[i], NULL, task, &params[i]);
+			threads[i] = std::thread(&ParallelBNB::start, this, i);
 		}
 
-		for (unsigned i = 0; i < num_threads; ++i)
-		{
-			pthread_join(threads[i], NULL);
-		}
+		std::for_each(threads.begin(),threads.end(),
+		    std::mem_fn(&std::thread::join));
 
 		delete [] m_nodes_list;
-		delete [] threads;
-		delete [] params;
 		std::cout << "end\n";
 		return sol;
 	}
