@@ -1,23 +1,31 @@
 #ifndef __STATS_HPP__
-#define __STATS_HPP_
+#define __STATS_HPP__
 
 #include <iostream>
-struct Stats
-{
+struct Stats {
 	size_t branches;
-	size_t constrained_by_record;
-	void clear()
-	{
+	size_t sets_generated;
+	size_t sets_constrained_by_record;
+	double seconds;
+	
+	Stats() {
+		clear();
+	}
+
+	void clear() {
 		branches = 0;
-		constrained_by_record = 0;
+		sets_generated = 0;
+		sets_constrained_by_record = 0;
+		seconds = 0.0;
 	}
 };
 
-/*void print_stats()
-{
-	std::cout << "Statistics: \n";
-	std::cout << "Branches: " << stats.branches << std::endl;
-	std::cout << "Constrained by record: " << stats.constrained_by_record << std::endl;
+std::ostream & operator << (std::ostream &os, const Stats &stats) {
+	os << "Branches: " << stats.branches << std::endl;
+	os << "Generated sets: " << stats.sets_generated << std::endl;
+	os << "Constrained by record: " << stats.sets_constrained_by_record << std::endl;
+	os << "Time: " << stats.seconds << " secs." << std::endl;
+	return os;
 }
-*/
-#endif //__STATS_HPP_
+
+#endif //__STATS_HPP__

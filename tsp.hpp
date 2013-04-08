@@ -8,6 +8,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
+
 #include "tree.hpp"
 #include "defs.h"
 #include "ap_solver.hpp"
@@ -65,7 +66,6 @@ private:
 	value_type *m_mtx;
 	const value_type *m_mtx_original;
 	AP_Solver<value_type> ap;
-	Stats stats;
 
 private:
 	static std::vector<size_t> create_tour(const std::vector<size_t> &ap_sol, std::ostream &logger = std::cout)
@@ -319,7 +319,6 @@ public:
 		m_mtx_original = data.matrix;
 		rank = data.rank;
 		ap.alloc(rank);
-		stats.clear();
 		m_mm = mm;
 		m_mtx = new value_type[rank*rank];
 	}
@@ -330,29 +329,6 @@ public:
 		node.data.is_right = false;
 		node.data.value = transform(node, m_mtx_original);
 	}
-
-	/*Node<Set> *init(const value_type *data, size_t rank, value_type &record)
-	{
-		m_mm->init(rank*rank);
-		this->m_mtx_original = data;
-		this->rank = rank;
-		ap.alloc(rank);
-		stats.clear();
-		Solution init_sol;
-		get_initial_solution(init_sol);
-		if(init_sol.value < record)
-		{
-			record = init_sol.value;
-		}
-		logger << "TSP_AP: Initial value: " << record << std::endl;
-
-		m_mtx = new value_type[rank*rank];
-		Node<Set> *node = m_mm->alloc(NULL);
-		node->data.level = 0;
-		node->data.is_right = false;
-		node->data.value = transform(*node, m_mtx_original);
-		return node;
-	}*/
 
 	TspSolver(std::ostream &_logger = std::cout): logger(_logger)
 	{
@@ -376,7 +352,7 @@ public:
 		logger << std::endl;
 	}
 
-	void branch(const Node<Set> *node, value_type &record, std::stack<Node<Set> *> &nodes, Solution &sol)
+	void branch(const Node<Set> *node, value_type &record, std::stack<Node<Set> *> &nodes, Solution &sol, Stats &stats)
 	{
 		stats.branches++;
 		Point move;
@@ -397,6 +373,7 @@ public:
 		copy_matrix(m_mtx, m_mtx_original, rank, node1);
 		node1->data.value = transform(*node1, m_mtx);
 		assert(m_mm->CheckRefs(node));
+		++stats.sets_generated;
 		if(node1->data.value < record)
 		{
 			if(node1->data.level == rank - 2)
@@ -436,7 +413,7 @@ public:
 		}
 		else
 		{
-			stats.constrained_by_record++;
+			++stats.sets_constrained_by_record;
 		}
 
 		Node<Set> *node2 = m_mm->alloc(node);
@@ -445,13 +422,14 @@ public:
 		node2->data.is_right = false;
 		copy_matrix(m_mtx, m_mtx_original, rank, node2);
 		node2->data.value = transform(*node2, m_mtx);
+		++stats.sets_generated;
 		if(node2->data.value < record)
 		{
 			nodes.push(node2);
 		}
 		else
 		{
-			stats.constrained_by_record++;
+			++stats.sets_constrained_by_record;
 			m_mm->free(node2);
 		}
 

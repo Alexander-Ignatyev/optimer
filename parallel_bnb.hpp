@@ -10,6 +10,8 @@
 
 #include "defs.h"
 #include "tree.hpp"
+#include "stats.hpp"
+#include "timer.hpp"
 #include "load_balancer.h"
 
 template <typename SolverFactory>
@@ -30,7 +32,7 @@ class ParallelBNB
 	nodes_t *m_nodes_list;
 	MemoryManager<Set> m_mm;
 
-	void start(unsigned threadID)
+	void start(unsigned threadID, Stats &stats)
 	{
 		value_type record = m_record;
 		Solution sol;
@@ -39,16 +41,18 @@ class ParallelBNB
 		Solver *psolver = m_factory.get_solver();
 		psolver->init(*m_idata, &m_mm);
 
+		Timer timer;
 		while(!nodes.empty())
 		{
 			node = nodes.top();
 			nodes.pop();
 
 			record = m_record;
-			psolver->branch(node, record, nodes, sol);
+			psolver->branch(node, record, nodes, sol, stats);
 			if(record < m_record)
 				m_record = record;
 		}
+		stats.seconds = timer.elapsed_seconds();
 		m_factory.free_solver(psolver);
 	}
 public:
@@ -68,6 +72,8 @@ public:
 		Solution sol;
 		nodes_t nodes;
 		m_mm.init(m_idata->rank*m_idata->rank*1024);
+		Stats initial_stats;
+		initial_stats.clear();
 		if (data.rank > MIN_RANK_VALUE)
 		{
 			Solver *psolver = m_factory.get_solver();
@@ -80,19 +86,20 @@ public:
 			psolver->get_initial_solution(initSol);
 			m_record = initSol.value;
 
+			Timer timer;
 			while (!nodes.empty() && nodes.size()
 					< m_params.minimum_nodes)
 			{
 				node = nodes.top();
 				nodes.pop();
 
-				psolver->branch(node, record, nodes, sol);
+				psolver->branch(node, record, nodes, sol, initial_stats);
 			}
+			initial_stats.seconds = timer.elapsed_seconds();
 			m_factory.free_solver(psolver);
 		}
 
 		//parallel part
-
 		m_nodes_list = new nodes_t[num_threads];
 		for (unsigned i = 0; !nodes.empty(); ++i)
 		{
@@ -101,16 +108,26 @@ public:
 		}
 		
 		std::vector<std::thread> threads(num_threads);
+		std::vector<Stats> stats(num_threads);
 		for (unsigned i = 0; i < num_threads; ++i)
 		{
-			threads[i] = std::thread(&ParallelBNB::start, this, i);
+			threads[i] = std::thread(&ParallelBNB::start, this, i, std::ref(stats[i]));
 		}
 
 		std::for_each(threads.begin(),threads.end(),
 		    std::mem_fn(&std::thread::join));
 
 		delete [] m_nodes_list;
-		std::cout << "end\n";
+		
+		std::cout << std::endl;
+		
+		std::cout << "Initial stats:\n" << initial_stats << std::endl;
+		
+		for (unsigned i = 0; i < num_threads; ++i)
+		{
+			std::cout << "Stats of theread #" << i << ":" << std::endl;
+			std::cout << stats[i] << std::endl;
+		}
 		return sol;
 	}
 };

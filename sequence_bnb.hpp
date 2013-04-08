@@ -2,9 +2,12 @@
 #define __SEQUENCE_BNB__
 
 #include <stack>
+#include <iostream>
+
 #include "defs.h"
 #include "tree.hpp"
-#include <iostream>
+#include "timer.hpp"
+#include "stats.hpp"
 
 template <typename SolverProvider>
 class SequenceBNB
@@ -24,6 +27,7 @@ public:
 	{
 		static const size_t MIN_RANK_VALUE = 2;
 
+		Stats stats;
 		Solution sol; 
 		if(data.rank > MIN_RANK_VALUE)
 		{
@@ -40,14 +44,18 @@ public:
 
 			std::stack<Node<Set> * > nodes;
 			nodes.push(node);
+			Timer timer;
 			while(!nodes.empty() /*&& this->stats.branches < max_branches*/)
 			{
 				node = nodes.top();
 				nodes.pop();
 
-				solver->branch(node, record, nodes, sol);
+				solver->branch(node, record, nodes, sol, stats);
 			}
+			stats.seconds = timer.elapsed_seconds();
 		}
+		
+		std::cout << "\nStats: \n" << stats << std::endl;
 		return sol;
 	}
 };
