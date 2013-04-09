@@ -18,6 +18,7 @@ class SequenceBNB
 	typedef typename Solver::InitialData InitialData;
 
 	SolverProvider &m_provider;
+	Stats m_stats;
 public:
 	SequenceBNB(SolverProvider &provider): m_provider(provider)
 	{
@@ -27,8 +28,8 @@ public:
 	{
 		static const size_t MIN_RANK_VALUE = 2;
 
-		Stats stats;
-		Solution sol; 
+		m_stats.clear();
+		Solution sol;
 		if(data.rank > MIN_RANK_VALUE)
 		{
 			MemoryManager<Set> mm;
@@ -50,13 +51,17 @@ public:
 				node = nodes.top();
 				nodes.pop();
 
-				solver->branch(node, record, nodes, sol, stats);
+				solver->branch(node, record, nodes, sol, m_stats);
 			}
-			stats.seconds = timer.elapsed_seconds();
+			m_stats.seconds = timer.elapsed_seconds();
 		}
-		
-		std::cout << "\nStats: \n" << stats << std::endl;
+
 		return sol;
+	}
+	
+	void print_stats(std::ostream &os) const
+	{
+		std::cout << "\nStats: \n" << m_stats << std::endl;		
 	}
 };
 #endif //__SEQUENCE_BNB__

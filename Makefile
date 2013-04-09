@@ -1,5 +1,5 @@
-INCLUDE = $(HOME)/usr/include
+INCLUDE = 
 LIB = 
 SRC = main.cpp data_loader.cpp
 all:
-	clang++ -I$(INCLUDE) --std=c++11 --stdlib=libc++ -g -o optimer $(SRC)
+	clang++ --std=c++11 --stdlib=libc++ -g -o optimer $(SRC)

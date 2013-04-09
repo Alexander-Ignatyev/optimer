@@ -2,8 +2,6 @@
 #include <string>
 #include <fstream>
 
-#include <boost/progress.hpp>
-
 #include "parallel_bnb.hpp"
 #include "sequence_bnb.hpp"
 #include "solver_provider.hpp"
@@ -11,7 +9,8 @@
 
 #include "data_loader.h"
 
-int parallel(const std::string &problem_path)
+template <typename BNBSolver>
+void solve(const std::string &problem_path, BNBSolver &solver)
 {
 	value_type *matrix;
 	size_t rank;
@@ -20,48 +19,42 @@ int parallel(const std::string &problem_path)
 	ifs.close();
 
 	TspInitialData data(matrix, rank);
+	
+	double valuation_time = -1;
+	try
+	{
+		Timer timer;
+		solver.solve(data);
+		valuation_time = timer.elapsed_seconds();
+	}
+	catch (std::bad_alloc &)
+	{
+		std::cout << "Out of memory\n";
+	}
+	delete[] matrix;
+	
+	solver.print_stats(std::cout);
+	std::cout << "Valuation Time: " << valuation_time << std::endl;
+		
+}
 
-	boost::progress_timer prg;
+int parallel(const std::string &problem_path)
+{
 	ClonedSolverProvider<TspSolver> provider;
 	LoadBalancerParams params = {8};
 	ParallelBNB<ClonedSolverProvider<TspSolver> > bnb(provider, params);
 
-	try
-	{
-		bnb.solve(data);
-	} catch (std::bad_alloc &)
-	{
-		std::cout << "Out of memory\n";
-		return 2;
-	}
-	delete[] matrix;
+	solve(problem_path, bnb);
+	
 	return 0;
 }
 
 int sequnce(const std::string &problem_path)
 {
-	value_type *matrix;
-	size_t rank;
-	std::ifstream ifs(problem_path);
-	load_tsplib_problem(ifs, matrix, rank);
-	ifs.close();
-
-	TspInitialData data(matrix, rank);
-
-	boost::progress_timer prg;
 	ClonedSolverProvider<TspSolver> provider;
 	SequenceBNB<ClonedSolverProvider<TspSolver> > bnb(provider);
 
-	try
-	{
-		bnb.solve(data);
-	}
-	catch (std::bad_alloc &)
-	{
-		std::cout << "Out of memory\n";
-		return 2;
-	}
-	delete[] matrix;
+	solve(problem_path, bnb);
 	return 0;
 }
 
@@ -73,6 +66,6 @@ int main(int argc, char *argv[])
 	{
 		problem_path = argv[1];
 	}
-	//return sequnce(problem_path);
-	return parallel(problem_path);
+	return sequnce(problem_path);
+	//return parallel(problem_path);
 }
