@@ -27,7 +27,9 @@ class ParallelBNB
 	typedef std::stack<Node<Set> *> nodes_t;
 
 	const InitialData *m_idata;
+	
 	value_type m_record;
+	std::mutex m_mutex_record;
 
 	std::vector<nodes_t> m_nodes_list;
 	std::vector<Stats> m_stats_list;
@@ -53,7 +55,13 @@ class ParallelBNB
 			record = m_record;
 			psolver->branch(node, record, nodes, sol, m_stats_list[threadID]);
 			if(record < m_record)
-				m_record = record; //multitreaded issue!
+			{
+				std::lock_guard<std::mutex> lock(m_mutex_record);
+				if(record < m_record)
+				{
+					m_record = record;
+				}
+			}
 		}
 		m_stats_list[threadID].seconds = timer.elapsed_seconds();
 		m_factory.free_solver(psolver);
@@ -122,7 +130,9 @@ public:
 		
 		m_nodes_list.clear();
 
-		return sol;
+		sol.value = m_record;
+		sol.route.clear();
+		return std::move(sol);
 	}
 	
 	void print_stats(std::ostream &os) const

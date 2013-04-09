@@ -21,10 +21,11 @@ void solve(const std::string &problem_path, BNBSolver &solver)
 	TspInitialData data(matrix, rank);
 	
 	double valuation_time = -1;
+	value_type record = 0;
 	try
 	{
 		Timer timer;
-		solver.solve(data);
+		record = solver.solve(data).value;
 		valuation_time = timer.elapsed_seconds();
 	}
 	catch (std::bad_alloc &)
@@ -34,6 +35,7 @@ void solve(const std::string &problem_path, BNBSolver &solver)
 	delete[] matrix;
 	
 	solver.print_stats(std::cout);
+	std::cout << "Found Record: " << record << std::endl;
 	std::cout << "Valuation Time: " << valuation_time << std::endl;
 		
 }
@@ -66,6 +68,6 @@ int main(int argc, char *argv[])
 	{
 		problem_path = argv[1];
 	}
-	return sequnce(problem_path);
-	//return parallel(problem_path);
+	//return sequnce(problem_path);
+	return parallel(problem_path);
 }

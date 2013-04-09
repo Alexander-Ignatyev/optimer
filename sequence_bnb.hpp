@@ -55,8 +55,10 @@ public:
 			}
 			m_stats.seconds = timer.elapsed_seconds();
 		}
-
-		return sol;
+		
+		sol.value = record;
+		sol.route.clear();
+		return std::move(sol);
 	}
 	
 	void print_stats(std::ostream &os) const
