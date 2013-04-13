@@ -10,7 +10,9 @@
 
 struct LoadBalancerParams
 {
+	unsigned threads;
 	unsigned minimum_nodes;
+	unsigned maximum_nodes;
 };
 
 #endif /* LOAD_BALANCER_H_ */

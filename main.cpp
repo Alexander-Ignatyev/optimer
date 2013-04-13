@@ -43,7 +43,7 @@ void solve(const std::string &problem_path, BNBSolver &solver)
 int parallel(const std::string &problem_path)
 {
 	ClonedSolverProvider<TspSolver> provider;
-	LoadBalancerParams params = {8};
+	LoadBalancerParams params = {4, 8, 100};
 	ParallelBNB<ClonedSolverProvider<TspSolver> > bnb(provider, params);
 
 	solve(problem_path, bnb);

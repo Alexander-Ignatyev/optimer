@@ -4,9 +4,11 @@
 #include <iostream>
 #include <vector>
 #include <stack>
+#include <queue>
 #include <algorithm>
 
 #include <thread>
+#include <condition_variable>
 
 #include "defs.h"
 #include "tree.hpp"
@@ -28,8 +30,13 @@ class ParallelBNB
 
 	const InitialData *m_idata;
 	
-	value_type m_record;
+	volatile value_type m_record;
 	std::mutex m_mutex_record;
+	
+	volatile unsigned m_working_threads;
+	std::queue<Node<Set> *> m_queue_sets;
+	std::mutex m_mutex_sets;
+	std::condition_variable m_condvar_sets;
 
 	std::vector<nodes_t> m_nodes_list;
 	std::vector<Stats> m_stats_list;
@@ -62,13 +69,47 @@ class ParallelBNB
 					m_record = record;
 				}
 			}
+			
+			if (nodes.size() > m_params.maximum_nodes)
+			{
+				std::lock_guard<std::mutex> lock(m_mutex_sets);
+				while(nodes.size() > m_params.minimum_nodes)
+				{
+					m_queue_sets.push(nodes.top());
+					nodes.pop();
+					++m_stats_list[threadID].sets_sent;
+				}
+				m_condvar_sets.notify_all();
+			}
+			
+			if (nodes.empty())
+			{
+				m_stats_list[threadID].seconds += timer.elapsed_seconds();
+				std::unique_lock<std::mutex> lock(m_mutex_sets);
+				--m_working_threads;
+				m_condvar_sets.wait(lock, [this] { return (!this->m_queue_sets.empty()) || (this->m_working_threads == 0); });
+				if (m_working_threads == 0)
+				{
+					m_condvar_sets.notify_all();
+					timer.reset();
+					break;
+				}
+				while (nodes.size() < m_params.minimum_nodes && !m_queue_sets.empty())
+				{
+					nodes.push(m_queue_sets.front());
+					m_queue_sets.pop();
+					++m_stats_list[threadID].sets_received;
+				}
+				++m_working_threads;
+				timer.reset();
+			}
 		}
-		m_stats_list[threadID].seconds = timer.elapsed_seconds();
+		m_stats_list[threadID].seconds += timer.elapsed_seconds();
 		m_factory.free_solver(psolver);
 	}
 
 public:
-	ParallelBNB(SolverFactory &factory, const LoadBalancerParams &params): m_factory(factory), m_params(params)
+	ParallelBNB(SolverFactory &factory, const LoadBalancerParams &params): m_factory(factory), m_params(params), m_working_threads(0)
 	{
 	}
 
@@ -76,7 +117,6 @@ public:
 			-1, value_type record = M_VAL)
 	{
 		static const size_t MIN_RANK_VALUE = 2;
-		const unsigned num_threads = 8;
 
 		m_record = record;
 		m_idata = &data;
@@ -111,17 +151,18 @@ public:
 		}
 
 		//parallel part
-		m_nodes_list.resize(num_threads);
-		m_stats_list.resize(num_threads);
+		m_nodes_list.resize(m_params.threads);
+		m_stats_list.resize(m_params.threads);
 		for (unsigned i = 0; !nodes.empty(); ++i)
 		{
-			m_nodes_list[i % num_threads].push(nodes.top());
+			m_nodes_list[i % m_params.threads].push(nodes.top());
 			nodes.pop();
 		}
 		
-		std::vector<std::thread> threads(num_threads);
-		for (unsigned i = 0; i < num_threads; ++i)
+		std::vector<std::thread> threads(m_params.threads);
+		for (unsigned i = 0; i < m_params.threads; ++i)
 		{
+			++m_working_threads;
 			threads[i] = std::thread(&ParallelBNB::start, this, i);
 		}
 
