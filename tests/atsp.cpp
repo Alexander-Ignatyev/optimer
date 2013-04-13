@@ -1,17 +1,22 @@
-#include <cppunit/extensions/HelperMacros.h>
-#include <cppunit/extensions/TestFactoryRegistry.h>
-#include <cppunit/ui/text/TestRunner.h>
-
 #include <iostream>
 #include <string>
 #include <fstream>
 
-#include "parallel_bnb.hpp"
-#include "sequence_bnb.hpp"
-#include "solver_provider.hpp"
-#include "tsp.hpp"
+#include <cppunit/TestRunner.h>
+#include <cppunit/TestResult.h>
+#include <cppunit/TestResultCollector.h>
+#include <cppunit/extensions/HelperMacros.h>
+#include <cppunit/BriefTestProgressListener.h>
+#include <cppunit/extensions/TestFactoryRegistry.h>
 
-#include "data_loader.h"
+#include <parallel_bnb.hpp>
+#include <sequence_bnb.hpp>
+#include <solver_provider.hpp>
+#include <tsp.hpp>
+
+#include <data_loader.h>
+
+#include "teamcity_cppunit.h"
 
 class ATSPTest : public CppUnit::TestFixture {
 	CPPUNIT_TEST_SUITE( ATSPTest );
@@ -43,9 +48,35 @@ class ATSPTest : public CppUnit::TestFixture {
 CPPUNIT_TEST_SUITE_REGISTRATION( ATSPTest );
 
 int main(int argc, char *argv[]) {
-    CppUnit::TextUi::TestRunner runner;
-    CppUnit::TestFactoryRegistry &registry = CppUnit::TestFactoryRegistry::getRegistry();
-    runner.addTest( registry.makeTest() );
-    bool wasSuccessful = runner.run( "", false );
-    return wasSuccessful;
+	using namespace CppUnit;
+    // Create the event manager and test controller
+    TestResult controller;
+    
+    // Add a listener that collects test result
+    TestResultCollector result;
+    controller.addListener(&result);
+    
+    // Add the top suite to the test runner
+    TestRunner runner;
+    runner.addTest(TestFactoryRegistry::getRegistry().makeTest());
+
+    // Listen to progress
+    TestListener *listener;
+    
+    if (JetBrains::underTeamcity()) {
+        // Add unique flowId parameter if you want to run test processes in parallel
+        // See http://confluence.jetbrains.net/display/TCD6/Build+Script+Interaction+with+TeamCity#BuildScriptInteractionwithTeamCity-MessageFlowId
+        listener = new JetBrains::TeamcityProgressListener();
+    } else {
+        listener = new BriefTestProgressListener();
+    }
+    controller.addListener(listener);
+
+    // Run tests
+    runner.run(controller);
+    
+    delete listener;
+    
+    return result.wasSuccessful() ? 0 : 1;
+    
 }
