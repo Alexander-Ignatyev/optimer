@@ -8,13 +8,14 @@ all:
 clang:
 	clang++ --std=c++11 --stdlib=libc++ -O2 -o optimer-clang $(SRC)
 
-release:
-	clang++ --std=c++11 --stdlib=libc++ -O2 -o optimer-clang $(SRC)
+clang-33:
 	clang++-mp-3.3 --std=c++11 --stdlib=libc++ -O2 -o optimer-clang++-mp-3.3 $(SRC)
-	g++-mp-4.7 --std=c++11 -O2 -o optimer-g++-mp-4.7 main.cpp data_loader.cpp
+
+gcc-47:
+	g++-mp-4.7 --std=c++11 -O2 -o optimer-g++-mp-4.7 $(SRC)
 
 tst:
-	g++-mp-4.7 $(INCLUDE) $(LIB) -lcppunit --std=c++11 -g -o optimer-tests $(TESTS_SRC)
+	g++-mp-4.7 $(INCLUDE) $(LIB) -lcppunit --std=c++11 -O2 -o optimer-tests $(TESTS_SRC)
 
 clean-all:
 	rm -rf optimer* bin include lib share
