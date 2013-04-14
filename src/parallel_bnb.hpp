@@ -11,12 +11,13 @@
 #include <condition_variable>
 
 #include "defs.h"
+#include "bnb.hpp"
 #include "tree.hpp"
 #include "stats.hpp"
 #include "timer.hpp"
 #include "load_balancer.h"
 
-template <typename SolverFactory>
+template <typename SolverFactory, typename NodesContainer = LifoContainer>
 class ParallelBNB
 {
 	typedef typename SolverFactory::Solver Solver;
@@ -26,7 +27,7 @@ class ParallelBNB
 
 	SolverFactory &m_factory;
 	const LoadBalancerParams &m_params;
-	typedef std::stack<Node<Set> *> nodes_t;
+	typedef std::vector<Node<Set> *> nodes_t;
 
 	const InitialData *m_idata;
 	
@@ -48,10 +49,13 @@ class ParallelBNB
 		m_stats_list[threadID].clear();
 		value_type record = m_record;
 		Solution sol;
-		nodes_t &nodes = m_nodes_list[threadID];
+		auto nodes = make_nodes_container<SolverFactory>(LifoContainer(), m_nodes_list[threadID].begin(), m_nodes_list[threadID].end());
+		m_nodes_list[threadID].clear();
 		Node<Set> *node;
 		Solver *psolver = m_factory.get_solver();
 		psolver->init(*m_idata, &m_mm);
+		
+		std::vector<Node<Set> * > tmp_nodes;
 
 		Timer timer;
 		while(!nodes.empty())
@@ -60,7 +64,13 @@ class ParallelBNB
 			nodes.pop();
 
 			record = m_record;
-			psolver->branch(node, record, nodes, sol, m_stats_list[threadID]);
+			psolver->branch(node, record, tmp_nodes, sol, m_stats_list[threadID]);
+			for (auto &set: tmp_nodes)
+			{
+				nodes.push(set);
+			}
+			tmp_nodes.clear();
+			
 			if(record < m_record)
 			{
 				std::lock_guard<std::mutex> lock(m_mutex_record);
@@ -122,8 +132,8 @@ public:
 		m_idata = &data;
 
 		Solution sol;
-		nodes_t nodes;
-		m_mm.init(m_idata->rank*m_idata->rank*1024);
+		auto nodes = make_nodes_container<SolverFactory>(LifoContainer());
+		m_mm.init(data.rank*data.rank*data.rank*data.rank);
 		m_stats_initial.clear();
 		if (data.rank > MIN_RANK_VALUE)
 		{
@@ -137,6 +147,8 @@ public:
 			psolver->get_initial_solution(initSol);
 			m_record = initSol.value;
 
+			std::vector<Node<Set> * > tmp_nodes;
+
 			Timer timer;
 			while (!nodes.empty() && nodes.size()
 					< m_params.minimum_nodes)
@@ -144,7 +156,12 @@ public:
 				node = nodes.top();
 				nodes.pop();
 
-				psolver->branch(node, record, nodes, sol, m_stats_initial);
+				psolver->branch(node, record, tmp_nodes, sol, m_stats_initial);
+				for (auto &set: tmp_nodes)
+				{
+					nodes.push(set);
+				}
+				tmp_nodes.clear();
 			}
 			m_stats_initial.seconds = timer.elapsed_seconds();
 			m_factory.free_solver(psolver);
@@ -155,7 +172,7 @@ public:
 		m_stats_list.resize(m_params.threads);
 		for (unsigned i = 0; !nodes.empty(); ++i)
 		{
-			m_nodes_list[i % m_params.threads].push(nodes.top());
+			m_nodes_list[i % m_params.threads].push_back(nodes.top());
 			nodes.pop();
 		}
 		

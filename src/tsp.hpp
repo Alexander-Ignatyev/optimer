@@ -51,6 +51,11 @@ public:
 		value_type value;
 		std::vector<size_t> ap_solve;
 		unsigned level;
+		
+		bool operator < (const Set &other) const
+		{
+			return value > other.value;
+		}
 	};
 
 	struct Solution
@@ -352,7 +357,7 @@ public:
 		logger << std::endl;
 	}
 
-	void branch(const Node<Set> *node, value_type &record, std::stack<Node<Set> *> &nodes, Solution &sol, Stats &stats)
+	void branch(const Node<Set> *node, value_type &record, std::vector<Node<Set> *> &nodes, Solution &sol, Stats &stats)
 	{
 		stats.branches++;
 		Point move;
@@ -425,7 +430,7 @@ public:
 		++stats.sets_generated;
 		if(node2->data.value < record)
 		{
-			nodes.push(node2);
+			nodes.push_back(node2);
 		}
 		else
 		{
@@ -435,7 +440,7 @@ public:
 
 		if(append_move_right)
 		{
-			nodes.push(node1);
+			nodes.push_back(node1);
 		}
 		else
 		{

@@ -5,11 +5,12 @@
 #include <iostream>
 
 #include "defs.h"
+#include "bnb.hpp"
 #include "tree.hpp"
 #include "timer.hpp"
 #include "stats.hpp"
 
-template <typename SolverProvider>
+template <typename SolverProvider, typename NodesContainer = LifoContainer>
 class SequenceBNB
 {
 	typedef typename SolverProvider::Solver Solver;
@@ -33,7 +34,7 @@ public:
 		if(data.rank > MIN_RANK_VALUE)
 		{
 			MemoryManager<Set> mm;
-			mm.init(data.rank*data.rank);
+			mm.init(data.rank*data.rank*data.rank*data.rank);
 			Node<Set> *node = mm.alloc(NULL);
 			Solution initSol;
 
@@ -43,7 +44,8 @@ public:
 			solver->get_initial_solution(initSol);
 			record = initSol.value;
 
-			std::stack<Node<Set> * > nodes;
+			auto nodes = make_nodes_container<SolverProvider>(NodesContainer());
+			std::vector<Node<Set> * > tmp_nodes;
 			nodes.push(node);
 			Timer timer;
 			while(!nodes.empty() /*&& this->stats.branches < max_branches*/)
@@ -51,7 +53,12 @@ public:
 				node = nodes.top();
 				nodes.pop();
 
-				solver->branch(node, record, nodes, sol, m_stats);
+				solver->branch(node, record, tmp_nodes, sol, m_stats);
+				for (auto &set: tmp_nodes)
+				{
+					nodes.push(set);
+				}
+				tmp_nodes.clear();
 			}
 			m_stats.seconds = timer.elapsed_seconds();
 		}
