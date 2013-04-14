@@ -113,7 +113,7 @@ public:
 	{
 	}
 
-	Solution solve(InitialData &data, size_t max_branches =
+	Solution solve(const InitialData &data, size_t max_branches =
 			-1, value_type record = M_VAL)
 	{
 		static const size_t MIN_RANK_VALUE = 2;
