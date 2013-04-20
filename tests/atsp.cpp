@@ -17,31 +17,27 @@ void test_problem(Solver &solver, const TspInitialData &data, value_type expecte
 }
 
 void test_sequential_problem_lifo(const TspInitialData &data, value_type expected_value) {
-	ClonedSolverProvider<TspSolver> provider;
-	SequenceBNB<ClonedSolverProvider<TspSolver>, LifoContainer > solver(provider);
+	SequenceBNB<ClonedSolverProvider<TspSolver>, LifoContainer > solver;
 	
 	test_problem(solver, data, expected_value);
 }
 
 void test_sequential_problem_priority(const TspInitialData &data, value_type expected_value) {
-	ClonedSolverProvider<TspSolver> provider;
-	SequenceBNB<ClonedSolverProvider<TspSolver>, PriorityContainer> solver(provider);
+	SequenceBNB<ClonedSolverProvider<TspSolver>, PriorityContainer> solver;
 	
 	test_problem(solver, data, expected_value);
 }
 
 void test_parallel_problem_lifo(const TspInitialData &data, value_type expected_value) {
-	ClonedSolverProvider<TspSolver> provider;
 	LoadBalancerParams params = {4, 8, static_cast<unsigned>(data.rank*2)};
-	ParallelBNB<ClonedSolverProvider<TspSolver>, LifoContainer > solver(provider, params);
+	ParallelBNB<ClonedSolverProvider<TspSolver>, LifoContainer > solver(params);
 	
 	test_problem(solver, data, expected_value);
 }
 
 void test_parallel_problem_priority(const TspInitialData &data, value_type expected_value) {
-	ClonedSolverProvider<TspSolver> provider;
 	LoadBalancerParams params = {4, 8, static_cast<unsigned>(data.rank*2)};
-	ParallelBNB<ClonedSolverProvider<TspSolver>, PriorityContainer > solver(provider, params);
+	ParallelBNB<ClonedSolverProvider<TspSolver>, PriorityContainer > solver(params);
 	
 	test_problem(solver, data, expected_value);
 }
@@ -76,7 +72,9 @@ class ATSPTest : public CppUnit::TestFixture {
 	}
 	
 public:
-	void setUp() {
+	ATSPTest(): ftv38_instance(nullptr), ftv38_matrix(nullptr), fvt38_solution(0) {}
+
+	void setUp() override {
 		fvt38_solution = 1530;
 		
 		size_t dimension;
@@ -87,7 +85,7 @@ public:
 		ftv38_instance = new TspInitialData(ftv38_matrix, dimension);
 	}
 	
-	void tearDown() {
+	void tearDown() override {
 		delete [] ftv38_matrix;
 		delete ftv38_instance;
 	}
