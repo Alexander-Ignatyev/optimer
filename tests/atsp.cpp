@@ -2,9 +2,9 @@
 
 #include <cppunit/extensions/HelperMacros.h>
 
-#include <parallel_bnb.hpp>
-#include <sequence_bnb.hpp>
-#include <solver_provider.hpp>
+#include <parallel_bnb.h>
+#include <sequence_bnb.h>
+#include <solver_provider.h>
 #include <tsp.h>
 
 #include <data_loader.h>

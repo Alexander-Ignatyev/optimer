@@ -1,12 +1,13 @@
+// Copyright (c) 2013 Alexander Ignatyev. All rights reserved.
+
 #include <iostream>
 #include <string>
 #include <fstream>
 
-#include "parallel_bnb.hpp"
-#include "sequence_bnb.hpp"
-#include "solver_provider.hpp"
 #include "tsp.h"
-
+#include "parallel_bnb.h"
+#include "sequence_bnb.h"
+#include "solver_provider.h"
 #include "data_loader.h"
 
 template <typename BNBSolver>
