@@ -42,7 +42,8 @@ APSolver<T>::APSolver()
         , v_(nullptr)
         , mins_(nullptr)
         , links_(nullptr)
-        , visited_(nullptr) {
+        , visited_(nullptr)
+        , mark_indices_(nullptr) {
     }
 
 template <typename T>
