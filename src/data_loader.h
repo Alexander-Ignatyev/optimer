@@ -1,10 +1,13 @@
-#ifndef DATA_LOADER_H
-#define DATA_LOADER_H
+// Copyright (c) 2013 Alexander Ignatyev. All rights reserved.
+
+#ifndef SRC_DATA_LOADER_H_
+#define SRC_DATA_LOADER_H_
 
 #include <iosfwd>
 
 #include "defs.h"
 
-bool load_tsplib_problem(std::istream &is, value_type *&matrix, size_t &dimension);
+bool load_tsplib_problem(std::istream &is, value_type *&matrix
+    , size_t &dimension);
 
-#endif //DATA_LOADER_H
+#endif  // SRC_DATA_LOADER_H_

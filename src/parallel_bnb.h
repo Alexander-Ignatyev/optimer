@@ -12,10 +12,10 @@
 #include <algorithm>
 
 #include "defs.h"
-#include "bnb.hpp"
-#include "tree.hpp"
+#include "bnb.h"
+#include "tree.h"
 #include "stats.h"
-#include "timer.hpp"
+#include "timer.h"
 #include "load_balancer.h"
 
 template <typename SolverFactory, typename NodesContainer = LifoContainer>

@@ -6,8 +6,8 @@
 #include <vector>
 
 #include "defs.h"
-#include "ap_solver.hpp"
-#include "tree.hpp"
+#include "ap_solver.h"
+#include "tree.h"
 
 struct Stats;
 
@@ -29,7 +29,7 @@ class TspSolver {
 
     struct Set {
         Point move;
-        Point m_point;
+        Point point;
         bool is_right;
         value_type value;
         std::vector<size_t> ap_solve;
@@ -44,13 +44,13 @@ class TspSolver {
         std::vector<size_t> route;
     };
 
-   explicit TspSolver(std::ostream &_logger = std::cout);
+    explicit TspSolver(std::ostream &_logger = std::cout);
 
-   // mandatory function
-   void init(const TspInitialData &data, MemoryManager<Set> *mm);
-   void get_initial_node(Node<Set> *node);
-   void get_initial_solution(Solution *sol);
-   void branch(const Node<Set> *node, value_type &record
+    // mandatory function
+    void init(const TspInitialData &data, MemoryManager<Set> *mm);
+    void get_initial_node(Node<Set> *node);
+    void get_initial_solution(Solution *sol);
+    void branch(const Node<Set> *node, value_type &record
        , std::vector<Node<Set> *> &nodes, Solution &sol, Stats &stats);
 
 
@@ -69,15 +69,14 @@ class TspSolver {
         , const Node<Set> &node, Point &move);
     value_type transform_node(const value_type *data, Node<Set> *node);
 
-    size_t rank;
-    size_t max_branches;
-    value_type *m_mtx;
-    const value_type *m_mtx_original;
+    size_t dimension_;
+    value_type *matrix_;
+    const value_type *matrix_original_;
 
-    MemoryManager<Set> *m_mm;
-    AP_Solver<value_type> ap;
+    MemoryManager<Set> *mm_;
+    APSolver<value_type> ap_solver_;
 
-    std::ostream &logger;
+    std::ostream &logger_;
 };
 
 #endif  // SRC_TSP_H_

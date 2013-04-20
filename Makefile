@@ -20,3 +20,6 @@ tst:
 
 clean-all:
 	rm -rf optimer* bin include lib share
+
+cpplint:
+	python tools/cpplint.py --filter="-build/include,-runtime/reference,-readability/streams" `find src` 2>&1

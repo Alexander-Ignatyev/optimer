@@ -1,3 +1,5 @@
+// Copyright (c) 2013 Alexander Ignatyev. All rights reserved.
+
 /*
  * load_balancer.h
  *
@@ -5,14 +7,13 @@
  *      Author: sash
  */
 
-#ifndef LOAD_BALANCER_H_
-#define LOAD_BALANCER_H_
+#ifndef SRC_LOAD_BALANCER_H_
+#define SRC_LOAD_BALANCER_H_
 
-struct LoadBalancerParams
-{
-	unsigned threads;
-	unsigned minimum_nodes;
-	unsigned maximum_nodes;
+struct LoadBalancerParams {
+    unsigned threads;
+    unsigned minimum_nodes;
+    unsigned maximum_nodes;
 };
 
-#endif /* LOAD_BALANCER_H_ */
+#endif  // SRC_LOAD_BALANCER_H_

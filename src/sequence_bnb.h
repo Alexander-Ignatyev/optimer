@@ -8,9 +8,9 @@
 #include <iostream>
 
 #include "defs.h"
-#include "bnb.hpp"
-#include "tree.hpp"
-#include "timer.hpp"
+#include "bnb.h"
+#include "tree.h"
+#include "timer.h"
 #include "stats.h"
 
 template <typename SolverProvider, typename NodesContainer = LifoContainer>

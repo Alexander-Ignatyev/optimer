@@ -18,42 +18,40 @@ bool is_m(double val) {
     return val >= M_VAL;
 }
 
-TspSolver::TspSolver(std::ostream &_logger)
-    : rank(0)
-    , max_branches(0)
-    , m_mtx(nullptr)
-    , m_mtx_original(nullptr)
-    , m_mm(nullptr)
-    , logger(_logger) { }
+TspSolver::TspSolver(std::ostream &_logger_)
+    : dimension_(0)
+    , matrix_(nullptr)
+    , matrix_original_(nullptr)
+    , mm_(nullptr)
+    , logger_(_logger_) { }
 
 
 void TspSolver::init(const TspInitialData &data, MemoryManager<Set> *mm) {
-    m_mtx_original = data.matrix;
-    rank = data.rank;
-    ap.alloc(rank);
-    m_mm = mm;
-    m_mtx = new value_type[rank*rank];
+    matrix_original_ = data.matrix;
+    dimension_ = data.rank;
+    mm_ = mm;
+    matrix_ = new value_type[dimension_*dimension_];
 }
 
 void TspSolver::get_initial_node(Node<Set> *node) {
     node->data.level = 0;
     node->data.is_right = false;
-    node->data.value = transform_node(m_mtx_original, node);
+    node->data.value = transform_node(matrix_original_, node);
 }
 
 void TspSolver::get_initial_solution(Solution *sol) {
     Solution tmpSol;
     sol->value = M_VAL;
-    for (unsigned i = 0; i < rank; ++i) {
+    for (unsigned i = 0; i < dimension_; ++i) {
         tmpSol.value = 0;
         tmpSol.route.clear();
-        get_greedy_solution(m_mtx_original, rank, tmpSol, i);
+        get_greedy_solution(matrix_original_, dimension_, tmpSol, i);
         two_opt(&tmpSol);
         if (sol->value > tmpSol.value) {
             *sol = tmpSol;
         }
     }
-    logger << std::endl;
+    logger_ << std::endl;
 }
 
 void TspSolver::branch(const Node<Set> *node, value_type &record,
@@ -61,28 +59,28 @@ void TspSolver::branch(const Node<Set> *node, value_type &record,
 
     stats.branches++;
     Point move;
-    copy_matrix(m_mtx, m_mtx_original, rank, node);
-    if (!select_move(m_mtx, *node, move)) {
-        logger << "TSP AP: Error! Cannot select move" << std::endl;
+    copy_matrix(matrix_, matrix_original_, dimension_, node);
+    if (!select_move(matrix_, *node, move)) {
+        logger_ << "TSP AP: Error! Cannot select move" << std::endl;
         return;
     }
 
     bool append_move_right = false;
 
-    Node<Set> *node1 = m_mm->alloc(node);
+    Node<Set> *node1 = mm_->alloc(node);
     node1->data.level = node->data.level+1;
     node1->data.move = move;
     node1->data.is_right = true;
     anti_cycle(node1);
-    copy_matrix(m_mtx, m_mtx_original, rank, node1);
-    node1->data.value = transform_node(m_mtx, node1);
-    assert(m_mm->CheckRefs(node));
+    copy_matrix(matrix_, matrix_original_, dimension_, node1);
+    node1->data.value = transform_node(matrix_, node1);
+    assert(mm_->CheckRefs(node));
     ++stats.sets_generated;
     if (node1->data.value < record) {
-        if (node1->data.level == rank - 2) {
+        if (node1->data.level == dimension_ - 2) {
             record = node1->data.value;
-            logger << "TSP AP: found new record: ";
-            logger << record << " "<< node1->data.level << std::endl;
+            logger_ << "TSP AP: found new record: ";
+            logger_ << record << " "<< node1->data.level << std::endl;
             sol.route = create_tour(node1->data.ap_solve);
 #ifndef NDEBUG
             if (sol.route.empty()) {
@@ -100,14 +98,14 @@ void TspSolver::branch(const Node<Set> *node, value_type &record,
                     }
                     node = const_cast<Node<Set> *>(node->parent);
                 }
-                print_matrix(m_mtx, rank, std::cout);
+                print_matrix(matrix_, dimension_, std::cout);
                 std::cout << std::endl;
                 exit(2);
             }
 #endif
 
             sol.value = record;
-            m_mm->free(node1);
+            mm_->free(node1);
             return;
         }
         append_move_right = true;
@@ -115,29 +113,29 @@ void TspSolver::branch(const Node<Set> *node, value_type &record,
         ++stats.sets_constrained_by_record;
     }
 
-    Node<Set> *node2 = m_mm->alloc(node);
+    Node<Set> *node2 = mm_->alloc(node);
     node2->data.level = node->data.level;
-    node2->data.m_point = move;
+    node2->data.point = move;
     node2->data.is_right = false;
-    copy_matrix(m_mtx, m_mtx_original, rank, node2);
-    node2->data.value = transform_node(m_mtx, node2);
+    copy_matrix(matrix_, matrix_original_, dimension_, node2);
+    node2->data.value = transform_node(matrix_, node2);
     ++stats.sets_generated;
     if (node2->data.value < record) {
         nodes.push_back(node2);
     } else {
         ++stats.sets_constrained_by_record;
-        m_mm->free(node2);
+        mm_->free(node2);
     }
 
     if (append_move_right) {
         nodes.push_back(node1);
     } else {
-        m_mm->free(node1);
+        mm_->free(node1);
     }
 }
 
 std::vector<size_t> TspSolver::create_tour(const std::vector<size_t> &ap_sol
-    , std::ostream &logger) {
+    , std::ostream &logger_) {
     std::vector<size_t> tour;
     size_t start = 0;
     tour.push_back(start);
@@ -156,12 +154,12 @@ std::vector<size_t> TspSolver::create_tour(const std::vector<size_t> &ap_sol
 }
 
 
-void TspSolver::get_greedy_solution(const value_type *data, size_t rank
+void TspSolver::get_greedy_solution(const value_type *data, size_t dimension
     , Solution &sol, unsigned startPoint) {
     sol.value = 0;
 
     std::set<size_t> points;
-    for (size_t i = 0; i < rank; ++i)
+    for (size_t i = 0; i < dimension; ++i)
         points.insert(i);
     size_t currPoint = startPoint;
     size_t minPoint;
@@ -173,8 +171,8 @@ void TspSolver::get_greedy_solution(const value_type *data, size_t rank
     while (!points.empty()) {
         minValue = M_VAL + 10;
         for (pos = points.begin(); pos != points.end(); ++pos) {
-            if (data[currPoint*rank+*pos] < minValue) {
-                minValue = data[currPoint*rank+*pos];
+            if (data[currPoint*dimension+*pos] < minValue) {
+                minValue = data[currPoint*dimension+*pos];
                 minPoint = *pos;
             }
         }
@@ -183,13 +181,13 @@ void TspSolver::get_greedy_solution(const value_type *data, size_t rank
          currPoint = minPoint;
         sol.route.push_back(currPoint);
     }
-    sol.value += data[currPoint*rank+startPoint];
+    sol.value += data[currPoint*dimension+startPoint];
     sol.route.push_back(startPoint);
 }
 
 bool TspSolver::two_opt(Solution *sol) const {
     bool bResult = false;
-    const value_type *mtx = m_mtx_original;
+    const value_type *mtx = matrix_original_;
     bool bContinue = true;
 
     while (bContinue) {
@@ -197,12 +195,12 @@ bool TspSolver::two_opt(Solution *sol) const {
         auto &route = sol->route;
         for (unsigned first = 1, second = 2; second < route.size()
                 - 2; ++first, ++second) {
-            value_type delta = (mtx[route[first - 1]*rank+route[first]]
-                + mtx[route[first]*rank+route[second]]
-                + mtx[route[second]*rank+route[second + 1]])
-                - (mtx[route[first- 1]*rank+route[second]]
-                + mtx[route[second]*rank+route[first]]
-                + mtx[route[first]*rank+route[second + 1]]);
+            value_type delta = (mtx[route[first - 1]*dimension_+route[first]]
+                + mtx[route[first]*dimension_+route[second]]
+                + mtx[route[second]*dimension_+route[second + 1]])
+                - (mtx[route[first- 1]*dimension_+route[second]]
+                + mtx[route[second]*dimension_+route[first]]
+                + mtx[route[first]*dimension_+route[second + 1]]);
             if (delta > 0) {
                 std::swap(route[first], route[second]);
                 sol->value -= delta;
@@ -215,25 +213,25 @@ bool TspSolver::two_opt(Solution *sol) const {
 }
 
 void TspSolver::print_matrix(const value_type *matrix
-    , size_t rank, std::ostream &logger) {
+    , size_t rank, std::ostream &logger_) {
     for (size_t i = 0; i < rank; ++i) {
         for (size_t j = 0; j < rank; ++j) {
             if (i != j && !is_m(matrix[i*rank+j])) {
-                logger << matrix[i*rank+j] << " ";
+                logger_ << matrix[i*rank+j] << " ";
             } else {
-                logger << "M ";
+                logger_ << "M ";
             }
         }
-        logger << std::endl;
+        logger_ << std::endl;
     }
-    logger << std::endl;
+    logger_ << std::endl;
 }
 
 void TspSolver::copy_matrix(value_type *target, const value_type *source
     , size_t rank, const Node<Set> *pnode) {
     memcpy(target, source, rank*rank*sizeof(value_type));
     if (pnode->parent) {
-        target[pnode->data.m_point.x*rank+pnode->data.m_point.y] = M_VAL;
+        target[pnode->data.point.x*rank+pnode->data.point.y] = M_VAL;
         while (pnode->parent) {
             if (pnode->data.is_right) {
                 for (unsigned k = 0; k < rank; ++k) {
@@ -241,16 +239,17 @@ void TspSolver::copy_matrix(value_type *target, const value_type *source
                     target[rank*k+pnode->data.move.y] = M_VAL;
                 }
             } else {
-                target[pnode->data.m_point.x*rank+pnode->data.m_point.y] = M_VAL;
+                target[pnode->data.point.x*rank+pnode->data.point.y] = M_VAL;
             }
-            target[pnode->data.m_point.x*rank+pnode->data.m_point.y] = M_VAL;
+            target[pnode->data.point.x*rank+pnode->data.point.y] = M_VAL;
             pnode = pnode->parent;
         }
     }
 }
 
 
-bool TspSolver::select_move(const value_type *data, const Node<Set> &node, Point &move) {
+bool TspSolver::select_move(const value_type *data
+    , const Node<Set> &node, Point &move) {
     bool move_selected = false;
     value_type theta = 0;
 
@@ -258,19 +257,19 @@ bool TspSolver::select_move(const value_type *data, const Node<Set> &node, Point
         size_t j = node.data.ap_solve[i];
         value_type min_i = M_VAL;
         value_type min_j = M_VAL;
-        value_type val = data[i*rank+j];
+        value_type val = data[i*dimension_+j];
         if (is_m(val)) {
             continue;
         }
-        for (unsigned k = 0; k < rank; ++k) {
+        for (unsigned k = 0; k < dimension_; ++k) {
             if (k != j) {
-                if (min_i > data[i *rank+k]) {
-                    min_i = data[i *rank+k];
+                if (min_i > data[i *dimension_+k]) {
+                    min_i = data[i *dimension_+k];
                 }
             }
             if (k != i) {
-                if (min_j > data[k*rank+j]) {
-                    min_j = data[k*rank+j];
+                if (min_j > data[k*dimension_+j]) {
+                    min_j = data[k*dimension_+j];
                 }
             }
         }
@@ -287,22 +286,23 @@ bool TspSolver::select_move(const value_type *data, const Node<Set> &node, Point
 }
 
 value_type TspSolver::transform_node(const value_type *data, Node<Set> *node) {
-    std::vector<size_t> markIndices = ap.transform(data, rank);
-    node->data.ap_solve.resize(rank);
-    for (size_t i = 0; i < rank; ++i) {
+    std::vector<size_t> markIndices = ap_solver_.transform(data, dimension_);
+    node->data.ap_solve.resize(dimension_);
+    for (size_t i = 0; i < dimension_; ++i) {
         node->data.ap_solve[markIndices[i]] = i;
     }
 
     value_type d0 = 0;
-    for (unsigned i = 0; i < rank; ++i) {
-        if (!is_m(data[markIndices[i]*rank+i])) {
-            d0 += data[markIndices[i]*rank+i];
+    for (unsigned i = 0; i < dimension_; ++i) {
+        if (!is_m(data[markIndices[i]*dimension_+i])) {
+            d0 += data[markIndices[i]*dimension_+i];
         }
     }
     const Node<Set> *pnode = node;
     while (pnode) {
         if (pnode->data.is_right) {
-            d0 += m_mtx_original[pnode->data.move.x*rank+pnode->data.move.y];
+            auto index = pnode->data.move.x*dimension_+pnode->data.move.y;
+            d0 += matrix_original_[index];
             node->data.ap_solve[pnode->data.move.x] = pnode->data.move.y;
         }
         pnode = pnode->parent;
@@ -334,6 +334,6 @@ void TspSolver::anti_cycle(Node<Set> *node) {
             pnode = pnode->parent;
         }
     }
-    node->data.m_point.x = finish;
-    node->data.m_point.y = start;
+    node->data.point.x = finish;
+    node->data.point.y = start;
 }

@@ -1,3 +1,5 @@
+// Copyright (c) 2013 Alexander Ignatyev. All rights reserved.
+
 #include "data_loader.h"
 
 #include <cstdlib>
@@ -26,12 +28,12 @@ void read_edges(std::string &line, value_type *matrix, size_t &position) {
         matrix[position] = val;
         ++position;
         iss >> val;
-        
     } while (iss);
 }
 
-bool load_tsplib_problem(std::istream &is, value_type *&matrix, size_t &dimension) {
-	matrix = nullptr;
+bool load_tsplib_problem(std::istream &is, value_type *&matrix
+    , size_t &dimension) {
+    matrix = nullptr;
 
     std::string line;
     bool edges_section = false;
@@ -39,21 +41,21 @@ bool load_tsplib_problem(std::istream &is, value_type *&matrix, size_t &dimensio
     while (std::getline(is, line)) {
         if (starts_with(line, MARKER_DIMENSION)) {
             dimension = read_dimension(line);
-			if (matrix != nullptr) {
-				return false;
-			}
-			matrix = new value_type[dimension*dimension];
+            if (matrix != nullptr) {
+                return false;
+            }
+            matrix = new value_type[dimension*dimension];
         } else if (starts_with(line, MARKER_EDGE_WEIGHT_SECTION)) {
             edges_section = true;
         } else if (starts_with(line, MARKER_EOF)) {
             edges_section = false;
         } else if (edges_section) {
-			if (matrix == nullptr) {
-				return false;
-			}
+            if (matrix == nullptr) {
+                return false;
+            }
             read_edges(line, matrix, position);
         } else {
         }
     }
-	return true;
+    return true;
 }

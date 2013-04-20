@@ -119,8 +119,10 @@ void ParallelBNB<SolverFactory, NodesContainer>::start(unsigned threadID) {
             std::unique_lock<std::mutex> lock(mutex_sets_);
             --num_working_threads_;
             condvar_sets_.wait(lock,
-                [this] { return (!this->queue_sets_.empty())
-                    || (this->num_working_threads_ == 0); });
+                [this] {
+                    return (!this->queue_sets_.empty())
+                    || (this->num_working_threads_ == 0);
+                });
             if (num_working_threads_ == 0) {
                 condvar_sets_.notify_all();
                 timer.reset();
