@@ -42,9 +42,8 @@ void solve(const std::string &problem_path, BNBSolver &solver)
 
 int parallel(const std::string &problem_path)
 {
-	ClonedSolverProvider<TspSolver> provider;
-	LoadBalancerParams params = {4, 8, 100};
-	ParallelBNB<ClonedSolverProvider<TspSolver> > bnb(provider, params);
+	LoadBalancerParams params = {4, 24, 40};
+	ParallelBNB<ClonedSolverProvider<TspSolver>, PriorityContainer> bnb(params);
 
 	solve(problem_path, bnb);
 	
@@ -53,21 +52,29 @@ int parallel(const std::string &problem_path)
 
 int sequnce(const std::string &problem_path)
 {
-	ClonedSolverProvider<TspSolver> provider;
-	SequenceBNB<ClonedSolverProvider<TspSolver> > bnb(provider);
+	SequenceBNB<ClonedSolverProvider<TspSolver>, PriorityContainer > bnb;
 
 	solve(problem_path, bnb);
 	return 0;
 }
 
+#define PARALLEL
+
 int main(int argc, char *argv[])
 {
 	std::cout << "starting..." << std::endl;
-	std::string problem_path = "data/ftv38.atsp";
+	std::string problem_path = "data/ftv47.atsp";
 	if (argc > 1)
 	{
 		problem_path = argv[1];
 	}
-	//return sequnce(problem_path);
-	return parallel(problem_path);
+	bool is_parallel = true;
+	if (is_parallel)
+	{
+		return parallel(problem_path);
+	}
+	else
+	{
+		return sequnce(problem_path);
+	}
 }

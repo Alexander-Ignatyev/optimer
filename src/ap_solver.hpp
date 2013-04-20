@@ -6,9 +6,9 @@ template <typename T> class AP_Solver
 	AP_Solver(const AP_Solver &);
 	AP_Solver &operator=(const AP_Solver &);
 
-	std::auto_ptr<ptrdiff_t> int_buffer;
-	std::auto_ptr<size_t> size_t_buffer;
-	std::auto_ptr<T> value_type_buffer;
+	std::vector<ptrdiff_t> int_buffer;
+	std::vector<size_t> size_t_buffer;
+	std::vector<T> value_type_buffer;
 
 	T *v;
 	T *u;
@@ -16,18 +16,19 @@ template <typename T> class AP_Solver
 	ptrdiff_t *visited;
 	size_t *markIndices;
 	T *mins;
-	size_t m_rank; //��� long
-
-	template <typename U> void assign(U *data, size_t rank, const U &value)
+	size_t m_rank;
+	
+	template <typename U> static void assign(U *data, size_t rank, const U &value)
 	{
 		for(size_t i = 0; i < rank; ++i)
 		{
 			data[i] = value;
 		}
 	}
+	
 public:
-	AP_Solver():m_rank(-1) {}
-	AP_Solver(size_t rank)
+
+	AP_Solver(size_t rank = 0): v(nullptr), u(nullptr), links(nullptr), visited(nullptr), m_rank(rank)
 	{
 		alloc(rank);
 	}
@@ -35,17 +36,21 @@ public:
 	void alloc(size_t rank)
 	{
 		m_rank = rank;
-		int_buffer.reset(new ptrdiff_t[rank*2]);
-		links = int_buffer.get();
-		visited = int_buffer.get() + rank;
+		if (m_rank == 0)
+		{
+			return;
+		}
+		int_buffer.resize(rank*2);
+		links = &int_buffer[0];
+		visited = &int_buffer[rank];
 
-		size_t_buffer.reset(new size_t[rank]);
-		markIndices = size_t_buffer.get();
+		size_t_buffer.resize(rank);
+		markIndices = &size_t_buffer[0];
 
-		value_type_buffer.reset(new T[rank*3]);
-		mins = value_type_buffer.get();
-		u = value_type_buffer.get() + rank;
-		v = value_type_buffer.get() + rank*2;
+		value_type_buffer.resize(rank*3);
+		mins = &value_type_buffer[0];
+		u = &value_type_buffer[rank];
+		v = &value_type_buffer[rank*2];
 	}
 
 	std::vector<size_t> transform(const T *data, size_t rank)

@@ -18,13 +18,8 @@ class SequenceBNB
 	typedef typename Solver::Solution Solution;
 	typedef typename Solver::InitialData InitialData;
 
-	SolverProvider &m_provider;
 	Stats m_stats;
 public:
-	SequenceBNB(SolverProvider &provider): m_provider(provider)
-	{
-	}
-
 	Solution solve(const InitialData &data, size_t max_branches = -1, value_type record = M_VAL)
 	{
 		static const size_t MIN_RANK_VALUE = 2;
@@ -38,7 +33,7 @@ public:
 			Node<Set> *node = mm.alloc(NULL);
 			Solution initSol;
 
-			Solver *solver = m_provider.get_solver();
+			Solver *solver = SolverProvider::get_solver();
 			solver->init(data, &mm);
 			solver->get_initial_node(*node);
 			solver->get_initial_solution(initSol);
@@ -61,6 +56,8 @@ public:
 				tmp_nodes.clear();
 			}
 			m_stats.seconds = timer.elapsed_seconds();
+			
+			SolverProvider::free_solver(solver);
 		}
 		
 		sol.value = record;

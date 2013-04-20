@@ -30,14 +30,13 @@ class OpenMP_BNB
 
 
 public:
-	OpenMP_BNB(SolverFactory &factory, const LoadBalancerParams &params): m_factory(factory), m_params(params)
+	OpenMP_BNB(SolverFactory &factory, const LoadBalancerParams &params): m_factory(factory), m_params(params), m_nodes_list(nullptr)
 	{
 	}
 
 	Solution solve(InitialData &data, size_t max_branches = -1, value_type record = M_VAL)
 	{
 		static const size_t MIN_RANK_VALUE = 2;
-		const unsigned num_threads = 8;
 		Solution sol;
 		nodes_t nodes;
 		m_mm.init(m_idata->rank * m_idata->rank * 1024);

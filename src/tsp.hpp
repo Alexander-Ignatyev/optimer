@@ -64,13 +64,15 @@ public:
 		std::vector<size_t> route;
 	};
 private:
-	MemoryManager<Set> *m_mm;
-	std::ostream &logger;
 	size_t rank;
 	size_t max_branches;
 	value_type *m_mtx;
 	const value_type *m_mtx_original;
+	
+	MemoryManager<Set> *m_mm;
 	AP_Solver<value_type> ap;
+	
+	std::ostream &logger;
 
 private:
 	static std::vector<size_t> create_tour(const std::vector<size_t> &ap_sol, std::ostream &logger = std::cout)
@@ -122,7 +124,7 @@ private:
 				}
 			}
 			sol.value += minValue;
-			points.erase(minPoint);//[[ru:������, �����]]
+			points.erase(minPoint);
  			currPoint = minPoint;
 			sol.route.push_back(currPoint);
 		}
@@ -207,7 +209,7 @@ private:
 	}
 
 
-	bool select_move(const value_type *data, const Node<Set> &node, Point &move)
+	bool select_move(const value_type *data, const Node<Set> &node, Point &move) const
 	{
 		bool move_selected = false;
 		value_type theta = 0;
@@ -283,7 +285,7 @@ private:
 		return d0;
 	}
 	
-	void anti_cycle(Node<Set> &node)
+	static void anti_cycle(Node<Set> &node)
 	{
 		bool bContinue = true;
 		size_t start, finish;
@@ -335,7 +337,7 @@ public:
 		node.data.value = transform(node, m_mtx_original);
 	}
 
-	TspSolver(std::ostream &_logger = std::cout): logger(_logger)
+	TspSolver(std::ostream &_logger = std::cout): rank(0), max_branches(0), m_mtx(nullptr), m_mtx_original(nullptr), m_mm(nullptr), logger(_logger)
 	{
 	}
 

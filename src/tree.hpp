@@ -50,7 +50,7 @@ class MemoryManager
 #endif
 	}
 
-	size_t DecRefs(Node<D> *node)
+	static size_t DecRefs(Node<D> *node)
 	{
 #ifndef NDEBUG
 		Element * elem = reinterpret_cast<Element *>((int8_t *)node-sizeof(size_t));
@@ -61,12 +61,8 @@ class MemoryManager
 #endif
 	}
 public:
-	MemoryManager()
+	MemoryManager(): refs(0), inc_refs(0), m_area(nullptr), m_free_list(nullptr), m_capacity(0)
 	{
-		m_capacity = 0;
-		m_area = NULL;
-		refs = 0;
-		inc_refs = 0;
 	}
 
 	~MemoryManager()

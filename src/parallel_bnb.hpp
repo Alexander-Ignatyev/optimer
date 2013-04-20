@@ -25,7 +25,6 @@ class ParallelBNB
 	typedef typename Solver::Solution Solution;
 	typedef typename Solver::InitialData InitialData;
 
-	SolverFactory &m_factory;
 	const LoadBalancerParams &m_params;
 	typedef std::vector<Node<Set> *> nodes_t;
 
@@ -52,7 +51,7 @@ class ParallelBNB
 		auto nodes = make_nodes_container<SolverFactory>(LifoContainer(), m_nodes_list[threadID].begin(), m_nodes_list[threadID].end());
 		m_nodes_list[threadID].clear();
 		Node<Set> *node;
-		Solver *psolver = m_factory.get_solver();
+		Solver *psolver = SolverFactory::get_solver();
 		psolver->init(*m_idata, &m_mm);
 		
 		std::vector<Node<Set> * > tmp_nodes;
@@ -115,11 +114,11 @@ class ParallelBNB
 			}
 		}
 		m_stats_list[threadID].seconds += timer.elapsed_seconds();
-		m_factory.free_solver(psolver);
+		SolverFactory::free_solver(psolver);
 	}
 
 public:
-	ParallelBNB(SolverFactory &factory, const LoadBalancerParams &params): m_factory(factory), m_params(params), m_working_threads(0)
+	ParallelBNB(const LoadBalancerParams &params): m_params(params), m_record(0), m_working_threads(0)
 	{
 	}
 
@@ -137,7 +136,7 @@ public:
 		m_stats_initial.clear();
 		if (data.rank > MIN_RANK_VALUE)
 		{
-			Solver *psolver = m_factory.get_solver();
+			Solver *psolver = SolverFactory::get_solver();
 			psolver->init(data, &m_mm);
 			Node<Set> *node = m_mm.alloc(NULL);
 			psolver->get_initial_node(*node);
@@ -164,7 +163,7 @@ public:
 				tmp_nodes.clear();
 			}
 			m_stats_initial.seconds = timer.elapsed_seconds();
-			m_factory.free_solver(psolver);
+			SolverFactory::free_solver(psolver);
 		}
 
 		//parallel part
