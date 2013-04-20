@@ -1,3 +1,5 @@
+// Copyright (c) 2013 Alexander Ignatyev. All rights reserved.
+
 #include <string>
 
 #include <cppunit/extensions/HelperMacros.h>
@@ -6,89 +8,92 @@
 #include <sequence_bnb.h>
 #include <solver_provider.h>
 #include <tsp.h>
-
 #include <data_loader.h>
 
 template <typename Solver>
-void test_problem(Solver &solver, const TspInitialData &data, value_type expected_value) {
-	value_type record = solver.solve(data).value;
-	
-	CPPUNIT_ASSERT_EQUAL(record, expected_value);
+void test_problem(Solver &solver, const TspInitialData &data
+    , value_type expected_value) {
+    value_type record = solver.solve(data).value;
+    CPPUNIT_ASSERT_EQUAL(record, expected_value);
 }
 
-void test_sequential_problem_lifo(const TspInitialData &data, value_type expected_value) {
-	SequenceBNB<ClonedSolverProvider<TspSolver>, LifoContainer > solver;
-	
-	test_problem(solver, data, expected_value);
+void test_sequential_problem_lifo(const TspInitialData &data
+    , value_type expected_value) {
+    SequenceBNB<ClonedSolverProvider<TspSolver>, LifoContainer > solver;
+    test_problem(solver, data, expected_value);
 }
 
-void test_sequential_problem_priority(const TspInitialData &data, value_type expected_value) {
-	SequenceBNB<ClonedSolverProvider<TspSolver>, PriorityContainer> solver;
-	
-	test_problem(solver, data, expected_value);
+void test_sequential_problem_priority(const TspInitialData &data
+    , value_type expected_value) {
+    SequenceBNB<ClonedSolverProvider<TspSolver>, PriorityContainer> solver;
+    test_problem(solver, data, expected_value);
 }
 
-void test_parallel_problem_lifo(const TspInitialData &data, value_type expected_value) {
-	LoadBalancerParams params = {4, 8, static_cast<unsigned>(data.rank*2)};
-	ParallelBNB<ClonedSolverProvider<TspSolver>, LifoContainer > solver(params);
-	
-	test_problem(solver, data, expected_value);
+void test_parallel_problem_lifo(const TspInitialData &data
+    , value_type expected_value) {
+    LoadBalancerParams params = {4, 8, static_cast<unsigned>(data.rank*2)};
+    ParallelBNB<ClonedSolverProvider<TspSolver>, LifoContainer > solver(params);
+    test_problem(solver, data, expected_value);
 }
 
-void test_parallel_problem_priority(const TspInitialData &data, value_type expected_value) {
-	LoadBalancerParams params = {4, 8, static_cast<unsigned>(data.rank*2)};
-	ParallelBNB<ClonedSolverProvider<TspSolver>, PriorityContainer > solver(params);
-	
-	test_problem(solver, data, expected_value);
+void test_parallel_problem_priority(const TspInitialData &data
+    , value_type expected_value) {
+    LoadBalancerParams params = {4, 8, static_cast<unsigned>(data.rank*2)};
+    ParallelBNB<ClonedSolverProvider<TspSolver>, PriorityContainer >
+        solver(params);
+    test_problem(solver, data, expected_value);
 }
 
 
-class ATSPTest : public CppUnit::TestFixture {
-	CPPUNIT_TEST_SUITE( ATSPTest );
-	CPPUNIT_TEST(test_sequential_FTV38_lifo);
-	CPPUNIT_TEST(test_sequential_FTV38_priority);
-	CPPUNIT_TEST(test_parallel_FTV38_lifo);
-	CPPUNIT_TEST(test_parallel_FTV38_priority);
-	CPPUNIT_TEST_SUITE_END();
-	
-	TspInitialData *ftv38_instance;
-	value_type *ftv38_matrix;
-	value_type fvt38_solution;
-	
-	void test_sequential_FTV38_lifo() {
-		test_sequential_problem_lifo(*ftv38_instance, fvt38_solution);
-	}
-	
-	void test_sequential_FTV38_priority() {
-		test_sequential_problem_priority(*ftv38_instance, fvt38_solution);
-	}
-	
-	void test_parallel_FTV38_lifo() {
-		test_parallel_problem_lifo(*ftv38_instance, fvt38_solution);
-	}
-	
-	void test_parallel_FTV38_priority() {
-		test_parallel_problem_priority(*ftv38_instance, fvt38_solution);
-	}
-	
-public:
-	ATSPTest(): ftv38_instance(nullptr), ftv38_matrix(nullptr), fvt38_solution(0) {}
+class ATSPTest: public CppUnit::TestFixture {
+    CPPUNIT_TEST_SUITE(ATSPTest);
+    CPPUNIT_TEST(test_sequential_FTV38_lifo);
+    CPPUNIT_TEST(test_sequential_FTV38_priority);
+    CPPUNIT_TEST(test_parallel_FTV38_lifo);
+    CPPUNIT_TEST(test_parallel_FTV38_priority);
+    CPPUNIT_TEST_SUITE_END();
 
-	void setUp() override {
-		fvt38_solution = 1530;
-		
-		size_t dimension;
-		std::ifstream ifs("data/ftv38.atsp");
-		load_tsplib_problem(ifs, ftv38_matrix, dimension);
-		ifs.close();
-		
-		ftv38_instance = new TspInitialData(ftv38_matrix, dimension);
-	}
-	
-	void tearDown() override {
-		delete [] ftv38_matrix;
-		delete ftv38_instance;
-	}
+    void test_sequential_FTV38_lifo() {
+        test_sequential_problem_lifo(*ftv38_instance, fvt38_solution);
+    }
+
+    void test_sequential_FTV38_priority() {
+        test_sequential_problem_priority(*ftv38_instance, fvt38_solution);
+    }
+
+    void test_parallel_FTV38_lifo() {
+        test_parallel_problem_lifo(*ftv38_instance, fvt38_solution);
+    }
+
+    void test_parallel_FTV38_priority() {
+        test_parallel_problem_priority(*ftv38_instance, fvt38_solution);
+    }
+
+    TspInitialData *ftv38_instance;
+    value_type *ftv38_matrix;
+    value_type fvt38_solution;
+
+ public:
+    ATSPTest()
+        : ftv38_instance(nullptr)
+        , ftv38_matrix(nullptr)
+        , fvt38_solution(0) {}
+
+    void setUp() override {
+        fvt38_solution = 1530;
+
+        size_t dimension;
+        std::ifstream ifs("data/ftv38.atsp");
+        load_tsplib_problem(ifs, ftv38_matrix, dimension);
+        ifs.close();
+
+        ftv38_instance = new TspInitialData(ftv38_matrix, dimension);
+    }
+
+    void tearDown() override {
+        delete [] ftv38_matrix;
+        delete ftv38_instance;
+    }
 };
 
-CPPUNIT_TEST_SUITE_REGISTRATION( ATSPTest );
+CPPUNIT_TEST_SUITE_REGISTRATION(ATSPTest);
