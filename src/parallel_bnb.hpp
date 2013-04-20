@@ -13,7 +13,7 @@
 #include "defs.h"
 #include "bnb.hpp"
 #include "tree.hpp"
-#include "stats.hpp"
+#include "stats.h"
 #include "timer.hpp"
 #include "load_balancer.h"
 
@@ -139,11 +139,11 @@ public:
 			Solver *psolver = SolverFactory::get_solver();
 			psolver->init(data, &m_mm);
 			Node<Set> *node = m_mm.alloc(NULL);
-			psolver->get_initial_node(*node);
+			psolver->get_initial_node(node);
 			nodes.push(node);
 
 			Solution initSol;
-			psolver->get_initial_solution(initSol);
+			psolver->get_initial_solution(&initSol);
 			m_record = initSol.value;
 
 			std::vector<Node<Set> * > tmp_nodes;

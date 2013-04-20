@@ -4,6 +4,7 @@
 #include <cstdint>
 #include <cassert>
 
+#include <iostream>
 #include <mutex>
 
 template <typename D>

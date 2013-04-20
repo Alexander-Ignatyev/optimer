@@ -5,7 +5,7 @@
 #include <parallel_bnb.hpp>
 #include <sequence_bnb.hpp>
 #include <solver_provider.hpp>
-#include <tsp.hpp>
+#include <tsp.h>
 
 #include <data_loader.h>
 

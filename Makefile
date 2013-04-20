@@ -1,7 +1,8 @@
 INCLUDE = -Iinclude -Isrc
 LIB = -Llib
-SRC = src/main.cpp src/data_loader.cpp
-TESTS_SRC = tests/main.cpp tests/ap.cpp tests/atsp.cpp tests/teamcity_cppunit.cpp tests/teamcity_messages.cpp src/data_loader.cpp
+SRC = src/main.cpp src/data_loader.cpp src/tsp.cpp src/stats.cpp
+TESTS_SRC = tests/main.cpp tests/ap.cpp tests/atsp.cpp tests/teamcity_cppunit.cpp tests/teamcity_messages.cpp src/data_loader.cpp src/tsp.cpp src/stats.cpp
+
 all:
 	clang++ $(INCLUDE) --std=c++11 --stdlib=libc++ -g -o optimer $(SRC)
 
