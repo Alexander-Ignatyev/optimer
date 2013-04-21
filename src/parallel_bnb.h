@@ -28,6 +28,7 @@ class ParallelBNB {
  public:
     explicit ParallelBNB(const LoadBalancerParams &params)
         : balancer_params_(params)
+        , initial_data_(nullptr)
         , record_(0)
         , num_working_threads_(0) { }
 

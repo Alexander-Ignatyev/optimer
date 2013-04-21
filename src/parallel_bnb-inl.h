@@ -21,7 +21,7 @@ ParallelBNB<Solver, NodesContainer>::solve(
     if (data.rank > MIN_RANK_VALUE) {
         Solver solver;
         solver.init(data, &mm_);
-        
+
         Node<Set> *node = mm_.alloc(NULL);
         solver.get_initial_node(node);
         nodes.push(node);
