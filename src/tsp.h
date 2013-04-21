@@ -66,7 +66,7 @@ class TspSolver {
     static void anti_cycle(Node<Set> *node);
     bool two_opt(Solution *sol) const;
     bool select_move(const value_type *data
-        , const Node<Set> &node, Point &move);
+        , const Node<Set> &node, Point &move) const;
     value_type transform_node(const value_type *data, Node<Set> *node);
 
     size_t dimension_;

@@ -3,9 +3,9 @@
 #ifndef SRC_PARALLEL_BNB_INL_H_
 #define SRC_PARALLEL_BNB_INL_H_
 
-template <typename Solver, typename NodesContainer>
+template <typename Solver, typename NodesContainer, typename Scheduler>
 typename Solver::Solution
-ParallelBNB<Solver, NodesContainer>::solve(
+ParallelBNB<Solver, NodesContainer, Scheduler>::solve(
       const InitialData &data
     , size_t max_branches
     , value_type record) {
@@ -34,7 +34,7 @@ ParallelBNB<Solver, NodesContainer>::solve(
 
         Timer timer;
         while (!nodes.empty()
-            && nodes.size() < balancer_params_.minimum_nodes) {
+            && nodes.size() < scheduler_.num_minimum_nodes()) {
             node = nodes.top();
             nodes.pop();
 
@@ -48,16 +48,16 @@ ParallelBNB<Solver, NodesContainer>::solve(
     }
 
     // parallel part
-    list_nodes_.resize(balancer_params_.threads);
-    list_stats_.resize(balancer_params_.threads);
+    const unsigned num_threads = scheduler_.num_threads();
+    list_nodes_.resize(num_threads);
+    list_stats_.resize(num_threads);
     for (unsigned i = 0; !nodes.empty(); ++i) {
-        list_nodes_[i % balancer_params_.threads].push_back(nodes.top());
+        list_nodes_[i % num_threads].push_back(nodes.top());
         nodes.pop();
     }
 
-    std::vector<std::thread> threads(balancer_params_.threads);
-    for (unsigned i = 0; i < balancer_params_.threads; ++i) {
-        ++num_working_threads_;
+    std::vector<std::thread> threads(num_threads);
+    for (unsigned i = 0; i < num_threads; ++i) {
         threads[i] = std::thread(&ParallelBNB::start, this, i);
     }
 
@@ -71,8 +71,8 @@ ParallelBNB<Solver, NodesContainer>::solve(
     return std::move(sol);
 }
 
-template <typename Solver, typename NodesContainer>
-void ParallelBNB<Solver, NodesContainer>::start(unsigned threadID) {
+template <typename Solver, typename NodesContainer, typename Scheduler>
+void ParallelBNB<Solver, NodesContainer, Scheduler>::start(unsigned threadID) {
     list_stats_[threadID].clear();
     value_type record = record_;
     Solution sol;
@@ -104,45 +104,17 @@ void ParallelBNB<Solver, NodesContainer>::start(unsigned threadID) {
             }
         }
 
-        if (nodes.size() > balancer_params_.maximum_nodes) {
-            std::lock_guard<std::mutex> lock(mutex_sets_);
-            while (nodes.size() > balancer_params_.minimum_nodes) {
-                queue_sets_.push(nodes.top());
-                nodes.pop();
-                ++list_stats_[threadID].sets_sent;
-            }
-            condvar_sets_.notify_all();
-        }
-
-        if (nodes.empty()) {
-            list_stats_[threadID].seconds += timer.elapsed_seconds();
-            std::unique_lock<std::mutex> lock(mutex_sets_);
-            --num_working_threads_;
-            condvar_sets_.wait(lock,
-                [this] {
-                    return (!this->queue_sets_.empty())
-                    || (this->num_working_threads_ == 0);
-                });
-            if (num_working_threads_ == 0) {
-                condvar_sets_.notify_all();
-                timer.reset();
-                break;
-            }
-            while (nodes.size() < balancer_params_.minimum_nodes
-                && !queue_sets_.empty()) {
-                nodes.push(queue_sets_.front());
-                queue_sets_.pop();
-                ++list_stats_[threadID].sets_received;
-            }
-            ++num_working_threads_;
-            timer.reset();
-        }
+        list_stats_[threadID].seconds += timer.elapsed_seconds();
+        auto scheduler_stats = scheduler_.schedule(&nodes);
+        timer.reset();
+        list_stats_[threadID].sets_sent = scheduler_stats.sets_sent;
+        list_stats_[threadID].sets_received = scheduler_stats.sets_received;
     }
     list_stats_[threadID].seconds += timer.elapsed_seconds();
 }
 
-template <typename SolverFactory, typename NodesContainer>
-void ParallelBNB<SolverFactory, NodesContainer>
+template <typename SolverFactory, typename NodesContainer, typename Scheduler>
+void ParallelBNB<SolverFactory, NodesContainer, Scheduler>
 ::print_stats(std::ostream &os) const {
     os << std::endl;
     os << "Initial stats:\n" << initial_stats_ << std::endl;

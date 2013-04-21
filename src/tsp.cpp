@@ -249,7 +249,7 @@ void TspSolver::copy_matrix(value_type *target, const value_type *source
 
 
 bool TspSolver::select_move(const value_type *data
-    , const Node<Set> &node, Point &move) {
+    , const Node<Set> &node, Point &move) const {
     bool move_selected = false;
     value_type theta = 0;
 

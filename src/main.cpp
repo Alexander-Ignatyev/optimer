@@ -8,6 +8,7 @@
 #include "parallel_bnb.h"
 #include "sequence_bnb.h"
 #include "data_loader.h"
+#include "giving_scheduler.h"
 
 template <typename BNBSolver>
 void solve(const std::string &problem_path, BNBSolver &solver) {
@@ -37,8 +38,9 @@ void solve(const std::string &problem_path, BNBSolver &solver) {
 }
 
 int parallel(const std::string &problem_path) {
-    LoadBalancerParams params = {4, 24, 40};
-    ParallelBNB<TspSolver, PriorityContainer> bnb(params);
+    typedef GivingScheduler<typename TspSolver::Set> Scheduler;
+    Scheduler scheduler({4, 24, 40});
+    ParallelBNB<TspSolver, PriorityContainer, Scheduler> bnb(scheduler);
 
     solve(problem_path, bnb);
 

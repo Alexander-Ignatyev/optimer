@@ -16,9 +16,8 @@
 #include "tree.h"
 #include "stats.h"
 #include "timer.h"
-#include "load_balancer.h"
 
-template <typename Solver, typename NodesContainer = LifoContainer>
+template <typename Solver, typename NodesContainer, typename Scheduler>
 class ParallelBNB {
     typedef typename Solver::Set Set;
     typedef typename Solver::Solution Solution;
@@ -26,11 +25,10 @@ class ParallelBNB {
     typedef std::vector<Node<Set> *> ListNodes;
 
  public:
-    explicit ParallelBNB(const LoadBalancerParams &params)
-        : balancer_params_(params)
-        , initial_data_(nullptr)
+    explicit ParallelBNB(const Scheduler &scheduler)
+        : initial_data_(nullptr)
         , record_(0)
-        , num_working_threads_(0) { }
+        , scheduler_(scheduler) { }
 
     Solution solve(const InitialData &data
         , size_t max_branches = -1
@@ -39,24 +37,19 @@ class ParallelBNB {
     void print_stats(std::ostream &os) const;
 
  private:
-     const LoadBalancerParams &balancer_params_;
+     void start(unsigned threadID);
 
      const InitialData *initial_data_;
 
      volatile value_type record_;
      std::mutex mutex_record_;
 
-     volatile unsigned num_working_threads_;
-     std::queue<Node<Set> *> queue_sets_;
-     std::mutex mutex_sets_;
-     std::condition_variable condvar_sets_;
-
      std::vector<ListNodes> list_nodes_;
      std::vector<Stats> list_stats_;
      Stats initial_stats_;
      MemoryManager<Set> mm_;
 
-     void start(unsigned threadID);
+     Scheduler scheduler_;
 };
 
 #include "parallel_bnb-inl.h"

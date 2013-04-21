@@ -8,6 +8,7 @@
 #include <sequence_bnb.h>
 #include <tsp.h>
 #include <data_loader.h>
+#include <giving_scheduler.h>
 
 template <typename Solver>
 void test_problem(Solver &solver, const TspInitialData &data
@@ -30,16 +31,18 @@ void test_sequential_problem_priority(const TspInitialData &data
 
 void test_parallel_problem_lifo(const TspInitialData &data
     , value_type expected_value) {
-    LoadBalancerParams params = {4, 8, static_cast<unsigned>(data.rank*2)};
-    ParallelBNB<TspSolver, LifoContainer > solver(params);
+    typedef GivingScheduler<typename TspSolver::Set> Scheduler;
+    Scheduler scheduler({4, 8, static_cast<unsigned>(data.rank*2)});
+    ParallelBNB<TspSolver, LifoContainer, Scheduler > solver(scheduler);
     test_problem(solver, data, expected_value);
 }
 
 void test_parallel_problem_priority(const TspInitialData &data
     , value_type expected_value) {
-    LoadBalancerParams params = {4, 8, static_cast<unsigned>(data.rank*2)};
-    ParallelBNB<TspSolver, PriorityContainer >
-        solver(params);
+    typedef GivingScheduler<typename TspSolver::Set> Scheduler;
+    Scheduler scheduler({4, 8, static_cast<unsigned>(data.rank*2)});
+    ParallelBNB<TspSolver, PriorityContainer, Scheduler>
+        solver(scheduler);
     test_problem(solver, data, expected_value);
 }
 

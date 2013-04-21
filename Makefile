@@ -28,3 +28,9 @@ cpplint:
 
 cpplint-tst:
 	python tools/cpplint.py --filter="-build/include,-runtime/reference,-readability/streams" $(TESTS_SRC)  2>&1
+
+cppcheck:
+	cppcheck --quiet --enable=all --inconclusive --std=c++11 -UNDEBUG src 2>&1
+
+cppcheck-tst:
+	cppcheck --quiet --enable=all --std=c++11 --includes-file="../src;../include" tests 2>&1
