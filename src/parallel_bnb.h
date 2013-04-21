@@ -18,9 +18,8 @@
 #include "timer.h"
 #include "load_balancer.h"
 
-template <typename SolverFactory, typename NodesContainer = LifoContainer>
+template <typename Solver, typename NodesContainer = LifoContainer>
 class ParallelBNB {
-    typedef typename SolverFactory::Solver Solver;
     typedef typename Solver::Set Set;
     typedef typename Solver::Solution Solution;
     typedef typename Solver::InitialData InitialData;

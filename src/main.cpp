@@ -7,7 +7,6 @@
 #include "tsp.h"
 #include "parallel_bnb.h"
 #include "sequence_bnb.h"
-#include "solver_provider.h"
 #include "data_loader.h"
 
 template <typename BNBSolver>
@@ -39,7 +38,7 @@ void solve(const std::string &problem_path, BNBSolver &solver) {
 
 int parallel(const std::string &problem_path) {
     LoadBalancerParams params = {4, 24, 40};
-    ParallelBNB<ClonedSolverProvider<TspSolver>, PriorityContainer> bnb(params);
+    ParallelBNB<TspSolver, PriorityContainer> bnb(params);
 
     solve(problem_path, bnb);
 
@@ -47,7 +46,7 @@ int parallel(const std::string &problem_path) {
 }
 
 int sequnce(const std::string &problem_path) {
-    SequenceBNB<ClonedSolverProvider<TspSolver>, PriorityContainer > bnb;
+    SequenceBNB<TspSolver, PriorityContainer > bnb;
 
     solve(problem_path, bnb);
     return 0;

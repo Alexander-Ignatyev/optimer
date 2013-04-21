@@ -13,9 +13,8 @@
 #include "timer.h"
 #include "stats.h"
 
-template <typename SolverProvider, typename NodesContainer = LifoContainer>
+template <typename Solver, typename NodesContainer = LifoContainer>
 class SequenceBNB {
-    typedef typename SolverProvider::Solver Solver;
     typedef typename Solver::Set Set;
     typedef typename Solver::Solution Solution;
     typedef typename Solver::InitialData InitialData;

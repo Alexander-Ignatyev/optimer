@@ -6,7 +6,6 @@
 
 #include <parallel_bnb.h>
 #include <sequence_bnb.h>
-#include <solver_provider.h>
 #include <tsp.h>
 #include <data_loader.h>
 
@@ -19,27 +18,27 @@ void test_problem(Solver &solver, const TspInitialData &data
 
 void test_sequential_problem_lifo(const TspInitialData &data
     , value_type expected_value) {
-    SequenceBNB<ClonedSolverProvider<TspSolver>, LifoContainer > solver;
+    SequenceBNB<TspSolver, LifoContainer > solver;
     test_problem(solver, data, expected_value);
 }
 
 void test_sequential_problem_priority(const TspInitialData &data
     , value_type expected_value) {
-    SequenceBNB<ClonedSolverProvider<TspSolver>, PriorityContainer> solver;
+    SequenceBNB<TspSolver, PriorityContainer> solver;
     test_problem(solver, data, expected_value);
 }
 
 void test_parallel_problem_lifo(const TspInitialData &data
     , value_type expected_value) {
     LoadBalancerParams params = {4, 8, static_cast<unsigned>(data.rank*2)};
-    ParallelBNB<ClonedSolverProvider<TspSolver>, LifoContainer > solver(params);
+    ParallelBNB<TspSolver, LifoContainer > solver(params);
     test_problem(solver, data, expected_value);
 }
 
 void test_parallel_problem_priority(const TspInitialData &data
     , value_type expected_value) {
     LoadBalancerParams params = {4, 8, static_cast<unsigned>(data.rank*2)};
-    ParallelBNB<ClonedSolverProvider<TspSolver>, PriorityContainer >
+    ParallelBNB<TspSolver, PriorityContainer >
         solver(params);
     test_problem(solver, data, expected_value);
 }

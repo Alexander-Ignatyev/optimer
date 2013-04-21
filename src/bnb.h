@@ -13,17 +13,17 @@ struct LifoContainer { };
 
 struct PriorityContainer { };
 
-template<typename SolverProvider>
-std::stack<Node<typename SolverProvider::Solver::Set> *>
+template<typename Solver>
+std::stack<Node<typename Solver::Set> *>
     make_nodes_container(LifoContainer lifo) {
-    return std::stack<Node<typename SolverProvider::Solver::Set> *>();
+    return std::stack<Node<typename Solver::Set> *>();
 }
 
-template<typename SolverProvider, typename InputIterator>
-std::stack<Node<typename SolverProvider::Solver::Set> *>
+template<typename Solver, typename InputIterator>
+std::stack<Node<typename Solver::Set> *>
     make_nodes_container(LifoContainer lifo
     , InputIterator first, InputIterator last) {
-    auto container = std::stack<Node<typename SolverProvider::Solver::Set> *>();
+    auto container = std::stack<Node<typename Solver::Set> *>();
     for (; first != last; ++first) {
         container.push(*first);
     }
@@ -37,25 +37,25 @@ struct PtrNodeComparer {
     }
 };
 
-template<typename SolverProvider>
-std::priority_queue<Node<typename SolverProvider::Solver::Set> *
-    , std::vector<Node<typename SolverProvider::Solver::Set> *>
-    , PtrNodeComparer<typename SolverProvider::Solver::Set> >
+template<typename Solver>
+std::priority_queue<Node<typename Solver::Set> *
+    , std::vector<Node<typename Solver::Set> *>
+    , PtrNodeComparer<typename Solver::Set> >
     make_nodes_container(PriorityContainer priority) {
-    return std::priority_queue<Node<typename SolverProvider::Solver::Set> *
-        , std::vector<Node<typename SolverProvider::Solver::Set> *>
-        , PtrNodeComparer<typename SolverProvider::Solver::Set> >();
+    return std::priority_queue<Node<typename Solver::Set> *
+        , std::vector<Node<typename Solver::Set> *>
+        , PtrNodeComparer<typename Solver::Set> >();
 }
 
-template<typename SolverProvider, typename InputIterator>
-std::priority_queue<Node<typename SolverProvider::Solver::Set> *
-    , std::vector<Node<typename SolverProvider::Solver::Set> *>
-    , PtrNodeComparer<typename SolverProvider::Solver::Set> >
+template<typename Solver, typename InputIterator>
+std::priority_queue<Node<typename Solver::Set> *
+    , std::vector<Node<typename Solver::Set> *>
+    , PtrNodeComparer<typename Solver::Set> >
     make_nodes_container(PriorityContainer priority
         , InputIterator first, InputIterator last) {
-    return std::priority_queue<Node<typename SolverProvider::Solver::Set> *
-        , std::vector<Node<typename SolverProvider::Solver::Set> *>
-        , PtrNodeComparer<typename SolverProvider::Solver::Set> >()
+    return std::priority_queue<Node<typename Solver::Set> *
+        , std::vector<Node<typename Solver::Set> *>
+        , PtrNodeComparer<typename Solver::Set> >()
         (first, last);
 }
 

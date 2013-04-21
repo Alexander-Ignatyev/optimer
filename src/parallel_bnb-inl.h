@@ -3,9 +3,9 @@
 #ifndef SRC_PARALLEL_BNB_INL_H_
 #define SRC_PARALLEL_BNB_INL_H_
 
-template <typename SolverFactory, typename NodesContainer>
-typename SolverFactory::Solver::Solution
-ParallelBNB<SolverFactory, NodesContainer>::solve(
+template <typename Solver, typename NodesContainer>
+typename Solver::Solution
+ParallelBNB<Solver, NodesContainer>::solve(
       const InitialData &data
     , size_t max_branches
     , value_type record) {
@@ -15,18 +15,19 @@ ParallelBNB<SolverFactory, NodesContainer>::solve(
     initial_data_ = &data;
 
     Solution sol;
-    auto nodes = make_nodes_container<SolverFactory>(LifoContainer());
+    auto nodes = make_nodes_container<Solver>(LifoContainer());
     mm_.init(data.rank*data.rank*data.rank*data.rank);
     initial_stats_.clear();
     if (data.rank > MIN_RANK_VALUE) {
-        Solver *psolver = SolverFactory::get_solver();
-        psolver->init(data, &mm_);
+        Solver solver;
+        solver.init(data, &mm_);
+        
         Node<Set> *node = mm_.alloc(NULL);
-        psolver->get_initial_node(node);
+        solver.get_initial_node(node);
         nodes.push(node);
 
         Solution initSol;
-        psolver->get_initial_solution(&initSol);
+        solver.get_initial_solution(&initSol);
         record_ = initSol.value;
 
         std::vector<Node<Set> * > tmp_nodes;
@@ -37,14 +38,13 @@ ParallelBNB<SolverFactory, NodesContainer>::solve(
             node = nodes.top();
             nodes.pop();
 
-            psolver->branch(node, record, tmp_nodes, sol, initial_stats_);
+            solver.branch(node, record, tmp_nodes, sol, initial_stats_);
             for (auto &set : tmp_nodes) {
                 nodes.push(set);
             }
             tmp_nodes.clear();
         }
         initial_stats_.seconds = timer.elapsed_seconds();
-        SolverFactory::free_solver(psolver);
     }
 
     // parallel part
@@ -71,17 +71,17 @@ ParallelBNB<SolverFactory, NodesContainer>::solve(
     return std::move(sol);
 }
 
-template <typename SolverFactory, typename NodesContainer>
-void ParallelBNB<SolverFactory, NodesContainer>::start(unsigned threadID) {
+template <typename Solver, typename NodesContainer>
+void ParallelBNB<Solver, NodesContainer>::start(unsigned threadID) {
     list_stats_[threadID].clear();
     value_type record = record_;
     Solution sol;
-    auto nodes = make_nodes_container<SolverFactory>(LifoContainer()
+    auto nodes = make_nodes_container<Solver>(LifoContainer()
         , list_nodes_[threadID].begin(), list_nodes_[threadID].end());
     list_nodes_[threadID].clear();
     Node<Set> *node;
-    Solver *psolver = SolverFactory::get_solver();
-    psolver->init(*initial_data_, &mm_);
+    Solver solver;
+    solver.init(*initial_data_, &mm_);
 
     std::vector<Node<Set> * > tmp_nodes;
 
@@ -91,7 +91,7 @@ void ParallelBNB<SolverFactory, NodesContainer>::start(unsigned threadID) {
         nodes.pop();
 
         record = record_;
-        psolver->branch(node, record, tmp_nodes, sol, list_stats_[threadID]);
+        solver.branch(node, record, tmp_nodes, sol, list_stats_[threadID]);
         for (auto &set : tmp_nodes) {
             nodes.push(set);
         }
@@ -139,7 +139,6 @@ void ParallelBNB<SolverFactory, NodesContainer>::start(unsigned threadID) {
         }
     }
     list_stats_[threadID].seconds += timer.elapsed_seconds();
-    SolverFactory::free_solver(psolver);
 }
 
 template <typename SolverFactory, typename NodesContainer>
@@ -148,7 +147,7 @@ void ParallelBNB<SolverFactory, NodesContainer>
     os << std::endl;
     os << "Initial stats:\n" << initial_stats_ << std::endl;
     for (size_t i = 0; i < list_stats_.size(); ++i) {
-        os << "Stats of theread #" << i << ":" << std::endl;
+        os << "Stats of thread #" << i << ":" << std::endl;
         os << list_stats_[i] << std::endl;
     }
 }
