@@ -1,8 +1,8 @@
 INCLUDE = -Iinclude -Isrc
 LIB = -Llib
 MAIN_CPP = src/main.cpp
-SRC = src/data_loader.cpp src/tsp.cpp src/stats.cpp
-TESTS_SRC = tests/main.cpp tests/ap.cpp tests/atsp.cpp
+SRC = src/data_loader.cpp src/tsp.cpp src/stats.cpp src/ini_file.cpp
+TESTS_SRC = tests/main.cpp  tests/algo_string.cpp  tests/ini_file.cpp tests/ap.cpp tests/atsp.cpp
 TEAMCITY_TESTS_SRC = tests/teamcity_cppunit.cpp tests/teamcity_messages.cpp
 
 all:
