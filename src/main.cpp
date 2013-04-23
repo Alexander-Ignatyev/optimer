@@ -5,6 +5,7 @@
 #include <fstream>
 
 #include "tsp.h"
+#include "ini_file.h"
 #include "parallel_bnb.h"
 #include "sequence_bnb.h"
 #include "data_loader.h"
@@ -37,33 +38,72 @@ void solve(const std::string &problem_path, BNBSolver &solver) {
     std::cout << "Valuation Time: " << valuation_time << std::endl;
 }
 
-int parallel(const std::string &problem_path) {
-    typedef GivingScheduler<typename TspSolver::Set> Scheduler;
-    Scheduler scheduler({4, 24, 40});
-    ParallelBNB<TspSolver, PriorityContainer, Scheduler> bnb(scheduler);
-
-    solve(problem_path, bnb);
-
-    return 0;
-}
-
-int sequnce(const std::string &problem_path) {
-    SequenceBNB<TspSolver, PriorityContainer > bnb;
-
-    solve(problem_path, bnb);
-    return 0;
+void get_scheduler_params(const IniSection &scheduler
+    , GivingSchedulerParams *params) {
+    params->num_threads = std::stoul(
+        scheduler["num_threads"], nullptr, 0);
+    params->num_minimum_nodes = std::stoul(
+        scheduler["num_minimum_nodes"], nullptr, 0);
+    params->num_maximum_nodes = std::stoul(
+        scheduler["num_maximum_nodes"], nullptr, 0);
 }
 
 int main(int argc, char *argv[]) {
-    std::cout << "starting..." << std::endl;
-    std::string problem_path = "data/ftv47.atsp";
+    static const std::string parallel_lock = "parallel-lock";
+    static const std::string sequence = "sequnce";
+    static const std::string lifo_container = "lifo";
+    static const std::string priority_container = "priority";
+    static const std::string giving_scheduler = "giving";
+
+    std::string config_path = "config/default.ini";
     if (argc > 1) {
-        problem_path = argv[1];
+        config_path = argv[1];
     }
-    bool is_parallel = true;
-    if (is_parallel) {
-        return parallel(problem_path);
-    } else {
-        return sequnce(problem_path);
+    std::ifstream ifs(config_path);
+    if (!ifs) {
+        std::cerr << "unable to find config file: " << config_path << std::endl;
+        return 1;
     }
+    IniFile ini(ifs);
+    IniSection general = ini["general"];
+    std::string valuation_type = general["valuation_type"];
+    std::string container_type = general["container_type"];
+    std::string problem_path = general["problem_path"];
+    if (valuation_type == parallel_lock) {
+        IniSection scheduler = ini["scheduler"];
+        std::string scheduler_type = scheduler["type"];
+
+        if (container_type == lifo_container) {
+            if (scheduler_type == giving_scheduler) {
+                GivingSchedulerParams params;
+                get_scheduler_params(scheduler, &params);
+
+                GivingScheduler<typename TspSolver::Set> scheduler(params);
+                ParallelBNB<TspSolver, LifoContainer
+                    , GivingScheduler<typename TspSolver::Set>>
+                    bnb(scheduler);
+                solve(problem_path, bnb);
+            }
+        } else if (container_type == priority_container) {
+            if (scheduler_type == giving_scheduler) {
+                GivingSchedulerParams params;
+                get_scheduler_params(scheduler, &params);
+
+                GivingScheduler<typename TspSolver::Set> scheduler(params);
+                ParallelBNB<TspSolver, PriorityContainer
+                    , GivingScheduler<typename TspSolver::Set>>
+                    bnb(scheduler);
+                solve(problem_path, bnb);
+            }
+        }
+    } else if (valuation_type == sequence) {
+        if (container_type == lifo_container) {
+            SequenceBNB<TspSolver, LifoContainer > bnb;
+            solve(problem_path, bnb);
+        } else if (container_type == priority_container) {
+            SequenceBNB<TspSolver, PriorityContainer > bnb;
+            solve(problem_path, bnb);
+        }
+    }
+    return 0;
 }
