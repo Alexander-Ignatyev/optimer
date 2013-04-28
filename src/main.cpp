@@ -1,8 +1,12 @@
 // Copyright (c) 2013 Alexander Ignatyev. All rights reserved.
 
 #include <iostream>
-#include <string>
 #include <fstream>
+#include <sstream>
+#include <string>
+
+#include <g2log.h>
+#include <g2logworker.h>
 
 #include "tsp.h"
 #include "ini_file.h"
@@ -35,7 +39,9 @@ void solve(const std::string &problem_path, BNBSolver &solver) {
     }
     delete[] matrix;
 
-    solver.print_stats(std::cout);
+    std::ostringstream oss;
+    solver.print_stats(oss);
+    LOG(INFO) << oss.str();
     std::cout << "Found Record: " << record << std::endl;
     std::cout << "Valuation Time: " << valuation_time << std::endl;
 }
@@ -115,6 +121,9 @@ int solve(std::istream &is) {
 }  // namespace tsp_config
 
 int main(int argc, char *argv[]) {
+    g2LogWorker g2log("optimer-atsp", "");
+    g2::initializeLogging(&g2log);
+
     std::string config_path = "config/default.ini";
     if (argc > 1) {
         config_path = argv[1];

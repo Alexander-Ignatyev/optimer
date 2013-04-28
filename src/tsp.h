@@ -44,7 +44,7 @@ class TspSolver {
         std::vector<size_t> route;
     };
 
-    explicit TspSolver(std::ostream &_logger = std::cout);
+    TspSolver();
 
     // mandatory function
     void init(const TspInitialData &data, MemoryManager<Set> *mm);
@@ -75,8 +75,6 @@ class TspSolver {
 
     MemoryManager<Set> *mm_;
     APSolver<value_type> ap_solver_;
-
-    std::ostream &logger_;
 };
 
 #endif  // SRC_TSP_H_

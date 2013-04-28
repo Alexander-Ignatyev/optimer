@@ -14,7 +14,6 @@ export BUILD_PATH=build_$CXX
 
 mkdir $BUILD_PATH
 cd $BUILD_PATH
-pwd
 cmake -DCMAKE_BUILD_TYPE=Release ..
 make
 cd ../

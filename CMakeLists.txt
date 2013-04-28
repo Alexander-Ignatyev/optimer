@@ -25,7 +25,7 @@ set(UNI_TESTS_SRC tests)
 get_filename_component(CXX ${CMAKE_CXX_COMPILER} NAME)
 if(NOT ENV{OPTIMER_BUILD_ENV})
     set(ENV{OPTIMER_BUILD_ENV} "${CMAKE_HOME_DIRECTORY}/env")
-    message("Set BUILD_ENV variable = $ENV{OPTIMER_BUILD_ENV}")
+    message("Set OPTIMER_BUILD_ENV variable = $ENV{OPTIMER_BUILD_ENV}")
 endif()
 
 set(BUILD_ENV "$ENV{OPTIMER_BUILD_ENV}/${CXX}")
@@ -41,7 +41,7 @@ link_directories("${BUILD_ENV}/lib")
 include_directories("${BUILD_ENV}/include" "${PROJECT_SRC}")
 
 message("[OPTIMER]: Compiler: ${CXX}")
-message("[OPTIMER]: Build env: ${BUILD_ENV}")
+message("[OPTIMER]: Build environment: ${BUILD_ENV}")
 
 # compiler flags
 set(CMAKE_CXX_FLAGS "-std=c++11")
@@ -49,22 +49,32 @@ if (${CXX} MATCHES "^clang*")
    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++")
 endif()
 
+# gl2log: https://bitbucket.org/KjellKod/g2log/src
+include_directories("${CMAKE_HOME_DIRECTORY}/contrib/g2log/src")
+add_subdirectory (contrib/g2log)
+set (LIBS ${LIBS} lib_activeobject lib_g2logger)
 
 # optimer lib
 set(SRC_CPP ${PROJECT_SRC}/data_loader.cpp ${PROJECT_SRC}/ini_file.cpp ${PROJECT_SRC}/stats.cpp ${PROJECT_SRC}/tsp.cpp)
 file(GLOB SRC_H ${PROJECT_SRC}/*.h)
 set(SRC_FILES ${SRC_CPP} ${SRC_H})
-
 add_library(optimer STATIC ${SRC_FILES})
+set(LIBS ${LIBS} optimer)
 
 # atsp executable
 add_executable(atsp ${PROJECT_SRC}/main.cpp)
-target_link_libraries(atsp optimer)
+target_link_libraries(atsp ${LIBS})
+
+# teamcity extension for cppunit
+include_directories("${CMAKE_HOME_DIRECTORY}/contrib/cppunit_teamcity")
+add_subdirectory(contrib/cppunit_teamcity)
+set(TEST_LIBS ${TEST_LIBS} cppunit_teamcity)
 
 # unittests
+set(TEST_LIBS ${TEST_LIBS} cppunit)
 file (GLOB SRC_TEST_FILES ${UNI_TESTS_SRC}/*.cpp)
 add_executable(optimer-tests ${SRC_TEST_FILES})
-target_link_libraries(optimer-tests optimer cppunit)
+target_link_libraries(optimer-tests ${LIBS} ${TEST_LIBS})
 
 add_test(NAME optimer-tests
         WORKING_DIRECTORY "${CMAKE_HOME_DIRECTORY}"

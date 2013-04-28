@@ -8,6 +8,8 @@
 #include <vector>
 #include <set>
 
+#include <g2log.h>
+
 #include "stats.h"
 
 bool is_m(int val) {
@@ -18,12 +20,11 @@ bool is_m(double val) {
     return val >= M_VAL;
 }
 
-TspSolver::TspSolver(std::ostream &_logger_)
+TspSolver::TspSolver()
     : dimension_(0)
     , matrix_(nullptr)
     , matrix_original_(nullptr)
-    , mm_(nullptr)
-    , logger_(_logger_) { }
+    , mm_(nullptr) { }
 
 
 void TspSolver::init(const TspInitialData &data, MemoryManager<Set> *mm) {
@@ -51,7 +52,6 @@ void TspSolver::get_initial_solution(Solution *sol) {
             *sol = tmpSol;
         }
     }
-    logger_ << std::endl;
 }
 
 void TspSolver::branch(const Node<Set> *node, value_type &record,
@@ -61,7 +61,7 @@ void TspSolver::branch(const Node<Set> *node, value_type &record,
     Point move;
     copy_matrix(matrix_, matrix_original_, dimension_, node);
     if (!select_move(matrix_, *node, move)) {
-        logger_ << "TSP AP: Error! Cannot select move" << std::endl;
+        LOG(WARNING) << "TSP AP: Error! Cannot select move";
         return;
     }
 
@@ -79,8 +79,8 @@ void TspSolver::branch(const Node<Set> *node, value_type &record,
     if (node1->data.value < record) {
         if (node1->data.level == dimension_ - 2) {
             record = node1->data.value;
-            logger_ << "TSP AP: found new record: ";
-            logger_ << record << " "<< node1->data.level << std::endl;
+            LOG(INFO) << "ATSP AP: found new record: "
+                << record << ". Level: " << node1->data.level;
             sol.route = create_tour(node1->data.ap_solve);
 #ifndef NDEBUG
             if (sol.route.empty()) {
