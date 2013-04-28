@@ -25,7 +25,7 @@ set(UNI_TESTS_SRC tests)
 get_filename_component(CXX ${CMAKE_CXX_COMPILER} NAME)
 if(NOT ENV{OPTIMER_BUILD_ENV})
     set(ENV{OPTIMER_BUILD_ENV} "${CMAKE_HOME_DIRECTORY}/env")
-    message("Set OPTIMER_BUILD_ENV variable = $ENV{OPTIMER_BUILD_ENV}")
+    message("[OPTIMER]: Set OPTIMER_BUILD_ENV variable = $ENV{OPTIMER_BUILD_ENV}")
 endif()
 
 set(BUILD_ENV "$ENV{OPTIMER_BUILD_ENV}/${CXX}")
