@@ -1,30 +1,30 @@
 // Copyright (c) 2013 Alexander Ignatyev. All rights reserved.
 
-#ifndef SRC_GIVING_SCHEDULER_H_
-#define SRC_GIVING_SCHEDULER_H_
+#ifndef SRC_REQUESTING_SCHEDULER_H_
+#define SRC_REQUESTING_SCHEDULER_H_
 
+#include <atomic>
 #include <thread>
 #include <condition_variable>
 
 #include "tree.h"
 #include "scheduler_common.h"
 
-struct GivingSchedulerParams {
+struct RequestingSchedulerParams {
     unsigned num_threads;
     unsigned num_minimum_nodes;
-    unsigned num_maximum_nodes;
 };
 
 template <class Set>
-class GivingScheduler {
+class RequestingScheduler {
  public:
-    explicit GivingScheduler(const GivingSchedulerParams &params)
+    explicit RequestingScheduler(const RequestingSchedulerParams &params)
         : params_(params)
-        , num_working_threads_(params.num_threads) {}
+        , num_waiting_threads_(0) {}
 
-    GivingScheduler(const GivingScheduler &scheduler)
+    RequestingScheduler(const RequestingScheduler &scheduler)
         : params_(scheduler.params_)
-        , num_working_threads_(scheduler.params_.num_threads) {
+        , num_waiting_threads_(0) {
     }
 
     unsigned num_threads() const {
@@ -38,7 +38,7 @@ class GivingScheduler {
     template <typename Container>
     SchedulerStats schedule(Container *nodes) {
         SchedulerStats stats = {0};
-        if (nodes->size() > params_.num_maximum_nodes) {
+        if (num_waiting_threads_.load() > 0) {
             std::lock_guard<std::mutex> lock(mutex_sets_);
             while (nodes->size() > params_.num_minimum_nodes) {
                 queue_sets_.push(nodes->top());
@@ -49,14 +49,15 @@ class GivingScheduler {
         }
 
         if (nodes->empty()) {
+            ++num_waiting_threads_;
             std::unique_lock<std::mutex> lock(mutex_sets_);
-            --num_working_threads_;
             condvar_sets_.wait(lock,
                 [this] {
                     return (!this->queue_sets_.empty())
-                    || (this->num_working_threads_ == 0);
+                    || (this->num_waiting_threads_.load()
+                        >= params_.num_threads);
                 });
-            if (num_working_threads_ == 0) {
+            if (num_waiting_threads_.load() >= params_.num_threads) {
                 condvar_sets_.notify_all();
                 return stats;
             }
@@ -66,17 +67,17 @@ class GivingScheduler {
                 queue_sets_.pop();
                 ++stats.sets_received;
             }
-            ++num_working_threads_;
+            --num_waiting_threads_;
         }
         return stats;
     }
 
  private:
-    GivingSchedulerParams params_;
-    volatile unsigned num_working_threads_;
+    RequestingSchedulerParams params_;
+    std::atomic<int> num_waiting_threads_;
     std::queue<Node<Set> *> queue_sets_;
     std::mutex mutex_sets_;
     std::condition_variable condvar_sets_;
 };
 
-#endif  // SRC_GIVING_SCHEDULER_H_
+#endif  // SRC_REQUESTING_SCHEDULER_H_

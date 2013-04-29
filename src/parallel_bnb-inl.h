@@ -107,8 +107,8 @@ void ParallelBNB<Solver, NodesContainer, Scheduler>::start(unsigned threadID) {
         list_stats_[threadID].seconds += timer.elapsed_seconds();
         auto scheduler_stats = scheduler_.schedule(&nodes);
         timer.reset();
-        list_stats_[threadID].sets_sent = scheduler_stats.sets_sent;
-        list_stats_[threadID].sets_received = scheduler_stats.sets_received;
+        list_stats_[threadID].sets_sent += scheduler_stats.sets_sent;
+        list_stats_[threadID].sets_received += scheduler_stats.sets_received;
     }
     list_stats_[threadID].seconds += timer.elapsed_seconds();
 }

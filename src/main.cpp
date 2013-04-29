@@ -14,6 +14,7 @@
 #include "sequence_bnb.h"
 #include "data_loader.h"
 #include "giving_scheduler.h"
+#include "requesting_scheduler.h"
 
 namespace tsp_config {
 
@@ -58,6 +59,14 @@ void get_scheduler_params(const IniSection &scheduler
         scheduler["num_maximum_nodes"], nullptr, 0);
 }
 
+void get_scheduler_params(const IniSection &scheduler
+    , RequestingSchedulerParams *params) {
+    params->num_threads = std::stoul(
+        scheduler["num_threads"], nullptr, 0);
+    params->num_minimum_nodes = std::stoul(
+        scheduler["num_minimum_nodes"], nullptr, 0);
+}
+
 const std::string &problem_path(const IniFile &ini) {
     return ini[g_general_param]["problem_path"];
 }
@@ -80,6 +89,15 @@ int process_parallel_lock(const IniFile &ini) {
         GivingScheduler<typename TspSolver::Set> scheduler(params);
         ParallelBNB<TspSolver, Container
             , GivingScheduler<typename TspSolver::Set>>
+            bnb(scheduler);
+        solve(problem_path(ini), bnb);
+    } else if (scheduler_type == "requesting") {
+        RequestingSchedulerParams params;
+        get_scheduler_params(scheduler, &params);
+
+        RequestingScheduler<typename TspSolver::Set> scheduler(params);
+        ParallelBNB<TspSolver, Container
+            , RequestingScheduler<typename TspSolver::Set>>
             bnb(scheduler);
         solve(problem_path(ini), bnb);
     } else {

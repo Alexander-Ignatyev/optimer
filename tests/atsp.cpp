@@ -9,6 +9,7 @@
 #include <tsp.h>
 #include <data_loader.h>
 #include <giving_scheduler.h>
+#include <requesting_scheduler.h>
 
 template <typename Solver>
 void test_problem(Solver &solver, const TspInitialData &data
@@ -29,7 +30,7 @@ void test_sequential_problem_priority(const TspInitialData &data
     test_problem(solver, data, expected_value);
 }
 
-void test_parallel_problem_lifo(const TspInitialData &data
+void test_parallel_problem_lifo_giving(const TspInitialData &data
     , value_type expected_value) {
     typedef GivingScheduler<typename TspSolver::Set> Scheduler;
     Scheduler scheduler({4, 8, static_cast<unsigned>(data.rank*2)});
@@ -37,10 +38,27 @@ void test_parallel_problem_lifo(const TspInitialData &data
     test_problem(solver, data, expected_value);
 }
 
-void test_parallel_problem_priority(const TspInitialData &data
+void test_parallel_problem_priority_giving(const TspInitialData &data
     , value_type expected_value) {
     typedef GivingScheduler<typename TspSolver::Set> Scheduler;
     Scheduler scheduler({4, 8, static_cast<unsigned>(data.rank*2)});
+    ParallelBNB<TspSolver, PriorityContainer, Scheduler>
+        solver(scheduler);
+    test_problem(solver, data, expected_value);
+}
+
+void test_parallel_problem_lifo_requesting(const TspInitialData &data
+    , value_type expected_value) {
+    typedef RequestingScheduler<typename TspSolver::Set> Scheduler;
+    Scheduler scheduler({4, 8});
+    ParallelBNB<TspSolver, LifoContainer, Scheduler > solver(scheduler);
+    test_problem(solver, data, expected_value);
+}
+
+void test_parallel_problem_priority_requesting(const TspInitialData &data
+    , value_type expected_value) {
+    typedef RequestingScheduler<typename TspSolver::Set> Scheduler;
+    Scheduler scheduler({4, 8});
     ParallelBNB<TspSolver, PriorityContainer, Scheduler>
         solver(scheduler);
     test_problem(solver, data, expected_value);
@@ -53,6 +71,8 @@ class ATSPTest: public CppUnit::TestFixture {
     CPPUNIT_TEST(test_sequential_FTV38_priority);
     CPPUNIT_TEST(test_parallel_FTV38_lifo);
     CPPUNIT_TEST(test_parallel_FTV38_priority);
+    CPPUNIT_TEST(test_parallel_FTV38_lifo_requesting);
+    CPPUNIT_TEST(test_parallel_FTV38_priority_requesting);
     CPPUNIT_TEST_SUITE_END();
 
     void test_sequential_FTV38_lifo() {
@@ -64,11 +84,20 @@ class ATSPTest: public CppUnit::TestFixture {
     }
 
     void test_parallel_FTV38_lifo() {
-        test_parallel_problem_lifo(*ftv38_instance, fvt38_solution);
+        test_parallel_problem_lifo_giving(*ftv38_instance, fvt38_solution);
     }
 
     void test_parallel_FTV38_priority() {
-        test_parallel_problem_priority(*ftv38_instance, fvt38_solution);
+        test_parallel_problem_priority_giving(*ftv38_instance, fvt38_solution);
+    }
+
+    void test_parallel_FTV38_lifo_requesting() {
+        test_parallel_problem_lifo_requesting(*ftv38_instance, fvt38_solution);
+    }
+
+    void test_parallel_FTV38_priority_requesting() {
+        test_parallel_problem_priority_requesting
+            (*ftv38_instance, fvt38_solution);
     }
 
     TspInitialData *ftv38_instance;
