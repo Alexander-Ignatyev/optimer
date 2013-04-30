@@ -59,8 +59,6 @@ class TspSolver {
         , std::ostream &logger = std::cout);
     static void get_greedy_solution(const value_type *data, size_t rank
         , Solution &sol, unsigned startPoint);
-    static void print_matrix(const value_type *matrix, size_t rank
-        , std::ostream &logger = std::cout);
     static void copy_matrix(value_type *target, const value_type *source
         , size_t rank, const Node<Set> *pnode);
     static void anti_cycle(Node<Set> *node);
@@ -68,6 +66,9 @@ class TspSolver {
     bool select_move(const value_type *data
         , const Node<Set> &node, Point &move) const;
     value_type transform_node(const value_type *data, Node<Set> *node);
+    static void print_matrix(const value_type *matrix, size_t rank
+        , std::ostream &logger = std::cout);
+    void dump_to_log(const Node<Set> *node);
 
     size_t dimension_;
     value_type *matrix_;
@@ -76,5 +77,8 @@ class TspSolver {
     MemoryManager<Set> *mm_;
     APSolver<value_type> ap_solver_;
 };
+
+std::ostream &operator<<(std::ostream &os, const TspSolver::Point &point);
+std::ostream &operator<<(std::ostream &os, const TspSolver::Set &set);
 
 #endif  // SRC_TSP_H_

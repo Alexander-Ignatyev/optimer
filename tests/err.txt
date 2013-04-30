@@ -1,5 +1,0 @@
-[teamcity_cppunit.cpp:32]: (performance) Variable 'flowid' is assigned in constructor body. Consider performing initialization in initialization list.
-[teamcity_cppunit.cpp:37]: (performance) Variable 'flowid' is assigned in constructor body. Consider performing initialization in initialization list.
-[atsp.cpp:77]: (style) The function 'setUp' is never used.
-[atsp.cpp:88]: (style) The function 'tearDown' is never used.
-(information) Cppcheck cannot find all the include files (use --check-config for details)

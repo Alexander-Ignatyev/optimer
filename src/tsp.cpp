@@ -12,6 +12,7 @@
 
 #include "stats.h"
 
+namespace {
 bool is_m(int val) {
     return val >= M_VAL;
 }
@@ -19,13 +20,13 @@ bool is_m(int val) {
 bool is_m(double val) {
     return val >= M_VAL;
 }
+}
 
 TspSolver::TspSolver()
     : dimension_(0)
     , matrix_(nullptr)
     , matrix_original_(nullptr)
     , mm_(nullptr) { }
-
 
 void TspSolver::init(const TspInitialData &data, MemoryManager<Set> *mm) {
     matrix_original_ = data.matrix;
@@ -62,6 +63,7 @@ void TspSolver::branch(const Node<Set> *node, value_type &record,
     copy_matrix(matrix_, matrix_original_, dimension_, node);
     if (!select_move(matrix_, *node, move)) {
         LOG(WARNING) << "TSP AP: Error! Cannot select move";
+        dump_to_log(node);
         return;
     }
 
@@ -212,21 +214,6 @@ bool TspSolver::two_opt(Solution *sol) const {
     return bResult;
 }
 
-void TspSolver::print_matrix(const value_type *matrix
-    , size_t rank, std::ostream &logger_) {
-    for (size_t i = 0; i < rank; ++i) {
-        for (size_t j = 0; j < rank; ++j) {
-            if (i != j && !is_m(matrix[i*rank+j])) {
-                logger_ << matrix[i*rank+j] << " ";
-            } else {
-                logger_ << "M ";
-            }
-        }
-        logger_ << std::endl;
-    }
-    logger_ << std::endl;
-}
-
 void TspSolver::copy_matrix(value_type *target, const value_type *source
     , size_t rank, const Node<Set> *pnode) {
     memcpy(target, source, rank*rank*sizeof(value_type));
@@ -337,3 +324,59 @@ void TspSolver::anti_cycle(Node<Set> *node) {
     node->data.point.x = finish;
     node->data.point.y = start;
 }
+
+void TspSolver::print_matrix(const value_type *matrix
+    , size_t dimension, std::ostream &os) {
+    for (size_t i = 0; i < dimension; ++i) {
+        for (size_t j = 0; j < dimension; ++j) {
+            if (i != j && !is_m(matrix[i*dimension+j])) {
+                os << matrix[i*dimension+j] << " ";
+            } else {
+                os << "M ";
+            }
+        }
+        os << std::endl;
+    }
+    os << std::endl;
+}
+
+void TspSolver::dump_to_log(const Node<Set> *node) {
+    std::ostringstream oss;
+    oss << node->data;
+    copy_matrix(matrix_, matrix_original_, dimension_, node);
+    oss << "AP Solve (non-empty): ";
+    for (size_t i = 0; i < node->data.ap_solve.size(); ++i) {
+        size_t j = node->data.ap_solve[i];
+        if (!is_m(matrix_[i*dimension_+j])) {
+            oss << "(" << i << ", " << j << ") ";
+        }
+    }
+    oss << std::endl;
+    print_matrix(matrix_, dimension_, oss);
+    LOG(WARNING) << oss.str();
+    oss.str(std::string());  // clear stream
+    if (node->parent != nullptr) {
+        dump_to_log(node->parent);
+    }
+}
+
+std::ostream &operator<<(std::ostream &os, const TspSolver::Point &point) {
+    os << "(" << point.x << ", " << point.y << ")";
+    return os;
+}
+
+std::ostream &operator<<(std::ostream &os, const TspSolver::Set &set) {
+    os << "<< Set: " << std::endl;
+    os << "Move: " << set.move << "; ";
+    os << (set.is_right ? "right" : "left") << std::endl;
+    os << "Point: " << set.point << std::endl;
+    os << "Value: " << set.value << std::endl;
+    os << "Level: " << set.level << std::endl;
+    os << "AP solve: ";
+    for (size_t i = 0; i < set.ap_solve.size(); ++i) {
+        os << "(" << i << ", " << set.ap_solve[i] << ") ";
+    }
+    os << std::endl;
+    return os;
+}
+
