@@ -13,6 +13,7 @@ fi
 export BUILD_PATH=build_$CXX
 
 mkdir $BUILD_PATH
+rm -f $BUILD_PATH/optimer-tests
 cd $BUILD_PATH
 cmake -DCMAKE_BUILD_TYPE=Release ..
 make

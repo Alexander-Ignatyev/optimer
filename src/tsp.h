@@ -68,6 +68,8 @@ class TspSolver {
     value_type transform_node(const value_type *data, Node<Set> *node);
     static void print_matrix(const value_type *matrix, size_t rank
         , std::ostream &logger = std::cout);
+    void check_route(const decltype(Solution::route) &route
+        , const Node<Set> *node);
     void dump_to_log(const Node<Set> *node);
 
     size_t dimension_;

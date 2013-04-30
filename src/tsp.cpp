@@ -67,72 +67,47 @@ void TspSolver::branch(const Node<Set> *node, value_type &record,
         return;
     }
 
-    bool append_move_right = false;
-
-    Node<Set> *node1 = mm_->alloc(node);
-    node1->data.level = node->data.level+1;
-    node1->data.move = move;
-    node1->data.is_right = true;
-    anti_cycle(node1);
-    copy_matrix(matrix_, matrix_original_, dimension_, node1);
-    node1->data.value = transform_node(matrix_, node1);
+    Node<Set> *node_right = mm_->alloc(node);
+    node_right->data.is_right = true;
+    node_right->data.level = node->data.level+1;
+    node_right->data.move = move;
+    anti_cycle(node_right);
+    copy_matrix(matrix_, matrix_original_, dimension_, node_right);
+    node_right->data.value = transform_node(matrix_, node_right);
     assert(mm_->CheckRefs(node));
     ++stats.sets_generated;
-    if (node1->data.value < record) {
-        if (node1->data.level == dimension_ - 2) {
-            record = node1->data.value;
+    if (node_right->data.level == dimension_ - 2) {
+         if (node_right->data.value < record) {
+            record = node_right->data.value;
             LOG(INFO) << "ATSP AP: found new record: "
-                << record << ". Level: " << node1->data.level;
-            sol.route = create_tour(node1->data.ap_solve);
-#ifndef NDEBUG
-            if (sol.route.empty()) {
-                std::cerr << "error AP solve\n";
-                for (size_t i = 0; i < node1->data.ap_solve.size(); ++i) {
-                    std::cout << "(" << i << ", ";
-                    std::cout << node1->data.ap_solve[i] << ") --- ";
-                }
-                std::cout << std::endl;
-                node = node1;
-                while (node->parent) {
-                    if (node->data.is_right) {
-                        std::cout << "(" << node->data.move.x;
-                        std::cout << ", " << node->data.move.y << ")\n";
-                    }
-                    node = const_cast<Node<Set> *>(node->parent);
-                }
-                print_matrix(matrix_, dimension_, std::cout);
-                std::cout << std::endl;
-                exit(2);
-            }
-#endif
-
+                << record << ". Level: " << node_right->data.level;
+            sol.route = create_tour(node_right->data.ap_solve);
             sol.value = record;
-            mm_->free(node1);
-            return;
+            check_route(sol.route, node_right);
         }
-        append_move_right = true;
-    } else {
-        ++stats.sets_constrained_by_record;
+        mm_->free(node_right);
+        return;
     }
 
-    Node<Set> *node2 = mm_->alloc(node);
-    node2->data.level = node->data.level;
-    node2->data.point = move;
-    node2->data.is_right = false;
-    copy_matrix(matrix_, matrix_original_, dimension_, node2);
-    node2->data.value = transform_node(matrix_, node2);
+    Node<Set> *node_left = mm_->alloc(node);
+    node_left->data.is_right = false;
+    node_left->data.level = node->data.level;
+    node_left->data.point = move;
+    copy_matrix(matrix_, matrix_original_, dimension_, node_left);
+    node_left->data.value = transform_node(matrix_, node_left);
     ++stats.sets_generated;
-    if (node2->data.value < record) {
-        nodes.push_back(node2);
+
+    if (node_left->data.value < record) {
+        nodes.push_back(node_left);
     } else {
         ++stats.sets_constrained_by_record;
-        mm_->free(node2);
+        mm_->free(node_left);
     }
-
-    if (append_move_right) {
-        nodes.push_back(node1);
+    if (node_right->data.value < record) {
+        nodes.push_back(node_right);
     } else {
-        mm_->free(node1);
+        ++stats.sets_constrained_by_record;
+        mm_->free(node_right);
     }
 }
 
@@ -338,6 +313,14 @@ void TspSolver::print_matrix(const value_type *matrix
         os << std::endl;
     }
     os << std::endl;
+}
+
+void TspSolver::check_route(const decltype(Solution::route) &route
+    , const Node<Set> *node) {
+    if (route.empty()) {
+        dump_to_log(node);
+        LOG(FATAL) << "Cannot build a tour. Error AP solve\n";
+    }
 }
 
 void TspSolver::dump_to_log(const Node<Set> *node) {
