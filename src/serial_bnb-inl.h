@@ -1,11 +1,11 @@
 // Copyright (c) 2013 Alexander Ignatyev. All rights reserved.
 
-#ifndef SRC_SEQUENCE_BNB_INL_H_
-#define SRC_SEQUENCE_BNB_INL_H_
+#ifndef SRC_SERIAL_BNB_INL_H_
+#define SRC_SERIAL_BNB_INL_H_
 
 template <typename Solver, typename NodesContainer>
 typename Solver::Solution
-    SequenceBNB<Solver, NodesContainer>::solve(
+    SerialBNB<Solver, NodesContainer>::solve(
     const InitialData &data, size_t max_branches, value_type record) {
     static const size_t MIN_RANK_VALUE = 2;
 
@@ -45,4 +45,4 @@ typename Solver::Solution
     return std::move(sol);
 }
 
-#endif  // SRC_SEQUENCE_BNB_INL_H_
+#endif  // SRC_SERIAL_BNB_INL_H_

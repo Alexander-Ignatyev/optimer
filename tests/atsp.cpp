@@ -5,7 +5,7 @@
 #include <cppunit/extensions/HelperMacros.h>
 
 #include <parallel_bnb.h>
-#include <sequence_bnb.h>
+#include <serial_bnb.h>
 #include <tsp.h>
 #include <data_loader.h>
 #include <giving_scheduler.h>
@@ -18,15 +18,15 @@ void test_problem(Solver &solver, const TspInitialData &data
     CPPUNIT_ASSERT_EQUAL(record, expected_value);
 }
 
-void test_sequential_problem_lifo(const TspInitialData &data
+void test_serial_problem_lifo(const TspInitialData &data
     , value_type expected_value) {
-    SequenceBNB<TspSolver, LifoContainer > solver;
+    SerialBNB<TspSolver, LifoContainer > solver;
     test_problem(solver, data, expected_value);
 }
 
-void test_sequential_problem_priority(const TspInitialData &data
+void test_serial_problem_priority(const TspInitialData &data
     , value_type expected_value) {
-    SequenceBNB<TspSolver, PriorityContainer> solver;
+    SerialBNB<TspSolver, PriorityContainer> solver;
     test_problem(solver, data, expected_value);
 }
 
@@ -67,20 +67,20 @@ void test_parallel_problem_priority_requesting(const TspInitialData &data
 
 class ATSPTest: public CppUnit::TestFixture {
     CPPUNIT_TEST_SUITE(ATSPTest);
-    CPPUNIT_TEST(test_sequential_FTV38_lifo);
-    CPPUNIT_TEST(test_sequential_FTV38_priority);
+    CPPUNIT_TEST(test_serial_FTV38_lifo);
+    CPPUNIT_TEST(test_serial_FTV38_priority);
     CPPUNIT_TEST(test_parallel_FTV38_lifo);
     CPPUNIT_TEST(test_parallel_FTV38_priority);
     CPPUNIT_TEST(test_parallel_FTV38_lifo_requesting);
     CPPUNIT_TEST(test_parallel_FTV38_priority_requesting);
     CPPUNIT_TEST_SUITE_END();
 
-    void test_sequential_FTV38_lifo() {
-        test_sequential_problem_lifo(*ftv38_instance, fvt38_solution);
+    void test_serial_FTV38_lifo() {
+        test_serial_problem_lifo(*ftv38_instance, fvt38_solution);
     }
 
-    void test_sequential_FTV38_priority() {
-        test_sequential_problem_priority(*ftv38_instance, fvt38_solution);
+    void test_serial_FTV38_priority() {
+        test_serial_problem_priority(*ftv38_instance, fvt38_solution);
     }
 
     void test_parallel_FTV38_lifo() {

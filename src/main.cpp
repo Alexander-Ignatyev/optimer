@@ -11,7 +11,7 @@
 #include "tsp.h"
 #include "ini_file.h"
 #include "parallel_bnb.h"
-#include "sequence_bnb.h"
+#include "serial_bnb.h"
 #include "data_loader.h"
 #include "giving_scheduler.h"
 #include "requesting_scheduler.h"
@@ -72,8 +72,8 @@ const std::string &problem_path(const IniFile &ini) {
 }
 
 template <typename Container>
-int process_sequence(const IniFile &ini) {
-    SequenceBNB<TspSolver, Container > bnb;
+int process_serial(const IniFile &ini) {
+    SerialBNB<TspSolver, Container > bnb;
     solve(problem_path(ini), bnb);
     return 0;
 }
@@ -110,8 +110,8 @@ int process_parallel_lock(const IniFile &ini) {
 template <typename Container>
 int process_valuation_type(const IniFile &ini) {
     std::string valuation = ini[g_general_param]["valuation_type"];
-    if (valuation == "sequnce") {
-        return process_sequence<Container>(ini);
+    if (valuation == "serial") {
+        return process_serial<Container>(ini);
     } else if (valuation == "parallel-lock") {
         return process_parallel_lock<Container>(ini);
     } else {
@@ -127,7 +127,7 @@ int process_container_type(const IniFile &ini) {
     } else if (container == "priority") {
         return process_valuation_type<PriorityContainer>(ini);
     } else {
-        std::cerr << "Invalid container type" << std::endl;
+        std::cerr << "Invalid container type: " << container << std::endl;
         return 1;
     }
 }

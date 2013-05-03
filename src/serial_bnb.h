@@ -1,7 +1,7 @@
 // Copyright (c) 2013 Alexander Ignatyev. All rights reserved.
 
-#ifndef SRC_SEQUENCE_BNB_H_
-#define SRC_SEQUENCE_BNB_H_
+#ifndef SRC_SERIAL_BNB_H_
+#define SRC_SERIAL_BNB_H_
 
 #include <stack>
 #include <vector>
@@ -14,7 +14,7 @@
 #include "stats.h"
 
 template <typename Solver, typename NodesContainer = LifoContainer>
-class SequenceBNB {
+class SerialBNB {
     typedef typename Solver::Set Set;
     typedef typename Solver::Solution Solution;
     typedef typename Solver::InitialData InitialData;
@@ -31,6 +31,6 @@ class SequenceBNB {
     Stats stats_;
 };
 
-#include "sequence_bnb-inl.h"
+#include "serial_bnb-inl.h"
 
-#endif  // SRC_SEQUENCE_BNB_H_
+#endif  // SRC_SERIAL_BNB_H_
