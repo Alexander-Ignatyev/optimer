@@ -32,9 +32,10 @@ ParallelBNB<Solver, NodesContainer, Scheduler>::solve(
 
         std::vector<Node<Set> * > tmp_nodes;
 
+        unsigned num_minimum_nodes = scheduler_.num_minimum_nodes() * scheduler_.num_threads();
         Timer timer;
         while (!nodes.empty()
-            && nodes.size() < scheduler_.num_minimum_nodes()) {
+            && nodes.size() < num_minimum_nodes) {
             node = nodes.top();
             nodes.pop();
 
