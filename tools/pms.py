@@ -32,11 +32,23 @@ class RunningResult(object):
         self.stdout, self.stderr = process.communicate()
         self.running_time = timer.elapsed()
         self.return_code = process.returncode
+        self.log_filename = ''
+
+    def get_log_filename(self):
+        pattern = 'log location:'
+        if self.log_filename == '':
+            for line in self.stderr.split('\n'):
+                pos = line.find(pattern)
+                if pos != -1:
+                    self.log_filename = line[pos+len(pattern)+1:]
+                    return self.log_filename
+        return self.log_filename
 
     def __str__(self):
         return 'return: {0}, total time: {1}'.format(self.return_code, self.running_time)
 
     def __repr__(self):
+        log_filename = os.path.basename(self.get_log_filename())
         return '<<return: {0}, total time: {1}>>'.format(self.return_code, self.running_time)
 
 def run_task(args):
@@ -166,6 +178,53 @@ class Config(object):
             file.writelines(lines)
         return filename
 
+def run_configs(module, num_runs, config_files):
+    num = 0
+    num_configs = len(config_files)
+    all_runs = {}
+    for task_name in sorted(config_files.iterkeys()):
+        num += 1
+        filename = config_files[task_name]
+        print '[{0: 3}/{1}] '.format(num, num_configs), 'running ', task_name, '...'
+        runs = []
+        for _ in xrange(num_runs):
+            res = run_task([module, filename])
+            runs.append(res)
+            if res.return_code != 0:
+                print 'stdout: ['+res.stdout+']'
+                print 'stderr: ['+res.stderr+']'
+        all_runs[task_name] = runs
+    return all_runs
+
+def prepare_results(all_runs):
+    all_avg_times = {}
+    for task_name, runs in all_runs.iteritems():
+        avg_time = reduce(lambda sum, run: sum + run.running_time, runs, 0.0) / len(runs)
+        all_avg_times[task_name] = avg_time
+
+    lines = []
+    lines.append('Average results:\n')
+    for task_name in sorted(all_avg_times.iterkeys()):
+        lines.append('{0} {1}\n'.format(task_name, all_avg_times[task_name]))
+
+    lines.append('\nResults:\n')
+    for task_name in sorted(all_runs.iterkeys()):
+        lines.append('{0} {1}\n'.format(task_name, all_runs[task_name]))
+
+    lines.append('\nLogs:\n')
+    for task_name in sorted(all_runs.iterkeys()):
+        lines.append('{0}\n'.format(task_name))
+        for run in all_runs[task_name]:
+            lines.append('\t{0}\n'.format(run.get_log_filename()))
+            if not run.get_log_filename():
+                continue
+            with open(run.get_log_filename()) as f:
+                for line in f:
+                    lines.append('\t\t{0}'.format(line))
+            os.unlink(run.get_log_filename())
+            lines.append('\n')
+    return lines
+
 def main():
     # set params section
     module = 'build_clang++_release/atsp'
@@ -184,39 +243,13 @@ def main():
     config = Config()
     config_files = config.generate_tasks(params, problem_path)
 
-    num = 0
-    num_configs = len(config_files)
-    all_runs = {}
-    for task_name in sorted(config_files.iterkeys()):
-        num += 1
-        filename = config_files[task_name]
-        print '[{0: 3}/{1}] '.format(num, num_configs), 'running ', task_name, '...'
-        runs = []
-        for _ in xrange(num_runs):
-            res = run_task([module, filename])
-            runs.append(res)
-            if res.return_code != 0:
-                print 'stdout: ['+res.stdout+']'
-                print 'stderr: ['+res.stderr+']'
-        all_runs[task_name] = runs
+    all_runs = run_configs(module, num_runs, config_files)
 
     print 'preparing results...'
-    all_avg_times = {}
-    for task_name, runs in all_runs.iteritems():
-        avg_time = reduce(lambda sum, run: sum + run.running_time, runs, 0.0) / len(runs)
-        all_avg_times[task_name] = avg_time
+    lines = prepare_results(all_runs)
 
     result_filename = 'pms_result.'+datetime.datetime.now().strftime('%Y%m%d-%H%M%S')+'.txt'
     print 'saving results to', result_filename, '...'
-    lines = []
-    lines.append('Average results:\n')
-    for task_name in sorted(all_avg_times.iterkeys()):
-        lines.append('{0} {1}\n'.format(task_name, all_avg_times[task_name]))
-
-    lines.append('\nResults:\n')
-    for task_name in sorted(all_runs.iterkeys()):
-        lines.append('{0} {1}\n'.format(task_name, all_runs[task_name]))
-
     with open(result_filename, 'w') as f:
         f.writelines(lines)
 
