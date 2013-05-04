@@ -11,7 +11,6 @@ ParallelBNB<Solver, NodesContainer, Scheduler>::solve(
     , value_type record) {
     static const size_t MIN_RANK_VALUE = 2;
 
-    record_ = record;
     initial_data_ = &data;
 
     Solution sol;
@@ -28,11 +27,12 @@ ParallelBNB<Solver, NodesContainer, Scheduler>::solve(
 
         Solution initSol;
         solver.get_initial_solution(&initSol);
-        record_ = initSol.value;
+        record = initSol.value;
 
         std::vector<Node<Set> * > tmp_nodes;
 
-        unsigned num_minimum_nodes = scheduler_.num_minimum_nodes() * scheduler_.num_threads();
+        unsigned num_minimum_nodes =
+            scheduler_.num_minimum_nodes() * scheduler_.num_threads();
         Timer timer;
         while (!nodes.empty()
             && nodes.size() < num_minimum_nodes) {
@@ -44,7 +44,9 @@ ParallelBNB<Solver, NodesContainer, Scheduler>::solve(
                 nodes.push(set);
             }
             tmp_nodes.clear();
+            mm_.free(node);
         }
+        record_ = record;
         initial_stats_.seconds = timer.elapsed_seconds();
     }
 
@@ -97,6 +99,7 @@ void ParallelBNB<Solver, NodesContainer, Scheduler>::start(unsigned threadID) {
             nodes.push(set);
         }
         tmp_nodes.clear();
+        mm_.free(node);
 
         if (record < record_) {
             std::lock_guard<std::mutex> lock(mutex_record_);

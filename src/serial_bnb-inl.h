@@ -36,6 +36,7 @@ typename Solver::Solution
                 nodes.push(set);
             }
             tmp_nodes.clear();
+            mm.free(node);
         }
         stats_.seconds = timer.elapsed_seconds();
     }

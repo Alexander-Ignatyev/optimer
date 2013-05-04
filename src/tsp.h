@@ -28,9 +28,7 @@ class TspSolver {
     };
 
     struct Set {
-        Point move;
         Point point;
-        bool is_right;
         value_type value;
         std::vector<size_t> ap_solve;
         unsigned level;
@@ -53,18 +51,15 @@ class TspSolver {
     void branch(const Node<Set> *node, value_type &record
        , std::vector<Node<Set> *> &nodes, Solution &sol, Stats &stats);
 
-
  private:
-    static std::vector<size_t> create_tour(const std::vector<size_t> &ap_sol
-        , std::ostream &logger = std::cout);
+    static std::vector<size_t> create_tour(const std::vector<size_t> &ap_sol);
     static void get_greedy_solution(const value_type *data, size_t rank
         , Solution &sol, unsigned startPoint);
     static void copy_matrix(value_type *target, const value_type *source
         , size_t rank, const Node<Set> *pnode);
-    static void anti_cycle(Node<Set> *node);
     bool two_opt(Solution *sol) const;
     bool select_move(const value_type *data
-        , const Node<Set> &node, Point &move) const;
+        , const Node<Set> &node, std::vector<Point> *moves) const;
     value_type transform_node(const value_type *data, Node<Set> *node);
     static void print_matrix(const value_type *matrix, size_t rank
         , std::ostream &logger = std::cout);

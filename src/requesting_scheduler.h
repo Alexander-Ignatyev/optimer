@@ -7,6 +7,8 @@
 #include <thread>
 #include <condition_variable>
 
+#include <g2log.h>
+
 #include "tree.h"
 #include "scheduler_common.h"
 
@@ -25,6 +27,10 @@ class RequestingScheduler {
     RequestingScheduler(const RequestingScheduler &scheduler)
         : params_(scheduler.params_)
         , num_waiting_threads_(0) {
+    }
+
+    ~RequestingScheduler() {
+        CHECK(queue_sets_.size() == 0);
     }
 
     unsigned num_threads() const {
@@ -57,15 +63,16 @@ class RequestingScheduler {
                     || (this->num_waiting_threads_.load()
                         >= params_.num_threads);
                 });
-            if (num_waiting_threads_.load() >= params_.num_threads) {
-                condvar_sets_.notify_all();
-                return stats;
-            }
             while (nodes->size() < params_.num_minimum_nodes
                 && !queue_sets_.empty()) {
                 nodes->push(queue_sets_.front());
                 queue_sets_.pop();
                 ++stats.sets_received;
+            }
+            if (nodes->empty()
+                    && num_waiting_threads_.load() >= params_.num_threads) {
+                condvar_sets_.notify_all();
+                return stats;
             }
             --num_waiting_threads_;
         }

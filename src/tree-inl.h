@@ -3,10 +3,11 @@
 #ifndef SRC_TREE_INL_H_
 #define SRC_TREE_INL_H_
 
+#include <g2log.h>
+
 template <typename D>
 MemoryManager<D>::MemoryManager()
     : refs_(0)
-    , inc_refs_(0)
     , capacity_(0)
     , area_(nullptr)
     , free_list_(nullptr) {
@@ -15,7 +16,7 @@ MemoryManager<D>::MemoryManager()
 template <typename D>
 MemoryManager<D>::~MemoryManager() {
     delete [] area_;
-    assert(refs_ == 0);
+    CHECK(refs_ == 0) << "MemoryManager: unfreed memory: " << refs_;
 }
 
 template <typename D>
@@ -34,91 +35,65 @@ void MemoryManager<D>::init(size_t capacity) {
 
 template <typename D>
 Node<D> *MemoryManager<D>::alloc(const Node<D> *parent) {
+    CHECK(free_list_ != nullptr) << "MemoryManager: not enough memory";
+
     std::lock_guard<std::recursive_mutex> lock(mutex_);
+
     ++refs_;
-    ++inc_refs_;
-    if (free_list_ == NULL) {
-        std::cerr << "MemoryManager: not enough memory\n";
-        throw std::bad_alloc();
-    }
-    if (parent != NULL) {
-        assert(CheckRefs(parent));
-        IncRefs(const_cast<Node<D> *>(parent));
-    }
     Element *elem = free_list_;
     free_list_ = free_list_->header.next;
     elem->header.refs = 0;
-
     Node<D> *result = &(elem->data);
+    inc_refs(result);
     result->parent = parent;
-    assert(CheckCycle(result));
+
+    if (parent != nullptr) {
+        inc_refs(const_cast<Node<D> *>(parent));
+    }
+
+    CHECK(has_cycle(result) == false);
     return result;
 }
 
 template <typename D>
 void MemoryManager<D>::free(Node<D> *ptr) {
     std::lock_guard<std::recursive_mutex> lock(mutex_);
-    --refs_;
     ptr->data.ap_solve.clear();
-    Element *elem = reinterpret_cast<Element *>(
-        reinterpret_cast<int8_t *>(ptr) - sizeof(elem->header));
-    assert(elem->header.refs == 0);
-    elem->header.next = free_list_;
-    free_list_ = elem;
-    if (elem->data.parent != NULL
-        && !DecRefs(const_cast<Node<D> *>(elem->data.parent))) {
-        assert(ptr->parent == elem->data.parent);
-        ptr = const_cast<Node<D> *>(elem->data.parent);
-        this->free(ptr);
+    if (dec_refs(ptr) == 0) {
+        --refs_;
+        Element *elem = reinterpret_cast<Element *>(
+            reinterpret_cast<int8_t *>(ptr) - sizeof(elem->header));
+        elem->header.next = free_list_;
+        free_list_ = elem;
+        if (ptr->parent != nullptr) {
+            free(const_cast<Node<D> *>(ptr->parent));
+        }
     }
 }
 
 template <typename D>
-bool MemoryManager<D>::CheckCycle(const Node<D> *start) {
+bool MemoryManager<D>::has_cycle(const Node<D> *start) {
     std::lock_guard<std::recursive_mutex> lock(mutex_);
     const Node<D> *node = start->parent;
-    while (node != NULL) {
+    while (node != nullptr) {
         if (node == start) {
-            return false;
+            return true;
         }
         node = node->parent;
     }
-    return true;
+    return false;
 }
 
 template <typename D>
-bool MemoryManager<D>::CheckRefs(const Node<D> *node) {
-    std::lock_guard<std::recursive_mutex> lock(mutex_);
-    const Element * elem = reinterpret_cast<const Element *>(
-        reinterpret_cast<const int8_t *>(node) - sizeof(size_t));
-    return elem->header.refs <= 2;
-}
-
-template <typename D>
-void MemoryManager<D>::IncRefs(Node<D> *node) {
-#ifndef NDEBUG
-    Element * elem = reinterpret_cast<Element *>(
-        reinterpret_cast<int8_t *>(node) - sizeof(size_t));
-    (elem->header.refs)++;
-    assert(elem >= area_ && elem <= &area_[capacity_]);
-    assert(elem->header.refs == 1 || elem->header.refs == 2);
-#else
+void MemoryManager<D>::inc_refs(Node<D> *node) {
     ++(reinterpret_cast<Element *>(
         reinterpret_cast<int8_t *>(node) - sizeof(size_t))->header.refs);
-#endif
 }
 
 template <typename D>
-size_t MemoryManager<D>::DecRefs(Node<D> *node) {
-#ifndef NDEBUG
-    Element * elem = reinterpret_cast<Element *>(
-        reinterpret_cast<int8_t *>(node) - sizeof(size_t));
-    assert(elem->header.refs == 1 || elem->header.refs == 2);
-    return --(elem->header.refs);
-#else
+size_t MemoryManager<D>::dec_refs(Node<D> *node) {
     return --(reinterpret_cast<Element *>(
         reinterpret_cast<int8_t *>(node) - sizeof(size_t))->header.refs);
-#endif
 }
 
 #endif  // SRC_TREE_INL_H_

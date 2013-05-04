@@ -57,5 +57,8 @@ bool load_tsplib_problem(std::istream &is, value_type *&matrix
         } else {
         }
     }
+    for (size_t k = 0; k < dimension; ++k) {
+        matrix[k * dimension + k] = M_VAL;
+    }
     return true;
 }

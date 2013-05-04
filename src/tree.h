@@ -26,8 +26,7 @@ class MemoryManager {
     Node<D> *alloc(const Node<D> *parent);
     void free(Node<D> *ptr);
 
-    bool CheckCycle(const Node<D> *start);
-    bool CheckRefs(const Node<D> *node);
+    bool has_cycle(const Node<D> *start);
 
  private:
 #pragma pack(push)
@@ -41,11 +40,10 @@ class MemoryManager {
     };
 #pragma pack(pop)
 
-    void IncRefs(Node<D> *node);
-    static size_t DecRefs(Node<D> *node);
+    static void inc_refs(Node<D> *node);
+    static size_t dec_refs(Node<D> *node);
 
     int refs_;
-    int inc_refs_;
     size_t capacity_;
     Element *area_;
     Element *free_list_;

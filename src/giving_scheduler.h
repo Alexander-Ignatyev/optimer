@@ -6,6 +6,8 @@
 #include <thread>
 #include <condition_variable>
 
+#include <g2log.h>
+
 #include "tree.h"
 #include "scheduler_common.h"
 
@@ -25,6 +27,10 @@ class GivingScheduler {
     GivingScheduler(const GivingScheduler &scheduler)
         : params_(scheduler.params_)
         , num_working_threads_(scheduler.params_.num_threads) {
+    }
+
+    ~GivingScheduler() {
+        CHECK(queue_sets_.size() == 0);
     }
 
     unsigned num_threads() const {
@@ -56,15 +62,15 @@ class GivingScheduler {
                     return (!this->queue_sets_.empty())
                     || (this->num_working_threads_ == 0);
                 });
-            if (num_working_threads_ == 0) {
-                condvar_sets_.notify_all();
-                return stats;
-            }
             while (nodes->size() < params_.num_minimum_nodes
                 && !queue_sets_.empty()) {
                 nodes->push(queue_sets_.front());
                 queue_sets_.pop();
                 ++stats.sets_received;
+            }
+            if (nodes->empty() && num_working_threads_ == 0) {
+                condvar_sets_.notify_all();
+                return stats;
             }
             ++num_working_threads_;
         }
