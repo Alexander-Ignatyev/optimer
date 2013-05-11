@@ -28,12 +28,18 @@ class TspSolver {
     };
 
     struct Set {
-        Point point;
         value_type value;
+        std::vector<Point> included_points;
+        std::vector<Point> excluded_points;
         std::vector<size_t> ap_solve;
         unsigned level;
         bool operator < (const Set &other) const {
             return value > other.value;
+        }
+        void clear() {
+            included_points.clear();
+            excluded_points.clear();
+            ap_solve.clear();
         }
     };
 
@@ -55,12 +61,9 @@ class TspSolver {
     static std::vector<size_t> create_tour(const std::vector<size_t> &ap_sol);
     static void get_greedy_solution(const value_type *data, size_t rank
         , Solution &sol, unsigned startPoint);
-    static void copy_matrix(value_type *target, const value_type *source
-        , size_t rank, const Node<Set> *pnode);
     bool two_opt(Solution *sol) const;
-    bool select_move(const value_type *data
-        , const Node<Set> &node, std::vector<Point> *moves) const;
-    value_type transform_node(const value_type *data, Node<Set> *node);
+    bool select_move(const Node<Set> &node, std::vector<Point> *moves) const;
+    void transform_node(Node<Set> *node);
     static void print_matrix(const value_type *matrix, size_t rank
         , std::ostream &logger = std::cout);
     void check_route(const decltype(Solution::route) &route

@@ -14,7 +14,7 @@ typename Solver::Solution
     if (data.rank > MIN_RANK_VALUE) {
         MemoryManager<Set> mm;
         mm.init(data.rank*data.rank*data.rank*data.rank);
-        Node<Set> *node = mm.alloc(NULL);
+        Node<Set> *node = mm.alloc(nullptr);
         Solution initSol;
 
         Solver solver;

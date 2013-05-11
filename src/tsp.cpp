@@ -37,7 +37,7 @@ void TspSolver::init(const TspInitialData &data, MemoryManager<Set> *mm) {
 
 void TspSolver::get_initial_node(Node<Set> *node) {
     node->data.level = 0;
-    node->data.value = transform_node(matrix_original_, node);
+    transform_node(node);
 }
 
 void TspSolver::get_initial_solution(Solution *sol) {
@@ -52,6 +52,7 @@ void TspSolver::get_initial_solution(Solution *sol) {
             *sol = tmpSol;
         }
     }
+    LOG(DEBUG) << "Initial solution: " << sol->value;
 }
 
 bool has_solution(const std::vector<size_t> &ap_sol, size_t dimension) {
@@ -73,8 +74,7 @@ void TspSolver::branch(const Node<Set> *node, value_type &record,
     }
     stats.branches++;
     std::vector<Point> points;
-    copy_matrix(matrix_, matrix_original_, dimension_, node);
-    if (!select_move(matrix_, *node, &points)) {
+    if (!select_move(*node, &points)) {
         LOG(WARNING) << "TSP AP: Error! Cannot select move";
         dump_to_log(node);
         CHECK(false);
@@ -84,10 +84,8 @@ void TspSolver::branch(const Node<Set> *node, value_type &record,
     for (auto point : points) {
         Node<Set> *new_node = mm_->alloc(node);
         new_node->data.level = node->data.level+1;
-        new_node->data.point = point;
-
-        copy_matrix(matrix_, matrix_original_, dimension_, new_node);
-        new_node->data.value = transform_node(matrix_, new_node);
+        new_node->data.excluded_points.push_back(point);
+        transform_node(new_node);
         ++stats.sets_generated;
 
         if (has_solution(new_node->data.ap_solve, dimension_)) {
@@ -193,18 +191,8 @@ bool TspSolver::two_opt(Solution *sol) const {
     return bResult;
 }
 
-void TspSolver::copy_matrix(value_type *target, const value_type *source
-    , size_t rank, const Node<Set> *pnode) {
-    memcpy(target, source, rank*rank*sizeof(value_type));
-    while (pnode->parent) {
-        target[pnode->data.point.x*rank+pnode->data.point.y] = M_VAL;
-        pnode = pnode->parent;
-    }
-}
-
-
-bool TspSolver::select_move(const value_type *data
-    , const Node<Set> &node, std::vector<Point> *moves) const {
+bool TspSolver::select_move(const Node<Set> &node
+    , std::vector<Point> *moves) const {
     std::vector<char> selected_vertices(dimension_, 0);
     size_t selected_path_start = dimension_;
     size_t selected_path_length = M_VAL;
@@ -248,21 +236,106 @@ bool TspSolver::select_move(const value_type *data
     return !moves->empty();
 }
 
-value_type TspSolver::transform_node(const value_type *data, Node<Set> *node) {
-    std::vector<size_t> markIndices = ap_solver_.transform(data, dimension_);
-    node->data.ap_solve.resize(dimension_);
-    for (size_t i = 0; i < dimension_; ++i) {
-        node->data.ap_solve[markIndices[i]] = i;
+void TspSolver::transform_node(Node<Set> *node) {
+    // restore included and excluded points from branch
+    std::vector<Point> included_points;
+    std::vector<Point> excluded_points;
+    const Node<Set> *tmp_node = node;
+    while (tmp_node->parent) {
+        included_points.insert(included_points.end()
+            , tmp_node->data.included_points.begin()
+            , tmp_node->data.included_points.end());
+        excluded_points.insert(excluded_points.end()
+            , tmp_node->data.excluded_points.begin()
+            , tmp_node->data.excluded_points.end());
+        tmp_node = tmp_node->parent;
     }
 
-    value_type value = 0;
-    for (unsigned i = 0; i < dimension_; ++i) {
-        if (is_m(data[markIndices[i]*dimension_+i])) {
-            LOG(DEBUG) << "transform_node: invalid ap_solve";
-        }
-        value += data[markIndices[i]*dimension_+i];
+    std::vector<size_t> i_original_to_new(dimension_, 0);
+    std::vector<size_t> j_original_to_new(dimension_, 0);
+    for (const Point &point : included_points) {
+        i_original_to_new[point.x] = dimension_;
+        j_original_to_new[point.y] = dimension_;
     }
-    return value;
+
+    size_t i_new = 0;
+    size_t j_new = 0;
+    for (size_t k_original = 0; k_original < dimension_; ++k_original) {
+        if (i_original_to_new[k_original] < dimension_) {
+            i_original_to_new[k_original] = i_new;
+            ++i_new;
+        }
+        if (j_original_to_new[k_original] < dimension_) {
+            j_original_to_new[k_original] = j_new;
+            ++j_new;
+        }
+    }
+
+    size_t dimension_new = dimension_ - included_points.size();
+    std::vector<size_t> j_new_to_original(dimension_new);
+    j_new = 0;
+    for (size_t j_original = 0; j_original < dimension_; ++j_original) {
+        if (j_original_to_new[j_original] < dimension_) {
+            j_new_to_original[j_new] = j_original;
+            ++j_new;
+        }
+    }
+
+    // prepare matrix for AP_Solver
+    i_new = 0;
+    for (size_t i_original = 0; i_original < dimension_; ++i_original) {
+        if (i_original_to_new[i_original] == dimension_) {
+            continue;
+        }
+        j_new = 0;
+        for (size_t j_original = 0; j_original < dimension_; ++j_original) {
+            if (j_original_to_new[j_original] == dimension_) {
+                continue;
+            }
+            matrix_[i_new * dimension_new + j_new]
+                = matrix_original_[i_original * dimension_ + j_original];
+            ++j_new;
+        }
+        ++i_new;
+    }
+
+    for (const Point &point : excluded_points) {
+        size_t index = i_original_to_new[point.x] * dimension_new;
+        index += j_original_to_new[point.y];
+        matrix_[index] = M_VAL;
+    }
+
+    // solve AP
+    std::vector<size_t> mark_indices =
+        ap_solver_.transform(matrix_, dimension_new);
+    std::vector<size_t> ap_solution_new(mark_indices.size());
+    for (size_t i = 0; i < dimension_new; ++i) {
+        ap_solution_new[mark_indices[i]] = i;
+    }
+    std::vector<size_t> ap_solution_original(dimension_, 0);
+    i_new = 0;
+    for (size_t i_original = 0; i_original < dimension_; ++i_original) {
+        if (i_original_to_new[i_original] == dimension_) {
+            continue;
+        }
+        size_t j_new = ap_solution_new[i_new];
+        size_t j_original = j_new_to_original[j_new];
+        ap_solution_original[i_original] = j_original;
+        ++i_new;
+    }
+    for (auto point : included_points) {
+        ap_solution_original[point.x] = point.y;
+    }
+    node->data.ap_solve = ap_solution_original;
+
+    // calculate value
+    value_type value = 0;
+    for (size_t i = 0; i < dimension_; ++i) {
+        auto cost = matrix_original_[i*dimension_new + node->data.ap_solve[i]];
+        LOG_IF(DEBUG, is_m(cost)) << "transform_node: invalid ap_solve";
+        value += cost;
+    }
+    node->data.value = value;
 }
 
 void TspSolver::print_matrix(const value_type *matrix
@@ -291,16 +364,7 @@ void TspSolver::check_route(const decltype(Solution::route) &route
 void TspSolver::dump_to_log(const Node<Set> *node) {
     std::ostringstream oss;
     oss << node->data;
-    copy_matrix(matrix_, matrix_original_, dimension_, node);
-    oss << "AP Solve (non-empty): ";
-    for (size_t i = 0; i < node->data.ap_solve.size(); ++i) {
-        size_t j = node->data.ap_solve[i];
-        if (!is_m(matrix_[i*dimension_+j])) {
-            oss << "(" << i << ", " << j << ") ";
-        }
-    }
-    oss << std::endl;
-    print_matrix(matrix_, dimension_, oss);
+    print_matrix(matrix_original_, dimension_, oss);
     LOG(WARNING) << oss.str();
     oss.str(std::string());
     if (node->parent != nullptr) {
@@ -315,8 +379,17 @@ std::ostream &operator<<(std::ostream &os, const TspSolver::Point &point) {
 
 std::ostream &operator<<(std::ostream &os, const TspSolver::Set &set) {
     os << "<< Set: " << std::endl;
-    os << "Point: " << set.point << std::endl;
     os << "Value: " << set.value << std::endl;
+    os << "Included Points: ";
+    for (auto point : set.included_points) {
+        os << point;
+    }
+    os << std::endl;
+    os << "Excluded Points: ";
+    for (auto point : set.excluded_points) {
+        os << point;
+    }
+    os << std::endl;
     os << "Level: " << set.level << std::endl;
     os << "AP solve: ";
     for (size_t i = 0; i < set.ap_solve.size(); ++i) {

@@ -58,9 +58,10 @@ Node<D> *MemoryManager<D>::alloc(const Node<D> *parent) {
 template <typename D>
 void MemoryManager<D>::free(Node<D> *ptr) {
     std::lock_guard<std::recursive_mutex> lock(mutex_);
-    ptr->data.ap_solve.clear();
     if (dec_refs(ptr) == 0) {
         --refs_;
+        ptr->data.clear();
+
         Element *elem = reinterpret_cast<Element *>(
             reinterpret_cast<int8_t *>(ptr) - sizeof(elem->header));
         elem->header.next = free_list_;
