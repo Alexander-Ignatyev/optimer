@@ -7,6 +7,7 @@
 #include <algorithm>
 #include <vector>
 #include <set>
+#include <unordered_set>
 
 #include <g2log.h>
 
@@ -21,6 +22,21 @@ bool is_m(double val) {
     return val >= M_VAL;
 }
 }
+
+struct PointHash {
+    std::hash<decltype(TspSolver::Point::x)> hash_x;
+    std::hash<decltype(TspSolver::Point::x)> hash_y;
+    size_t operator()(const TspSolver::Point &point) const {
+        return hash_x(point.x) ^ hash_y(point.y);
+    }
+};
+
+struct PointEqualsTo {
+    bool operator()(const TspSolver::Point &lhs
+        , const TspSolver::Point &rhs) const {
+        return lhs.x == rhs.x && lhs.y == rhs.y;
+    }
+};
 
 TspSolver::TspSolver()
     : dimension_(0)
@@ -81,11 +97,14 @@ void TspSolver::branch(const Node<Set> *node, value_type &record,
         return;
     }
 
+    std::vector<Point> included_points;
     for (auto point : points) {
         Node<Set> *new_node = mm_->alloc(node);
         new_node->data.level = node->data.level+1;
+        new_node->data.included_points = included_points;
         new_node->data.excluded_points.push_back(point);
         transform_node(new_node);
+        included_points.push_back(point);
         ++stats.sets_generated;
 
         if (has_solution(new_node->data.ap_solve, dimension_)) {
@@ -194,6 +213,14 @@ bool TspSolver::two_opt(Solution *sol) const {
 bool TspSolver::select_move(const Node<Set> &node
     , std::vector<Point> *moves) const {
     std::vector<char> selected_vertices(dimension_, 0);
+    std::unordered_set<Point, PointHash, PointEqualsTo> included_points;
+    const Node<Set> *tmp_node = &node;
+    while (tmp_node->parent) {
+        included_points.insert(
+            tmp_node->data.included_points.begin()
+            , tmp_node->data.included_points.end());
+        tmp_node = tmp_node->parent;
+    }
     size_t selected_path_start = dimension_;
     size_t selected_path_length = M_VAL;
     while (selected_path_length != 2) {
@@ -221,17 +248,14 @@ bool TspSolver::select_move(const Node<Set> &node
         auto start = selected_path_start;
         auto finish = node.data.ap_solve[start];
         for (; selected_path_start != finish; ) {
-            Point point;
-            point.x = start;
-            point.y = finish;
-            moves->push_back(point);
+            Point point = {start, finish};
+            if (included_points.find(point) == included_points.end()) {
+                moves->push_back(point);
+            }
             start = finish;
             finish = node.data.ap_solve[finish];
         }
-        Point point;
-        point.x = start;
-        point.y = finish;
-        moves->push_back(point);
+        moves->push_back({start, finish});
     }
     return !moves->empty();
 }
@@ -300,6 +324,10 @@ void TspSolver::transform_node(Node<Set> *node) {
     }
 
     for (const Point &point : excluded_points) {
+        if (i_original_to_new[point.x] == dimension_
+            || j_original_to_new[point.y] == dimension_) {
+                continue;
+            }
         size_t index = i_original_to_new[point.x] * dimension_new;
         index += j_original_to_new[point.y];
         matrix_[index] = M_VAL;
@@ -331,8 +359,9 @@ void TspSolver::transform_node(Node<Set> *node) {
     // calculate value
     value_type value = 0;
     for (size_t i = 0; i < dimension_; ++i) {
-        auto cost = matrix_original_[i*dimension_new + node->data.ap_solve[i]];
-        LOG_IF(DEBUG, is_m(cost)) << "transform_node: invalid ap_solve";
+        auto cost = matrix_original_[i*dimension_ + node->data.ap_solve[i]];
+        LOG_IF(WARNING, is_m(cost)) << "transform_node: invalid ap_solve (" <<
+            i << ", " << node->data.ap_solve[i] << ")";
         value += cost;
     }
     node->data.value = value;
