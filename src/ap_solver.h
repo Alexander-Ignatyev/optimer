@@ -3,118 +3,201 @@
 #ifndef SRC_AP_SOLVER_H_
 #define SRC_AP_SOLVER_H_
 
-#include <cstddef>
-
-#include <memory>
 #include <vector>
 #include <limits>
+#include <cmath>
 #include <algorithm>
 
 template <typename T>
-class APSolver {
+inline bool is_zero(T value) {
+    return value == 0;
+}
+
+template <>
+inline bool is_zero<double> (double value) {
+    return std::abs(value) < std::numeric_limits<double>::epsilon();
+}
+
+template <>
+inline bool is_zero<float> (float value) {
+    return std::abs(value) < std::numeric_limits<float>::epsilon();
+}
+
+template <typename T>
+class ApSolver {
  public:
-    APSolver();
-    std::vector<size_t> transform(const T *data, size_t dimension);
+    ApSolver(): dimension_(0), matrix_(nullptr) {}
+    const std::vector<size_t> &solve(const T *matrix, size_t dimension);
 
  private:
-    APSolver(const APSolver &) = delete;
-    APSolver &operator=(const APSolver &) = delete;
+    void preprocessing();
+    size_t augment(size_t k);
+    void dual_update(const std::vector<char> &scanned_u
+                    , std::vector<char> *plabeled_v
+                    , std::vector<T> *ppi);
+    size_t next_unassigned() const;
 
-    void alloc(size_t dimension);
-
+    static const T big_value_;
     size_t dimension_;
-    T *u_;
-    T *v_;
-    T *mins_;
-    ptrdiff_t *links_;
-    ptrdiff_t *visited_;
-    size_t *mark_indices_;
-
-    std::vector<ptrdiff_t> int_buffer_;
-    std::vector<size_t> size_t_buffer_;
-    std::vector<T> value_type_buffer_;
+    const T *matrix_;
+    std::vector<T> dual_u_;
+    std::vector<T> dual_v_;
+    std::vector<size_t> row_;
+    std::vector<size_t> phi_;
+    std::vector<size_t> pred_;
 };
 
 template <typename T>
-APSolver<T>::APSolver()
-        : dimension_(0)
-        , u_(nullptr)
-        , v_(nullptr)
-        , mins_(nullptr)
-        , links_(nullptr)
-        , visited_(nullptr)
-        , mark_indices_(nullptr) {
-    }
-
-template <typename T>
-void APSolver<T>::alloc(size_t dimension) {
-    if (dimension_ == dimension || dimension == 0) {
-        return;
-    }
+const std::vector<size_t> &ApSolver<T>::solve(const T *matrix
+                                            , size_t dimension) {
+    matrix_ = matrix;
     dimension_ = dimension;
-    int_buffer_.resize(dimension*2);
-    links_ = &int_buffer_[0];
-    visited_ = &int_buffer_[dimension];
 
-    size_t_buffer_.resize(dimension);
-    mark_indices_ = &size_t_buffer_[0];
+    preprocessing();
 
-    value_type_buffer_.resize(dimension*3);
-    mins_ = &value_type_buffer_[0];
-    u_ = &value_type_buffer_[dimension];
-    v_ = &value_type_buffer_[dimension*2];
+    size_t k = next_unassigned();
+    while (k != dimension_) {
+        size_t j = augment(k);
+        size_t i;
+        do {
+            i = pred_[j];
+            row_[j] = i;
+            size_t h = j;
+            j = phi_[i];
+            phi_[i] = h;
+        } while (i != k);
+        k = next_unassigned();
+    }
+
+    return phi_;
 }
 
 template <typename T>
-std::vector<size_t> APSolver<T>::transform(const T *data, size_t dimension) {
-    alloc(dimension);
-    std::fill_n<T *>(u_, dimension, 0);
-    std::fill_n<T *>(v_, dimension, 0);
-    std::fill_n<size_t *>(mark_indices_, dimension, -1);
+void ApSolver<T>::preprocessing() {
+    // dual problem: row and column reduction
+    dual_u_.resize(dimension_);
+    dual_v_.resize(dimension_);
+    std::fill(dual_u_.begin(), dual_u_.end(), big_value_);
+    std::fill(dual_v_.begin(), dual_v_.end(), big_value_);
 
-    for (size_t i = 0; i < dimension; i++) {
-        std::fill_n<ptrdiff_t *>(links_, dimension, -1);
-        std::fill_n<T *>(mins_, dimension, std::numeric_limits<T>::max());
-        std::fill_n<ptrdiff_t *>(visited_, dimension, 0);
-
-        ptrdiff_t markedI = i, markedJ = -1, j;
-        while (markedI != -1) {
-            j = -1;
-            for (size_t j1 = 0; j1 < dimension; ++j1)
-            if (!visited_[j1]) {
-                auto value = data[markedI*dimension+j1] - u_[markedI] - v_[j1];
-                if (mins_[j1] > value) {
-                    mins_[j1] = value;
-                    links_[j1] = markedJ;
-                }
-                if (j == -1 || mins_[j1] < mins_[j]) {
-                    j = j1;
-                }
-            }
-
-            T delta = mins_[j];
-            for (size_t j1 = 0; j1 < dimension; j1++) {
-                if (visited_[j1]) {
-                    u_[mark_indices_[j1]] += delta;
-                    v_[j1] -= delta;
-                } else {
-                    mins_[j1] -= delta;
-                }
-            }
-            u_[i] += delta;
-
-            visited_[j] = 1;
-            markedJ = j;
-            markedI = mark_indices_[j];
+    for (size_t i = 0; i < dimension_; ++i) {
+        for (size_t j = 0; j < dimension_; ++j) {
+            dual_u_[i] = std::min(dual_u_[i], matrix_[i*dimension_+j]);
         }
-
-        for (; links_[j] != -1; j = links_[j]) {
-            mark_indices_[j] = mark_indices_[links_[j]];
-        }
-        mark_indices_[j] = i;
     }
 
-    return std::vector<size_t>(mark_indices_, mark_indices_+dimension);
+    for (size_t i = 0; i < dimension_; ++i) {
+        for (size_t j = 0; j < dimension_; ++j) {
+            dual_v_[j] = std::min(dual_v_[j]
+                        , matrix_[i*dimension_+j]-dual_u_[i]);
+        }
+    }
+
+    // primal problem: partial solution
+    row_.resize(dimension_);
+    phi_.resize(dimension_, dimension_);
+    std::fill(row_.begin(), row_.end(), dimension_);
+    std::fill(phi_.begin(), phi_.end(), dimension_);
+
+    for (size_t i = 0; i < dimension_; ++i) {
+        for (size_t j = 0; j < dimension_; ++j) {
+            if (row_[j] == dimension_
+                && matrix_[i*dimension_+j] == dual_u_[i]+dual_v_[j]) {
+                row_[j] = i;
+                break;
+            }
+        }
+    }
+
+    for (size_t j = 0; j < dimension_; ++j) {
+        if (row_[j] < dimension_) {
+            phi_[row_[j]] = j;
+        }
+    }
 }
+
+template <typename T>
+size_t ApSolver<T>::augment(size_t k) {
+    std::vector<T> pi(dimension_, big_value_);
+    std::vector<char> scanned_u(dimension_, 0);
+    std::vector<char> scanned_v(dimension_, 0);
+    std::vector<char> labeled_v(dimension_, 0);
+    pred_.resize(dimension_);
+    std::fill(pred_.begin(), pred_.end(), dimension_);
+
+    size_t sink = dimension_;
+    size_t i = k;
+    while (sink == dimension_) {
+        scanned_u[i] = 1;
+        for (size_t j = 0; j < dimension_; ++j) {
+            T val = matrix_[i*dimension_+j] - dual_u_[i] - dual_v_[j];
+            if (labeled_v[j] == 0 && pi[j] > val) {
+                pred_[j] = i;
+                pi[j] = val;
+                if (is_zero(val)) {
+                    labeled_v[j] = 1;
+                }
+            }
+        }
+        bool update_labeled = false;
+        for (size_t j = 0; j < dimension_; ++j) {
+            if (labeled_v[j] == 1 && scanned_v[j] == 0) {
+                scanned_v[j] = 1;
+                update_labeled = true;
+                if (row_[j] == dimension_) {
+                    sink = j;
+                } else {
+                    i = row_[j];
+                }
+            }
+        }
+
+        if (!update_labeled) {
+            dual_update(scanned_u, &labeled_v, &pi);
+        }
+    }
+    return sink;
+}
+
+template <typename T>
+void ApSolver<T>::dual_update(const std::vector<char> &scanned_u
+                              , std::vector<char> *plabeled_v
+                              , std::vector<T> *ppi) {
+    std::vector<T> &pi = *ppi;
+    std::vector<char> &labeled_v = *plabeled_v;
+
+    T delta = big_value_;
+    for (size_t j = 0; j < dimension_; ++j) {
+        if (labeled_v[j] == 0) {
+            delta = std::min(delta, pi[j]);
+        }
+    }
+    for (size_t k = 0; k < dimension_; ++k) {
+        if (scanned_u[k] == 1) {
+            dual_u_[k] += delta;
+        }
+        if (labeled_v[k] == 1) {
+            dual_v_[k] -= delta;
+        } else {  // if (labeled_v[k] == 0)
+            pi[k] -= delta;
+            if (is_zero(pi[k])) {
+                labeled_v[k] = 1;
+            }
+        }
+    }
+}
+
+template <typename T>
+size_t ApSolver<T>::next_unassigned() const {
+    for (size_t k = 0; k < dimension_; ++k) {
+        if (phi_[k] == dimension_) {
+            return k;
+        }
+    }
+    return dimension_;
+}
+
+template <typename T>
+const T ApSolver<T>::big_value_ = std::numeric_limits<T>::max();
 
 #endif  // SRC_AP_SOLVER_H_

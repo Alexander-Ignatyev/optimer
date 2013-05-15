@@ -75,7 +75,7 @@ class TspSolver {
     const value_type *matrix_original_;
 
     MemoryManager<Set> *mm_;
-    APSolver<value_type> ap_solver_;
+    ApSolver<value_type> ap_solver_;
 };
 
 std::ostream &operator<<(std::ostream &os, const TspSolver::Point &point);

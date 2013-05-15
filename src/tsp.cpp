@@ -334,12 +334,8 @@ void TspSolver::transform_node(Node<Set> *node) {
     }
 
     // solve AP
-    std::vector<size_t> mark_indices =
-        ap_solver_.transform(matrix_, dimension_new);
-    std::vector<size_t> ap_solution_new(mark_indices.size());
-    for (size_t i = 0; i < dimension_new; ++i) {
-        ap_solution_new[mark_indices[i]] = i;
-    }
+    std::vector<size_t> ap_solution_new =
+            ap_solver_.solve(matrix_, dimension_new);
     std::vector<size_t> ap_solution_original(dimension_, 0);
     i_new = 0;
     for (size_t i_original = 0; i_original < dimension_; ++i_original) {

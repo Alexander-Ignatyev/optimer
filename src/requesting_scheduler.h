@@ -30,7 +30,7 @@ class RequestingScheduler {
     }
 
     ~RequestingScheduler() {
-        CHECK(queue_sets_.size() == 0);
+        CHECK(queue_sets_.empty());
     }
 
     unsigned num_threads() const {
