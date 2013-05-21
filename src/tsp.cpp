@@ -107,12 +107,12 @@ void TspSolver::branch(const Node<Set> *node, value_type &record,
         included_points.push_back(point);
         ++stats.sets_generated;
 
-        if (has_solution(new_node->data.ap_solve, dimension_)) {
+        if (has_solution(new_node->data.ap_solution.primal, dimension_)) {
             if (new_node->data.value < record) {
                 record = new_node->data.value;
                 LOG(INFO) << "ATSP AP: found new record: "
                     << record << ". Level: " << new_node->data.level;
-                sol.route = create_tour(new_node->data.ap_solve);
+                sol.route = create_tour(new_node->data.ap_solution.primal);
                 sol.value = record;
                 check_route(sol.route, new_node);
             }
@@ -223,6 +223,7 @@ bool TspSolver::select_move(const Node<Set> &node
     }
     size_t selected_path_start = dimension_;
     size_t selected_path_length = M_VAL;
+    auto ap_solution = node.data.ap_solution.primal.data();
     while (selected_path_length != 2) {
         size_t start = 0;
         for (; start != dimension_ && selected_vertices[start] != 0; ++start) {}
@@ -231,10 +232,10 @@ bool TspSolver::select_move(const Node<Set> &node
         }
         size_t path_length = 1;
         ++selected_vertices[start];
-        size_t finish = node.data.ap_solve[start];
+        size_t finish = ap_solution[start];
         ++selected_vertices[finish];
         for (; start != finish && path_length < dimension_; ++path_length) {
-            finish = node.data.ap_solve[finish];
+            finish = ap_solution[finish];
             ++selected_vertices[finish];
         }
         if (start == finish && path_length > 1
@@ -246,14 +247,14 @@ bool TspSolver::select_move(const Node<Set> &node
 
     if (selected_path_start < dimension_) {
         auto start = selected_path_start;
-        auto finish = node.data.ap_solve[start];
+        auto finish = ap_solution[start];
         for (; selected_path_start != finish; ) {
             Point point = {start, finish};
             if (included_points.find(point) == included_points.end()) {
                 moves->push_back(point);
             }
             start = finish;
-            finish = node.data.ap_solve[finish];
+            finish = ap_solution[finish];
         }
         moves->push_back({start, finish});
     }
@@ -333,31 +334,77 @@ void TspSolver::transform_node(Node<Set> *node) {
         matrix_[index] = M_VAL;
     }
 
-    // solve AP
-    std::vector<size_t> ap_solution_new =
-            ap_solver_.solve(matrix_, dimension_new);
-    std::vector<size_t> ap_solution_original(dimension_, 0);
+    // preprocess of AP
+    ApSolver<value_type>::Solution ap_solution_new;
+    if (node->parent) {
+        ap_solution_new.init(dimension_new);
+        const auto &tmp = node->parent->data.ap_solution;
+        i_new = 0;
+        for (size_t i_original = 0; i_original < dimension_; ++i_original) {
+            if (i_original_to_new[i_original] != dimension_) {
+                size_t j_original = tmp.primal[i_original];
+                ap_solution_new.primal[i_new] = j_original_to_new[j_original];
+                ap_solution_new.dual_u[i_new] = tmp.dual_u[i_original];
+                ++i_new;
+            }
+        }
+        j_new = 0;
+        for (size_t j_original = 0; j_original < dimension_; ++j_original) {
+            if (j_original_to_new[j_original] < dimension_) {
+                ap_solution_new.dual_v[j_new] = tmp.dual_v[j_original];
+                ++j_new;
+            }
+        }
+        for (auto point : node->data.excluded_points) {
+            i_new = i_original_to_new[point.x];
+            j_new = j_original_to_new[point.y];
+            CHECK(i_new < dimension_new);
+            CHECK(j_new < dimension_new);
+            ap_solution_new.primal[i_new] = dimension_new;
+        }
+    }
+
+    ap_solver_.solve(matrix_, dimension_new, &ap_solution_new);
+
+    const auto ap_primal_new = ap_solution_new.primal.data();
+    const auto ap_dual_u_new = ap_solution_new.dual_u.data();
+    const auto ap_dual_v_new = ap_solution_new.dual_v.data();
+
+    node->data.ap_solution.init(dimension_);
+
+    auto ap_primal_original = node->data.ap_solution.primal.data();
+    auto ap_dual_u_original = node->data.ap_solution.dual_u.data();
+    auto ap_dual_v_original = node->data.ap_solution.dual_v.data();
+
     i_new = 0;
     for (size_t i_original = 0; i_original < dimension_; ++i_original) {
         if (i_original_to_new[i_original] == dimension_) {
             continue;
         }
-        size_t j_new = ap_solution_new[i_new];
+        size_t j_new = ap_primal_new[i_new];
         size_t j_original = j_new_to_original[j_new];
-        ap_solution_original[i_original] = j_original;
+        ap_primal_original[i_original] = j_original;
+        ap_dual_u_original[i_original] = ap_dual_u_new[i_new];
         ++i_new;
     }
-    for (auto point : included_points) {
-        ap_solution_original[point.x] = point.y;
+    j_new = 0;
+    for (size_t j_original = 0; j_original < dimension_; ++j_original) {
+        if (j_original_to_new[j_original] == dimension_) {
+            continue;
+        }
+        ap_dual_v_original[j_original] = ap_dual_v_new[j_new];
+        ++j_new;
     }
-    node->data.ap_solve = ap_solution_original;
+    for (auto point : included_points) {
+        ap_primal_original[point.x] = point.y;
+    }
 
     // calculate value
     value_type value = 0;
     for (size_t i = 0; i < dimension_; ++i) {
-        auto cost = matrix_original_[i*dimension_ + node->data.ap_solve[i]];
+        auto cost = matrix_original_[i*dimension_ + ap_primal_original[i]];
         LOG_IF(WARNING, is_m(cost)) << "transform_node: invalid ap_solve (" <<
-            i << ", " << node->data.ap_solve[i] << ")";
+            i << ", " << ap_primal_original[i] << ")";
         value += cost;
     }
     node->data.value = value;
@@ -367,7 +414,7 @@ void TspSolver::print_matrix(const value_type *matrix
     , size_t dimension, std::ostream &os) {
     for (size_t i = 0; i < dimension; ++i) {
         for (size_t j = 0; j < dimension; ++j) {
-            if (i != j && !is_m(matrix[i*dimension+j])) {
+            if (!is_m(matrix[i*dimension+j])) {
                 os << matrix[i*dimension+j] << " ";
             } else {
                 os << "M ";
@@ -416,9 +463,9 @@ std::ostream &operator<<(std::ostream &os, const TspSolver::Set &set) {
     }
     os << std::endl;
     os << "Level: " << set.level << std::endl;
-    os << "AP solve: ";
-    for (size_t i = 0; i < set.ap_solve.size(); ++i) {
-        os << "(" << i << ", " << set.ap_solve[i] << ") ";
+    os << "AP primal solvution: ";
+    for (size_t i = 0; i < set.ap_solution.primal.size(); ++i) {
+        os << "(" << i << ", " << set.ap_solution.primal[i] << ") ";
     }
     os << std::endl;
     return os;

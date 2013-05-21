@@ -31,7 +31,7 @@ class TspSolver {
         value_type value;
         std::vector<Point> included_points;
         std::vector<Point> excluded_points;
-        std::vector<size_t> ap_solve;
+        ApSolver<value_type>::Solution ap_solution;
         unsigned level;
         bool operator < (const Set &other) const {
             return value > other.value;
@@ -39,7 +39,7 @@ class TspSolver {
         void clear() {
             included_points.clear();
             excluded_points.clear();
-            ap_solve.clear();
+            ap_solution.clear();
         }
     };
 
