@@ -14,7 +14,7 @@ MemoryManager<D>::MemoryManager(size_t capacity)
 
 template <typename D>
 MemoryManager<D>::~MemoryManager() {
-    for (auto area: area_list_) {
+    for (auto area : area_list_) {
         delete [] area;
     }
     CHECK(refs_ == 0) << "MemoryManager: unfreed memory: " << refs_;

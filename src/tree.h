@@ -20,7 +20,7 @@ struct Node {
 template <typename D>
 class MemoryManager {
  public:
-    MemoryManager(size_t capacity = 1024);
+    explicit MemoryManager(size_t capacity = 1024);
     ~MemoryManager();
 
     Node<D> *alloc(const Node<D> *parent);
