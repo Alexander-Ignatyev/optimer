@@ -8,6 +8,7 @@
 
 #include <iostream>
 #include <mutex>
+#include <list>
 
 template <typename D>
 struct Node {
@@ -19,9 +20,8 @@ struct Node {
 template <typename D>
 class MemoryManager {
  public:
-    MemoryManager();
+    MemoryManager(size_t capacity = 1024);
     ~MemoryManager();
-    void init(size_t capacity);
 
     Node<D> *alloc(const Node<D> *parent);
     void free(Node<D> *ptr);
@@ -43,9 +43,10 @@ class MemoryManager {
     static void inc_refs(Node<D> *node);
     static size_t dec_refs(Node<D> *node);
 
+    void allocate();
     int refs_;
     size_t capacity_;
-    Element *area_;
+    std::list<Element *> area_list_;
     Element *free_list_;
     std::recursive_mutex mutex_;
 };

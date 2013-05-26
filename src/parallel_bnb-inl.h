@@ -15,7 +15,6 @@ ParallelBNB<Solver, NodesContainer, Scheduler>::solve(
 
     Solution sol;
     auto nodes = make_nodes_container<Solver>(LifoContainer());
-    mm_.init(data.rank*data.rank*data.rank*data.rank);
     initial_stats_.clear();
     if (data.rank > MIN_RANK_VALUE) {
         Solver solver;

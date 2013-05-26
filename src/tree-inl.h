@@ -6,38 +6,27 @@
 #include <g2log.h>
 
 template <typename D>
-MemoryManager<D>::MemoryManager()
+MemoryManager<D>::MemoryManager(size_t capacity)
     : refs_(0)
-    , capacity_(0)
-    , area_(nullptr)
+    , capacity_(capacity)
     , free_list_(nullptr) {
 }
 
 template <typename D>
 MemoryManager<D>::~MemoryManager() {
-    delete [] area_;
+    for (auto area: area_list_) {
+        delete [] area;
+    }
     CHECK(refs_ == 0) << "MemoryManager: unfreed memory: " << refs_;
 }
 
 template <typename D>
-void MemoryManager<D>::init(size_t capacity) {
-    if (capacity_ < capacity) {
-        capacity_ = capacity;
-        delete [] area_;
-        area_ = new Element[capacity];
-        for (size_t i = 0; i < capacity-1; ++i) {
-            area_[i].header.next = &area_[i+1];
-        }
-        area_[capacity-1].header.next = NULL;
-        free_list_ = area_;
-    }
-}
-
-template <typename D>
 Node<D> *MemoryManager<D>::alloc(const Node<D> *parent) {
-    CHECK(free_list_ != nullptr) << "MemoryManager: not enough memory";
-
     std::lock_guard<std::recursive_mutex> lock(mutex_);
+
+    if (free_list_ == nullptr) {
+        allocate();
+    }
 
     ++refs_;
     Element *elem = free_list_;
@@ -95,6 +84,17 @@ template <typename D>
 size_t MemoryManager<D>::dec_refs(Node<D> *node) {
     return --(reinterpret_cast<Element *>(
         reinterpret_cast<int8_t *>(node) - sizeof(size_t))->header.refs);
+}
+
+template <typename D>
+void MemoryManager<D>::allocate() {
+    Element *area = new Element[capacity_];
+    for (size_t i = 0; i < capacity_-1; ++i) {
+        area[i].header.next = &area[i+1];
+    }
+    area[capacity_-1].header.next = free_list_;
+    free_list_ = area;
+    area_list_.push_back(area);
 }
 
 #endif  // SRC_TREE_INL_H_
