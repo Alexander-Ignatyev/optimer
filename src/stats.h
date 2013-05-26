@@ -8,6 +8,8 @@
 struct Stats {
     Stats();
     void clear();
+    Stats &operator += (const Stats &rhs);
+    Stats &operator /= (size_t value);
 
     size_t branches;
     size_t sets_generated;
@@ -18,5 +20,7 @@ struct Stats {
 };
 
 std::ostream & operator << (std::ostream &os, const Stats &stats);
+
+Stats operator / (Stats lhs, double value);
 
 #endif  // SRC_STATS_H_

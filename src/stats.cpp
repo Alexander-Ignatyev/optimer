@@ -17,6 +17,30 @@ void Stats::clear() {
     seconds = 0.0;
 }
 
+Stats &Stats::operator+=(const Stats &rhs) {
+    branches += rhs.branches;
+    sets_generated += rhs.sets_generated;
+    sets_constrained_by_record += rhs.sets_constrained_by_record;
+    sets_sent += rhs.sets_sent;
+    sets_received += rhs.sets_received;
+    seconds += rhs.seconds;
+    return *this;
+}
+
+Stats &Stats::operator /= (size_t value) {
+    branches /= value;
+    sets_generated /= value;
+    sets_constrained_by_record /= value;
+    sets_sent /= value;
+    sets_received /= value;
+    seconds /= value;
+    return *this;
+}
+
+Stats operator / (Stats lhs, double value) {
+    return lhs /= value;
+}
+
 std::ostream & operator << (std::ostream &os, const Stats &stats) {
     os << "Branches: " << stats.branches << std::endl;
     os << "Generated sets: " << stats.sets_generated << std::endl;

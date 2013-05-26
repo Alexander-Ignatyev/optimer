@@ -68,7 +68,7 @@ void TspSolver::get_initial_solution(Solution *sol) {
             *sol = tmpSol;
         }
     }
-    LOG(DEBUG) << "Initial solution: " << sol->value;
+    LOG(INFO) << "Initial solution: " << sol->value;
 }
 
 bool has_solution(const std::vector<size_t> &ap_sol, size_t dimension) {
@@ -86,6 +86,7 @@ void TspSolver::branch(const Node<Set> *node, value_type &record,
     std::vector<Node<Set> *> &nodes, Solution &sol, Stats &stats) {
 
     if (node->data.value >= record) {
+        ++stats.sets_constrained_by_record;
         return;
     }
     stats.branches++;

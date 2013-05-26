@@ -121,10 +121,22 @@ void ParallelBNB<SolverFactory, NodesContainer, Scheduler>
 ::print_stats(std::ostream &os) const {
     os << std::endl;
     os << "Initial stats:\n" << initial_stats_ << std::endl;
+    Stats total_stats;
     for (size_t i = 0; i < list_stats_.size(); ++i) {
         os << "Stats of thread #" << i << ":" << std::endl;
         os << list_stats_[i] << std::endl;
+        total_stats += list_stats_[i];
     }
+
+    os << "Total stats:\n";
+    os << total_stats << std::endl;
+
+    Stats average_stats = total_stats / list_stats_.size();
+    os << "Average stats:\n";
+    os << average_stats << std::endl;
+
+    os << "# of sets per second: ";
+    os << (total_stats.sets_generated / average_stats.seconds) << std::endl;
 }
 
 #endif  // SRC_PARALLEL_BNB_INL_H_

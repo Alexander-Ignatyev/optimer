@@ -23,10 +23,7 @@ class SerialBNB {
     Solution solve(const InitialData &data
         , size_t max_branches = -1, value_type record = M_VAL);
 
-    void print_stats(std::ostream &os) const {
-        std::cout << "\nStats: \n" << stats_ << std::endl;
-    }
-
+    void print_stats(std::ostream &os) const;
  private:
     Stats stats_;
 };

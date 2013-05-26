@@ -45,4 +45,11 @@ typename Solver::Solution
     return std::move(sol);
 }
 
+template <typename Solver, typename NodesContainer>
+void SerialBNB<Solver, NodesContainer>::print_stats(std::ostream &os) const {
+    os << "\nStats: \n" << stats_ << std::endl;
+    os << "# of sets per second: ";
+    os << (stats_.sets_generated / stats_.seconds) << std::endl;
+}
+
 #endif  // SRC_SERIAL_BNB_INL_H_
