@@ -3,10 +3,14 @@
 #ifndef SRC_ALGO_STRING_H_
 #define SRC_ALGO_STRING_H_
 
+#include <cctype>
+
 #include <string>
 #include <vector>
+#include <locale>
 #include <sstream>
 #include <algorithm>
+#include <functional>
 
 // the code of split functions is based on
 // http://stackoverflow.com/a/236803

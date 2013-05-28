@@ -257,7 +257,8 @@ bool TspSolver::select_move(const Node<Set> &node
             start = finish;
             finish = ap_solution[finish];
         }
-        moves->push_back({start, finish});
+        Point point = {start, finish};
+        moves->push_back(point);
     }
     return !moves->empty();
 }

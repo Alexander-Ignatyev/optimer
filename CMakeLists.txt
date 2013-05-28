@@ -10,12 +10,20 @@
 #  % make test
 #  % ./atsp <path-to-config-file>
 # run cmake -DCMAKE_BUILD_TYPE=Release .. to build release version
+#
+# Build instruction for Visual Studio 2012
+# % mkdir build
+# % cd build
+# % cmake -DUSE_UNIT_TESTS=OFF ..
+# unit tests are not supported for VS now
 
 cmake_minimum_required(VERSION 2.8)
 enable_language(CXX)
 enable_testing()
 
 project(optimer)
+
+option (USE_UNIT_TESTS "Create unit tests" ON)
 
 # set paths
 set(PROJECT_SRC src)
@@ -44,9 +52,14 @@ message("[OPTIMER]: Compiler: ${CXX}")
 message("[OPTIMER]: Build environment: ${BUILD_ENV}")
 
 # compiler flags
-set(CMAKE_CXX_FLAGS "-std=c++11")
+if(${CXX} MATCHES "^clang*" OR ${CXX} MATCHES "g\\+\\+")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+endif()
 if (${CXX} MATCHES "^clang*")
    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++")
+endif()
+if(MSVC)
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /EHsc")
 endif()
 
 # gl2log: https://bitbucket.org/KjellKod/g2log/src
@@ -65,17 +78,19 @@ set(LIBS ${LIBS} optimer)
 add_executable(atsp ${PROJECT_SRC}/main.cpp)
 target_link_libraries(atsp ${LIBS})
 
-# teamcity extension for cppunit
-include_directories("${CMAKE_HOME_DIRECTORY}/contrib/cppunit_teamcity")
-add_subdirectory(contrib/cppunit_teamcity)
-set(TEST_LIBS ${TEST_LIBS} cppunit_teamcity)
+if(USE_UNIT_TESTS)
+	# teamcity extension for cppunit
+	include_directories("${CMAKE_HOME_DIRECTORY}/contrib/cppunit_teamcity")
+	add_subdirectory(contrib/cppunit_teamcity)
+	set(TEST_LIBS ${TEST_LIBS} cppunit_teamcity)
 
-# unittests
-set(TEST_LIBS ${TEST_LIBS} cppunit)
-file (GLOB SRC_TEST_FILES ${UNI_TESTS_SRC}/*.cpp)
-add_executable(optimer-tests ${SRC_TEST_FILES})
-target_link_libraries(optimer-tests ${LIBS} ${TEST_LIBS})
+	# unittests
+	set(TEST_LIBS ${TEST_LIBS} cppunit)
+	file (GLOB SRC_TEST_FILES ${UNI_TESTS_SRC}/*.cpp)
+	add_executable(optimer-tests ${SRC_TEST_FILES})
+	target_link_libraries(optimer-tests ${LIBS} ${TEST_LIBS})
 
-add_test(NAME optimer-tests
-        WORKING_DIRECTORY "${CMAKE_HOME_DIRECTORY}"
-        COMMAND "${PROJECT_BINARY_DIR}/optimer-tests")
+	add_test(NAME optimer-tests
+			WORKING_DIRECTORY "${CMAKE_HOME_DIRECTORY}"
+			COMMAND "${PROJECT_BINARY_DIR}/optimer-tests")
+endif()
