@@ -42,12 +42,12 @@ TspSolver::TspSolver()
     : dimension_(0)
     , matrix_(nullptr)
     , matrix_original_(nullptr)
-    , mm_(nullptr) { }
+    , search_tree_(nullptr) { }
 
-void TspSolver::init(const TspInitialData &data, MemoryManager<Set> *mm) {
+void TspSolver::init(const TspInitialData &data, BnbSearchTree<Set> *mm) {
     matrix_original_ = data.matrix;
     dimension_ = data.rank;
-    mm_ = mm;
+    search_tree_ = mm;
     matrix_ = new value_type[dimension_*dimension_];
 }
 
@@ -100,7 +100,7 @@ void TspSolver::branch(const Node<Set> *node, value_type &record,
 
     std::vector<Point> included_points;
     for (auto point : points) {
-        Node<Set> *new_node = mm_->alloc(node);
+        Node<Set> *new_node = search_tree_->create_node(node);
         new_node->data.level = node->data.level+1;
         new_node->data.included_points = included_points;
         new_node->data.excluded_points.push_back(point);
@@ -117,7 +117,7 @@ void TspSolver::branch(const Node<Set> *node, value_type &record,
                 sol.value = record;
                 check_route(sol.route, new_node);
             }
-            mm_->free(new_node);
+            search_tree_->release_node(new_node);
             continue;
         }
 
@@ -128,7 +128,7 @@ void TspSolver::branch(const Node<Set> *node, value_type &record,
                 LOG(INFO) << "branch: sets_constrained_by_record with M_VAL";
             }
             ++stats.sets_constrained_by_record;
-            mm_->free(new_node);
+            search_tree_->release_node(new_node);
         }
     }
 }

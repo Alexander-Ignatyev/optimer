@@ -51,7 +51,7 @@ class TspSolver {
     TspSolver();
 
     // mandatory function
-    void init(const TspInitialData &data, MemoryManager<Set> *mm);
+    void init(const TspInitialData &data, BnbSearchTree<Set> *mm);
     void get_initial_node(Node<Set> *node);
     void get_initial_solution(Solution *sol);
     void branch(const Node<Set> *node, value_type &record
@@ -74,7 +74,7 @@ class TspSolver {
     value_type *matrix_;
     const value_type *matrix_original_;
 
-    MemoryManager<Set> *mm_;
+    BnbSearchTree<Set> *search_tree_;
     ApSolver<value_type> ap_solver_;
 };
 

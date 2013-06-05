@@ -18,9 +18,9 @@ ParallelBNB<Solver, NodesContainer, Scheduler>::solve(
     initial_stats_.clear();
     if (data.rank > MIN_RANK_VALUE) {
         Solver solver;
-        solver.init(data, &mm_);
+        solver.init(data, &search_tree_);
 
-        Node<Set> *node = mm_.alloc(NULL);
+        Node<Set> *node = search_tree_.create_node();
         solver.get_initial_node(node);
         nodes.push(node);
 
@@ -43,7 +43,7 @@ ParallelBNB<Solver, NodesContainer, Scheduler>::solve(
                 nodes.push(set);
             }
             tmp_nodes.clear();
-            mm_.free(node);
+            search_tree_.release_node(node);
         }
         record_ = record;
         initial_stats_.seconds = timer.elapsed_seconds();
@@ -83,7 +83,7 @@ void ParallelBNB<Solver, NodesContainer, Scheduler>::start(unsigned threadID) {
     list_nodes_[threadID].clear();
     Node<Set> *node;
     Solver solver;
-    solver.init(*initial_data_, &mm_);
+    solver.init(*initial_data_, &search_tree_);
 
     std::vector<Node<Set> * > tmp_nodes;
 
@@ -98,7 +98,7 @@ void ParallelBNB<Solver, NodesContainer, Scheduler>::start(unsigned threadID) {
             nodes.push(set);
         }
         tmp_nodes.clear();
-        mm_.free(node);
+        search_tree_.release_node(node);
 
         if (record < record_) {
             std::lock_guard<std::mutex> lock(mutex_record_);

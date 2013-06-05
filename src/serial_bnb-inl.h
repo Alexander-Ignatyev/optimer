@@ -12,12 +12,12 @@ typename Solver::Solution
     stats_.clear();
     Solution sol;
     if (data.rank > MIN_RANK_VALUE) {
-        MemoryManager<Set> mm;
-        Node<Set> *node = mm.alloc(nullptr);
+        BnbSearchTree<Set> search_tree;
+        Node<Set> *node = search_tree.create_node();
         Solution initSol;
 
         Solver solver;
-        solver.init(data, &mm);
+        solver.init(data, &search_tree);
         solver.get_initial_node(node);
         solver.get_initial_solution(&initSol);
         record = initSol.value;
@@ -26,7 +26,7 @@ typename Solver::Solution
         std::vector<Node<Set> * > tmp_nodes;
         nodes.push(node);
         Timer timer;
-        while (!nodes.empty() /*&& this->stats.branches < max_branches*/) {
+        while (!nodes.empty()) {
             node = nodes.top();
             nodes.pop();
 
@@ -35,7 +35,7 @@ typename Solver::Solution
                 nodes.push(set);
             }
             tmp_nodes.clear();
-            mm.free(node);
+            search_tree.release_node(node);
         }
         stats_.seconds = timer.elapsed_seconds();
     }

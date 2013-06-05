@@ -47,7 +47,7 @@ class ParallelBNB {
      std::vector<ListNodes> list_nodes_;
      std::vector<Stats> list_stats_;
      Stats initial_stats_;
-     MemoryManager<Set> mm_;
+     BnbSearchTree<Set> search_tree_;
 
      Scheduler scheduler_;
 };
