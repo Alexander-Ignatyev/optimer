@@ -27,29 +27,13 @@ option (USE_UNIT_TESTS "Create unit tests" ON)
 
 # set paths
 set(PROJECT_SRC src)
-set(UNI_TESTS_SRC tests)
-
-# set build environment
-get_filename_component(CXX ${CMAKE_CXX_COMPILER} NAME)
-if(NOT ENV{OPTIMER_BUILD_ENV})
-    set(ENV{OPTIMER_BUILD_ENV} "${CMAKE_HOME_DIRECTORY}/env")
-    message("[OPTIMER]: Set OPTIMER_BUILD_ENV variable = $ENV{OPTIMER_BUILD_ENV}")
-endif()
-
-set(BUILD_ENV "$ENV{OPTIMER_BUILD_ENV}/${CXX}")
-
-if(NOT EXISTS ${BUILD_ENV})
-    message("[OPTIMER]: Build environment path ${BUILD_ENV} not found!")
-    message("[OPTIMER]: Starting to build environment...")
-    execute_process(COMMAND bash ${CMAKE_HOME_DIRECTORY}/contrib/build_env.sh ${CXX} $ENV{OPTIMER_BUILD_ENV}
-        WORKING_DIRECTORY ${CMAKE_HOME_DIRECTORY}/contrib)
-endif()
+set(UNIT_TESTS_SRC tests)
 
 link_directories("${BUILD_ENV}/lib")
 include_directories("${BUILD_ENV}/include" "${PROJECT_SRC}")
 
+get_filename_component(CXX ${CMAKE_CXX_COMPILER} NAME)
 message("[OPTIMER]: Compiler: ${CXX}")
-message("[OPTIMER]: Build environment: ${BUILD_ENV}")
 
 # compiler flags
 if(${CXX} MATCHES "^clang*" OR ${CXX} MATCHES "g\\+\\+")
@@ -79,14 +63,13 @@ add_executable(atsp ${PROJECT_SRC}/main.cpp)
 target_link_libraries(atsp ${LIBS})
 
 if(USE_UNIT_TESTS)
-	# teamcity extension for cppunit
-	include_directories("${CMAKE_HOME_DIRECTORY}/contrib/cppunit_teamcity")
-	add_subdirectory(contrib/cppunit_teamcity)
-	set(TEST_LIBS ${TEST_LIBS} cppunit_teamcity)
+	# UnitTest++
+	include_directories("${CMAKE_HOME_DIRECTORY}/contrib/UnitTest++/src")
+	add_subdirectory(contrib/UnitTest++)
+	set(TEST_LIBS ${TEST_LIBS} UnitTestPP)
 
 	# unittests
-	set(TEST_LIBS ${TEST_LIBS} cppunit)
-	file (GLOB SRC_TEST_FILES ${UNI_TESTS_SRC}/*.cpp)
+	file (GLOB SRC_TEST_FILES ${UNIT_TESTS_SRC}/*.cpp)
 	add_executable(optimer-tests ${SRC_TEST_FILES})
 	target_link_libraries(optimer-tests ${LIBS} ${TEST_LIBS})
 

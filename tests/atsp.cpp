@@ -1,8 +1,10 @@
 // Copyright (c) 2013 Alexander Ignatyev. All rights reserved.
 
 #include <string>
+#include <fstream>
 
-#include <cppunit/extensions/HelperMacros.h>
+#include <UnitTest++.h>
+#undef CHECK
 
 #include <parallel_bnb.h>
 #include <serial_bnb.h>
@@ -11,11 +13,12 @@
 #include <giving_scheduler.h>
 #include <requesting_scheduler.h>
 
+namespace {
 template <typename Solver>
 void test_problem(Solver &solver, const TspInitialData &data
     , value_type expected_value) {
     value_type record = solver.solve(data).value;
-    CPPUNIT_ASSERT_EQUAL(record, expected_value);
+    CHECK_EQUAL(record, expected_value);
 }
 
 void test_serial_problem_lifo(const TspInitialData &data
@@ -65,52 +68,8 @@ void test_parallel_problem_priority_requesting(const TspInitialData &data
 }
 
 
-class ATSPTest: public CppUnit::TestFixture {
-    CPPUNIT_TEST_SUITE(ATSPTest);
-    CPPUNIT_TEST(test_serial_FTV38_lifo);
-    CPPUNIT_TEST(test_serial_FTV38_priority);
-    CPPUNIT_TEST(test_parallel_FTV38_lifo);
-    CPPUNIT_TEST(test_parallel_FTV38_priority);
-    CPPUNIT_TEST(test_parallel_FTV38_lifo_requesting);
-    CPPUNIT_TEST(test_parallel_FTV38_priority_requesting);
-    CPPUNIT_TEST_SUITE_END();
-
-    void test_serial_FTV38_lifo() {
-        test_serial_problem_lifo(*ftv38_instance, fvt38_solution);
-    }
-
-    void test_serial_FTV38_priority() {
-        test_serial_problem_priority(*ftv38_instance, fvt38_solution);
-    }
-
-    void test_parallel_FTV38_lifo() {
-        test_parallel_problem_lifo_giving(*ftv38_instance, fvt38_solution);
-    }
-
-    void test_parallel_FTV38_priority() {
-        test_parallel_problem_priority_giving(*ftv38_instance, fvt38_solution);
-    }
-
-    void test_parallel_FTV38_lifo_requesting() {
-        test_parallel_problem_lifo_requesting(*ftv38_instance, fvt38_solution);
-    }
-
-    void test_parallel_FTV38_priority_requesting() {
-        test_parallel_problem_priority_requesting
-            (*ftv38_instance, fvt38_solution);
-    }
-
-    TspInitialData *ftv38_instance;
-    value_type *ftv38_matrix;
-    value_type fvt38_solution;
-
- public:
-    ATSPTest()
-        : ftv38_instance(nullptr)
-        , ftv38_matrix(nullptr)
-        , fvt38_solution(0) {}
-
-    void setUp() override {
+struct Ftv38Fixture {
+    Ftv38Fixture() {
         fvt38_solution = 1530;
 
         size_t dimension;
@@ -121,10 +80,50 @@ class ATSPTest: public CppUnit::TestFixture {
         ftv38_instance = new TspInitialData(ftv38_matrix, dimension);
     }
 
-    void tearDown() override {
+    ~Ftv38Fixture() {
         delete [] ftv38_matrix;
         delete ftv38_instance;
     }
+
+    Ftv38Fixture(const Ftv38Fixture &) = delete;
+    Ftv38Fixture &operator=(const Ftv38Fixture &) = delete;
+
+    TspInitialData *ftv38_instance;
+    value_type *ftv38_matrix;
+    value_type fvt38_solution;
 };
 
-CPPUNIT_TEST_SUITE_REGISTRATION(ATSPTest);
+SUITE(ATSPTest) {
+    TEST_FIXTURE(Ftv38Fixture, test_serial_FTV38_lifo) {
+        UNITTEST_TIME_CONSTRAINT(10000);
+        test_serial_problem_lifo(*ftv38_instance, fvt38_solution);
+    }
+
+    TEST_FIXTURE(Ftv38Fixture, test_serial_FTV38_priority) {
+        UNITTEST_TIME_CONSTRAINT(10000);
+        test_serial_problem_priority(*ftv38_instance, fvt38_solution);
+    }
+
+    TEST_FIXTURE(Ftv38Fixture, test_parallel_FTV38_lifo) {
+        UNITTEST_TIME_CONSTRAINT(10000);
+        test_parallel_problem_lifo_giving(*ftv38_instance, fvt38_solution);
+    }
+
+    TEST_FIXTURE(Ftv38Fixture, test_parallel_FTV38_priority) {
+        UNITTEST_TIME_CONSTRAINT(10000);
+        test_parallel_problem_priority_giving(*ftv38_instance, fvt38_solution);
+    }
+
+    TEST_FIXTURE(Ftv38Fixture, test_parallel_FTV38_lifo_requesting) {
+        UNITTEST_TIME_CONSTRAINT(10000);
+        test_parallel_problem_lifo_requesting(*ftv38_instance, fvt38_solution);
+    }
+
+    TEST_FIXTURE(Ftv38Fixture, test_parallel_FTV38_priority_requesting) {
+        UNITTEST_TIME_CONSTRAINT(10000);
+        test_parallel_problem_priority_requesting
+            (*ftv38_instance, fvt38_solution);
+    }
+}
+}  // namespace
+
