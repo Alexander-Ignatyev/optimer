@@ -46,10 +46,20 @@ if(MSVC)
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /EHsc")
 endif()
 
+message("[OPTIMER]: Compiler flags: ${CMAKE_CXX_FLAGS}")
+message("[OPTIMER]: Debug compiler flags: ${CMAKE_CXX_FLAGS_DEBUG}")
+message("[OPTIMER]: Minsizerel compiler flags: ${CMAKE_CXX_FLAGS_MINSIZEREL}")
+message("[OPTIMER]: Release compiler flags: ${CMAKE_CXX_FLAGS_RELEASE}")
+
+if(XCODE_VERSION)
+    set(CMAKE_XCODE_ATTRIBUTE_CLANG_CXX_LANGUAGE_STANDARD "c++11")
+    set(CMAKE_XCODE_ATTRIBUTE_CLANG_CXX_LIBRARY "libc++")
+endif()
+
 # gl2log: https://bitbucket.org/KjellKod/g2log/src
 include_directories("${CMAKE_HOME_DIRECTORY}/contrib/g2log/src")
 add_subdirectory (contrib/g2log)
-set (LIBS ${LIBS} lib_activeobject lib_g2logger)
+set (LIBS ${LIBS} lib_g2logger)
 
 # optimer lib
 set(SRC_CPP ${PROJECT_SRC}/data_loader.cpp ${PROJECT_SRC}/ini_file.cpp ${PROJECT_SRC}/stats.cpp ${PROJECT_SRC}/tsp.cpp)
