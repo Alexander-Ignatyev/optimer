@@ -1,7 +1,7 @@
 // Copyright (c) 2013 Alexander Ignatyev. All rights reserved.
 
-#ifndef SRC_BNB_H_
-#define SRC_BNB_H_
+#ifndef BNB_BNB_H_
+#define BNB_BNB_H_
 
 #include <stack>
 #include <queue>
@@ -59,4 +59,4 @@ std::priority_queue<Node<typename Solver::Set> *
         (first, last);
 }
 
-#endif  // SRC_BNB_H_
+#endif  // BNB_BNB_H_

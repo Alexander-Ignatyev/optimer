@@ -1,13 +1,14 @@
 // Copyright (c) 2013 Alexander Ignatyev. All rights reserved.
 
-#ifndef SRC_TSP_H_
-#define SRC_TSP_H_
+#ifndef TSP_ASSYMETRIC_TSP_H_
+#define TSP_ASSYMETRIC_TSP_H_
 
 #include <vector>
 
-#include "defs.h"
+#include <bnb/defs.h>
+#include <bnb/tree.h>
+
 #include "ap_solver.h"
-#include "tree.h"
 
 struct Stats;
 
@@ -81,4 +82,4 @@ class TspSolver {
 std::ostream &operator<<(std::ostream &os, const TspSolver::Point &point);
 std::ostream &operator<<(std::ostream &os, const TspSolver::Set &set);
 
-#endif  // SRC_TSP_H_
+#endif  // TSP_ASSYMETRIC_TSP_H_

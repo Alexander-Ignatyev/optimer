@@ -1,7 +1,7 @@
 // Copyright (c) 2013 Alexander Ignatyev. All rights reserved.
 
-#ifndef SRC_GIVING_SCHEDULER_H_
-#define SRC_GIVING_SCHEDULER_H_
+#ifndef BNB_GIVING_SCHEDULER_H_
+#define BNB_GIVING_SCHEDULER_H_
 
 #include <thread>
 #include <condition_variable>
@@ -85,4 +85,4 @@ class GivingScheduler {
     std::condition_variable condvar_sets_;
 };
 
-#endif  // SRC_GIVING_SCHEDULER_H_
+#endif  // BNB_GIVING_SCHEDULER_H_

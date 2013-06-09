@@ -1,7 +1,7 @@
 // Copyright (c) 2013 Alexander Ignatyev. All rights reserved.
 
-#ifndef SRC_AP_SOLVER_H_
-#define SRC_AP_SOLVER_H_
+#ifndef TSP_ASSYMETRIC_AP_SOLVER_H_
+#define TSP_ASSYMETRIC_AP_SOLVER_H_
 
 #include <cmath>
 
@@ -242,4 +242,4 @@ size_t ApSolver<T>::next_unassigned(const Solution *solution) const {
 template <typename T>
 const T ApSolver<T>::big_value_ = std::numeric_limits<T>::max();
 
-#endif  // SRC_AP_SOLVER_H_
+#endif  // TSP_ASSYMETRIC_AP_SOLVER_H_

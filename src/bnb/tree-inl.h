@@ -1,7 +1,7 @@
 // Copyright (c) 2013 Alexander Ignatyev. All rights reserved.
 
-#ifndef SRC_TREE_INL_H_
-#define SRC_TREE_INL_H_
+#ifndef BNB_TREE_INL_H_
+#define BNB_TREE_INL_H_
 
 #include <cassert>
 
@@ -55,4 +55,4 @@ bool BnbSearchTree<D>::has_cycle(const Node<D> *start) {
     return false;
 }
 
-#endif  // SRC_TREE_INL_H_
+#endif  // BNB_TREE_INL_H_

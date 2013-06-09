@@ -1,16 +1,17 @@
 // Copyright (c) 2013 Alexander Ignatyev. All rights reserved.
 
-#ifndef SRC_SERIAL_BNB_H_
-#define SRC_SERIAL_BNB_H_
+#ifndef BNB_SERIAL_BNB_H_
+#define BNB_SERIAL_BNB_H_
 
 #include <stack>
 #include <vector>
 #include <iostream>
 
+#include <common/timer.h>
+
 #include "defs.h"
 #include "bnb.h"
 #include "tree.h"
-#include "timer.h"
 #include "stats.h"
 
 template <typename Solver, typename NodesContainer = LifoContainer>
@@ -30,4 +31,4 @@ class SerialBNB {
 
 #include "serial_bnb-inl.h"
 
-#endif  // SRC_SERIAL_BNB_H_
+#endif  // BNB_SERIAL_BNB_H_

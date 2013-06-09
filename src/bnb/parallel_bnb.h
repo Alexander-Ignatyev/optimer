@@ -1,7 +1,7 @@
 // Copyright (c) 2013 Alexander Ignatyev. All rights reserved.
 
-#ifndef SRC_PARALLEL_BNB_H_
-#define SRC_PARALLEL_BNB_H_
+#ifndef BNB_PARALLEL_BNB_H_
+#define BNB_PARALLEL_BNB_H_
 
 #include <thread>
 #include <condition_variable>
@@ -11,11 +11,12 @@
 #include <queue>
 #include <algorithm>
 
+#include <common/timer.h>
+
 #include "defs.h"
 #include "bnb.h"
 #include "tree.h"
 #include "stats.h"
-#include "timer.h"
 
 template <typename Solver, typename NodesContainer, typename Scheduler>
 class ParallelBNB {
@@ -54,4 +55,4 @@ class ParallelBNB {
 
 #include "parallel_bnb-inl.h"
 
-#endif  // SRC_PARALLEL_BNB_H_
+#endif  // BNB_PARALLEL_BNB_H_

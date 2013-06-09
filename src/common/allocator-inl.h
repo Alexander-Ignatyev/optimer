@@ -1,7 +1,7 @@
 // Copyright (c) 2013 Alexander Ignatyev. All rights reserved.
 
-#ifndef SRC_ALLOCATOR_INL_H_
-#define SRC_ALLOCATOR_INL_H_
+#ifndef COMMON_ALLOCATOR_INL_H_
+#define COMMON_ALLOCATOR_INL_H_
 
 #include <cstdint>
 
@@ -76,4 +76,4 @@ typename RefCountedAllocator<N>::Element *
 
 #include "allocator-inl.h"
 
-#endif  // SRC_ALLOCATOR_INL_H_
+#endif  // COMMON_ALLOCATOR_INL_H_

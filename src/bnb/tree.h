@@ -1,11 +1,11 @@
 // Copyright (c) 2013 Alexander Ignatyev. All rights reserved.
 
-#ifndef SRC_TREE_H_
-#define SRC_TREE_H_
+#ifndef BNB_TREE_H_
+#define BNB_TREE_H_
 
 #include <mutex>
 
-#include "allocator.h"
+#include <common/allocator.h>
 
 template <typename D>
 struct Node {
@@ -32,4 +32,4 @@ class BnbSearchTree {
 
 #include "tree-inl.h"
 
-#endif  // SRC_TREE_H_
+#endif  // BNB_TREE_H_

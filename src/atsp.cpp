@@ -8,13 +8,14 @@
 #include <g2log.h>
 #include <g2logworker.h>
 
-#include "tsp.h"
-#include "ini_file.h"
-#include "parallel_bnb.h"
-#include "serial_bnb.h"
-#include "data_loader.h"
-#include "giving_scheduler.h"
-#include "requesting_scheduler.h"
+#include <common/ini_file.h>
+#include <bnb/parallel_bnb.h>
+#include <bnb/serial_bnb.h>
+#include <bnb/giving_scheduler.h>
+#include <bnb/requesting_scheduler.h>
+
+#include <tsp/assymetric/tsp.h>
+#include <tsp/assymetric/data_loader.h>
 
 namespace tsp_config {
 
@@ -65,6 +66,13 @@ void get_scheduler_params(const IniSection &scheduler
         scheduler["num_threads"], nullptr, 0);
     params->num_minimum_nodes = std::stoul(
         scheduler["num_minimum_nodes"], nullptr, 0);
+
+    if (params->num_threads == 0) {
+        std::cerr << "invalid num_threads param" << std::endl;
+    }
+    if (params->num_minimum_nodes == 0) {
+        std::cerr << "invalid num_minimum_nodes param" << std::endl;
+    }
 }
 
 const std::string &problem_path(const IniFile &ini) {

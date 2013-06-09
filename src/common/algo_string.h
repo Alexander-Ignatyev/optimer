@@ -1,7 +1,7 @@
 // Copyright (c) 2013 Alexander Ignatyev. All rights reserved.
 
-#ifndef SRC_ALGO_STRING_H_
-#define SRC_ALGO_STRING_H_
+#ifndef COMMON_ALGO_STRING_H_
+#define COMMON_ALGO_STRING_H_
 
 #include <cctype>
 
@@ -53,4 +53,4 @@ inline std::string &trim(std::string &s) {
     return ltrim(rtrim(s));
 }
 
-#endif  // SRC_ALGO_STRING_H_
+#endif  // COMMON_ALGO_STRING_H_

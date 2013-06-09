@@ -1,7 +1,7 @@
 // Copyright (c) 2013 Alexander Ignatyev. All rights reserved.
 
 #include <UnitTest++.h>
-#include <algo_string.h>
+#include <common/algo_string.h>
 
 namespace {
 SUITE(AlgoStringTest) {

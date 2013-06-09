@@ -1,7 +1,7 @@
 // Copyright (c) 2013 Alexander Ignatyev. All rights reserved.
 
-#ifndef SRC_TIMER_H_
-#define SRC_TIMER_H_
+#ifndef COMMON_TIMER_H_
+#define COMMON_TIMER_H_
 
 #include <chrono>
 
@@ -28,4 +28,4 @@ class Timer {
     std::chrono::steady_clock::time_point start_;
 };
 
-#endif  // SRC_TIMER_H_
+#endif  // COMMON_TIMER_H_

@@ -4,7 +4,7 @@
 
 #include <fstream>
 
-#include "algo_string.h"
+#include <common/algo_string.h>
 
 const std::string IniSection::empty_string_;
 

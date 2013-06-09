@@ -1,7 +1,7 @@
 // Copyright (c) 2013 Alexander Ignatyev. All rights reserved.
 
-#ifndef SRC_INI_FILE_H_
-#define SRC_INI_FILE_H_
+#ifndef COMMON_INI_FILE_H_
+#define COMMON_INI_FILE_H_
 
 #include <iosfwd>
 #include <string>
@@ -34,4 +34,4 @@ class IniFile {
     std::unordered_map<std::string, IniSection> sections_;
 };
 
-#endif  // SRC_INI_FILE_H_
+#endif  // COMMON_INI_FILE_H_

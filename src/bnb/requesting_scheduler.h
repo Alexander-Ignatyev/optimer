@@ -1,7 +1,7 @@
 // Copyright (c) 2013 Alexander Ignatyev. All rights reserved.
 
-#ifndef SRC_REQUESTING_SCHEDULER_H_
-#define SRC_REQUESTING_SCHEDULER_H_
+#ifndef BNB_REQUESTING_SCHEDULER_H_
+#define BNB_REQUESTING_SCHEDULER_H_
 
 #include <atomic>
 #include <thread>
@@ -87,4 +87,4 @@ class RequestingScheduler {
     std::condition_variable condvar_sets_;
 };
 
-#endif  // SRC_REQUESTING_SCHEDULER_H_
+#endif  // BNB_REQUESTING_SCHEDULER_H_

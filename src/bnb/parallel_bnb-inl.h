@@ -1,7 +1,7 @@
 // Copyright (c) 2013 Alexander Ignatyev. All rights reserved.
 
-#ifndef SRC_PARALLEL_BNB_INL_H_
-#define SRC_PARALLEL_BNB_INL_H_
+#ifndef BNB_PARALLEL_BNB_INL_H_
+#define BNB_PARALLEL_BNB_INL_H_
 
 template <typename Solver, typename NodesContainer, typename Scheduler>
 typename Solver::Solution
@@ -139,4 +139,4 @@ void ParallelBNB<SolverFactory, NodesContainer, Scheduler>
     os << (total_stats.sets_generated / average_stats.seconds) << std::endl;
 }
 
-#endif  // SRC_PARALLEL_BNB_INL_H_
+#endif  // BNB_PARALLEL_BNB_INL_H_

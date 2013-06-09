@@ -11,7 +11,7 @@
 
 #include <g2log.h>
 
-#include "stats.h"
+#include <bnb/stats.h>
 
 namespace {
 bool is_m(int val) {

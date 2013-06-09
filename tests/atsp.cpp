@@ -6,12 +6,13 @@
 #include <UnitTest++.h>
 #undef CHECK
 
-#include <parallel_bnb.h>
-#include <serial_bnb.h>
-#include <tsp.h>
-#include <data_loader.h>
-#include <giving_scheduler.h>
-#include <requesting_scheduler.h>
+#include <bnb/parallel_bnb.h>
+#include <bnb/serial_bnb.h>
+#include <bnb/giving_scheduler.h>
+#include <bnb/requesting_scheduler.h>
+
+#include <tsp/assymetric/data_loader.h>
+#include <tsp/assymetric/tsp.h>
 
 namespace {
 template <typename Solver>

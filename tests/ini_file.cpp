@@ -6,7 +6,7 @@
 
 #include <UnitTest++.h>
 
-#include <ini_file.h>
+#include <common/ini_file.h>
 
 namespace {
 SUITE(IniFileTest) {

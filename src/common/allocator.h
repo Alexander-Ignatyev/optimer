@@ -1,7 +1,7 @@
 // Copyright (c) 2013 Alexander Ignatyev. All rights reserved.
 
-#ifndef SRC_ALLOCATOR_H_
-#define SRC_ALLOCATOR_H_
+#ifndef COMMON_ALLOCATOR_H_
+#define COMMON_ALLOCATOR_H_
 
 #include <list>
 
@@ -30,4 +30,4 @@ class RefCountedAllocator {
 
 #include "allocator-inl.h"
 
-#endif  // SRC_ALLOCATOR_H_
+#endif  // COMMON_ALLOCATOR_H_

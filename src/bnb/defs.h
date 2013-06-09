@@ -1,7 +1,7 @@
 // Copyright (c) 2013 Alexander Ignatyev. All rights reserved.
 
-#ifndef SRC_DEFS_H_
-#define SRC_DEFS_H_
+#ifndef BNB_DEFS_H_
+#define BNB_DEFS_H_
 
 #include <cstddef>
 
@@ -13,4 +13,4 @@ const vertex_type School = 0;
 const vertex_type Nil = 9000;
 const value_type EPSILON = (value_type)0.0001;
 
-#endif  // SRC_DEFS_H_
+#endif  // BNB_DEFS_H_

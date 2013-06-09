@@ -1,7 +1,7 @@
 // Copyright (c) 2013 Alexander Ignatyev. All rights reserved.
 
-#ifndef SRC_SERIAL_BNB_INL_H_
-#define SRC_SERIAL_BNB_INL_H_
+#ifndef BNB_SERIAL_BNB_INL_H_
+#define BNB_SERIAL_BNB_INL_H_
 
 template <typename Solver, typename NodesContainer>
 typename Solver::Solution
@@ -52,4 +52,4 @@ void SerialBNB<Solver, NodesContainer>::print_stats(std::ostream &os) const {
     os << (stats_.sets_generated / stats_.seconds) << std::endl;
 }
 
-#endif  // SRC_SERIAL_BNB_INL_H_
+#endif  // BNB_SERIAL_BNB_INL_H_

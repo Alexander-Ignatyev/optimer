@@ -1,7 +1,7 @@
 // Copyright (c) 2013 Alexander Ignatyev. All rights reserved.
 
-#ifndef SRC_STATS_H_
-#define SRC_STATS_H_
+#ifndef BNB_STATS_H_
+#define BNB_STATS_H_
 
 #include <iosfwd>
 
@@ -23,4 +23,4 @@ std::ostream & operator << (std::ostream &os, const Stats &stats);
 
 Stats operator / (Stats lhs, double value);
 
-#endif  // SRC_STATS_H_
+#endif  // BNB_STATS_H_

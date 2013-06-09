@@ -25,13 +25,6 @@ project(optimer)
 
 option (USE_UNIT_TESTS "Create unit tests" ON)
 
-# set paths
-set(PROJECT_SRC src)
-set(UNIT_TESTS_SRC tests)
-
-link_directories("${BUILD_ENV}/lib")
-include_directories("${BUILD_ENV}/include" "${PROJECT_SRC}")
-
 get_filename_component(CXX ${CMAKE_CXX_COMPILER} NAME)
 message("[OPTIMER]: Compiler: ${CXX}")
 
@@ -56,23 +49,38 @@ if(XCODE_VERSION)
     set(CMAKE_XCODE_ATTRIBUTE_CLANG_CXX_LIBRARY "libc++")
 endif()
 
+# set paths
+set(PROJECT_SRC ${CMAKE_CURRENT_SOURCE_DIR}/src)
+include_directories(${PROJECT_SRC})
+
 # gl2log: https://bitbucket.org/KjellKod/g2log/src
 include_directories("${CMAKE_HOME_DIRECTORY}/contrib/g2log/src")
 add_subdirectory (contrib/g2log)
 set (LIBS ${LIBS} lib_g2logger)
 
-# optimer lib
-set(SRC_CPP ${PROJECT_SRC}/data_loader.cpp ${PROJECT_SRC}/ini_file.cpp ${PROJECT_SRC}/stats.cpp ${PROJECT_SRC}/tsp.cpp)
-file(GLOB SRC_H ${PROJECT_SRC}/*.h)
-set(SRC_FILES ${SRC_CPP} ${SRC_H})
-add_library(optimer STATIC ${SRC_FILES})
-set(LIBS ${LIBS} optimer)
+# common lib
+file(GLOB COMMON_SRC ${PROJECT_SRC}/common/*.cpp ${PROJECT_SRC}/common/*.h)
+add_library(common STATIC ${COMMON_SRC})
+set(LIBS ${LIBS} common)
+
+# bnb lib
+file(GLOB BNB_SRC ${PROJECT_SRC}/bnb/*.cpp ${PROJECT_SRC}/bnb/*.h)
+add_library(bnb STATIC ${BNB_SRC})
+set(LIBS ${LIBS} bnb)
+
+# atsp library
+file(GLOB ASSYMETRIC_TSP_SRC ${PROJECT_SRC}/tsp/assymetric/*.cpp ${PROJECT_SRC}/tsp/assymetric/*.h)
+add_library(assymetric_tsp STATIC ${ASSYMETRIC_TSP_SRC})
+set(LIBS ${LIBS} assymetric_tsp)
 
 # atsp executable
-add_executable(atsp ${PROJECT_SRC}/main.cpp)
+file(GLOB ATSP_SRC ${PROJECT_SRC}/tsp/assymetric/*.cpp ${PROJECT_SRC}/tsp/assymetric/*.h)
+add_executable(atsp ${PROJECT_SRC}/atsp.cpp)
 target_link_libraries(atsp ${LIBS})
 
 if(USE_UNIT_TESTS)
+    set(UNIT_TESTS_SRC tests)
+
 	# UnitTest++
 	include_directories("${CMAKE_HOME_DIRECTORY}/contrib/UnitTest++/src")
 	add_subdirectory(contrib/UnitTest++)
