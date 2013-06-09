@@ -72,5 +72,9 @@ if(APPLE)
     set(CMAKE_CXX_FLAGS "-D_XOPEN_SOURCE ${CMAKE_CXX_FLAGS}")
 endif()
 
+if(UNIX)
+    set(CMAKE_CXX_FLAGS "-D_GLIBCXX_USE_NANOSLEEP ${CMAKE_CXX_FLAGS}")
+endif()
+
 set(SRC_FILES ${SRC_CPP} ${SRC_H} ${SRC_PLATFORM_SPECIFIC})
 add_library(lib_g2logger  ${SRC_FILES})
