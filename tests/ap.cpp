@@ -2,7 +2,7 @@
 
 #include <algorithm>
 #include <UnitTest++.h>
-#include <tsp/assymetric/ap_solver.h>
+#include <tsp/asymmetric/ap_solver.h>
 
 namespace {
 void test_problem(const double *data, size_t dimension

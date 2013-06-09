@@ -1,7 +1,7 @@
 // Copyright (c) 2013 Alexander Ignatyev. All rights reserved.
 
-#ifndef TSP_ASSYMETRIC_TSP_H_
-#define TSP_ASSYMETRIC_TSP_H_
+#ifndef TSP_ASYMMETRIC_TSP_H_
+#define TSP_ASYMMETRIC_TSP_H_
 
 #include <vector>
 
@@ -82,4 +82,4 @@ class TspSolver {
 std::ostream &operator<<(std::ostream &os, const TspSolver::Point &point);
 std::ostream &operator<<(std::ostream &os, const TspSolver::Set &set);
 
-#endif  // TSP_ASSYMETRIC_TSP_H_
+#endif  // TSP_ASYMMETRIC_TSP_H_

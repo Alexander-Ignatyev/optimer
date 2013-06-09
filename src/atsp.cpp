@@ -14,8 +14,8 @@
 #include <bnb/giving_scheduler.h>
 #include <bnb/requesting_scheduler.h>
 
-#include <tsp/assymetric/tsp.h>
-#include <tsp/assymetric/data_loader.h>
+#include <tsp/asymmetric/tsp.h>
+#include <tsp/asymmetric/data_loader.h>
 
 namespace tsp_config {
 

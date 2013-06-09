@@ -69,12 +69,11 @@ add_library(bnb STATIC ${BNB_SRC})
 set(LIBS ${LIBS} bnb)
 
 # atsp library
-file(GLOB ASSYMETRIC_TSP_SRC ${PROJECT_SRC}/tsp/assymetric/*.cpp ${PROJECT_SRC}/tsp/assymetric/*.h)
-add_library(assymetric_tsp STATIC ${ASSYMETRIC_TSP_SRC})
-set(LIBS ${LIBS} assymetric_tsp)
+file(GLOB ASYMMETRIC_TSP_SRC ${PROJECT_SRC}/tsp/asymmetric/*.cpp ${PROJECT_SRC}/tsp/asymmetric/*.h)
+add_library(asymmetric_tsp STATIC ${ASYMMETRIC_TSP_SRC})
+set(LIBS ${LIBS} asymmetric_tsp)
 
 # atsp executable
-file(GLOB ATSP_SRC ${PROJECT_SRC}/tsp/assymetric/*.cpp ${PROJECT_SRC}/tsp/assymetric/*.h)
 add_executable(atsp ${PROJECT_SRC}/atsp.cpp)
 target_link_libraries(atsp ${LIBS})
 
