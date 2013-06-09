@@ -78,6 +78,15 @@ file(GLOB ATSP_SRC ${PROJECT_SRC}/tsp/assymetric/*.cpp ${PROJECT_SRC}/tsp/assyme
 add_executable(atsp ${PROJECT_SRC}/atsp.cpp)
 target_link_libraries(atsp ${LIBS})
 
+# stsp library
+file(GLOB SYMMETRIC_TSP_SRC ${PROJECT_SRC}/tsp/symmetric/*.cpp ${PROJECT_SRC}/tsp/symmetric/*.h)
+add_library(symmetric_tsp STATIC ${SYMMETRIC_TSP_SRC})
+set(LIBS ${LIBS} symmetric_tsp)
+
+# stsp executable
+add_executable(stsp ${PROJECT_SRC}/stsp.cpp)
+target_link_libraries(stsp ${LIBS})
+
 if(USE_UNIT_TESTS)
     set(UNIT_TESTS_SRC tests)
 

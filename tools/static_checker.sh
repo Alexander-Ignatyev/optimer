@@ -10,7 +10,7 @@ fi
 
 if [ "$1" == "cpplint" ];
 then
-    python tools/cpplint.py --root=$2 --filter="-build/include,-runtime/reference,-readability/streams,-readability/check" `find $2` 2>&1
+    python tools/cpplint.py --root=$2 --filter="-build/include,-runtime/reference,-readability/streams,-readability/check,-readability/braces" `find $2` 2>&1
 fi
 
 if [ "$1" == "cppcheck" ];
