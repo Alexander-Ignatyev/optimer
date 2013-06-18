@@ -16,6 +16,10 @@
 # % cd build
 # % cmake -DUSE_UNIT_TESTS=OFF ..
 # unit tests are not supported for VS now
+#
+# Known issue for MacPorts clang-3.3: http://trac.macports.org/ticket/38527
+# to fix it just add a line to ~/.profile: 
+# export DYLD_LIBRARY_PATH=$DYLD_LIBRARY_PATH:/opt/local/libexec/llvm-3.3/lib/clang/3.3/lib/darwin
 
 cmake_minimum_required(VERSION 2.8)
 enable_language(CXX)
@@ -34,6 +38,7 @@ if(${CXX} MATCHES "^clang*" OR ${CXX} MATCHES "g\\+\\+")
 endif()
 if (${CXX} MATCHES "^clang*")
    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++")
+   set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -fsanitize=address")
 endif()
 if(MSVC)
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /EHsc")

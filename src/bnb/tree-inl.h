@@ -23,6 +23,7 @@ Node<D> *BnbSearchTree<D>::create_node(const Node<D> *parent) {
 
     ++num_nodes_;
     Node<D> *result = static_cast<Node<D> *>(allocator_.allocate());
+    new(result)Node<D>;
     result->parent = parent;
 
     if (parent != nullptr) {
@@ -37,6 +38,7 @@ template <typename D>
 void BnbSearchTree<D>::release_node(Node<D> *node) {
     std::lock_guard<std::mutex> lock(mutex_);
     while (node && allocator_.dec_refs(node) == 0) {
+        node->~Node<D>();
         --num_nodes_;
         node->data.clear();
         node = const_cast<Node<D> *>(node->parent);
