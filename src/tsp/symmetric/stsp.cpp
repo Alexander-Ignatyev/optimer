@@ -2,6 +2,8 @@
 
 #include "stsp.h"
 
+#include <cstring>
+
 #include <g2log.h>
 #include <bnb/stats.h>
 #include <tsp/symmetric/ms_one_tree.h>
