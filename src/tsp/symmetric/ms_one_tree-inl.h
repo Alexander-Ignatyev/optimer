@@ -10,10 +10,7 @@ constexpr T max_val() {
 }
 
 namespace Prim {
-bool vertex_is_included(size_t vertex
-                        , const std::vector<size_t> &min_indices) {
-    return min_indices[vertex] < min_indices.size();
-}
+bool vertex_is_included(size_t vertex, const std::vector<size_t> &min_indices);
 
 template <typename T>
 void update_mins(const T *matrix
