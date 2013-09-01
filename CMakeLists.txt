@@ -73,6 +73,11 @@ file(GLOB BNB_SRC ${PROJECT_SRC}/bnb/*.cpp ${PROJECT_SRC}/bnb/*.h)
 add_library(bnb STATIC ${BNB_SRC})
 set(LIBS ${LIBS} bnb)
 
+# tsp common
+file(GLOB TSP_COMMON_SRC ${PROJECT_SRC}/tsp/common/*.cpp ${PROJECT_SRC}/tsp/common/*.h)
+add_library(tsp_common STATIC ${TSP_COMMON_SRC})
+set(LIBS ${LIBS} tsp_common)
+
 # atsp library
 file(GLOB ASYMMETRIC_TSP_SRC ${PROJECT_SRC}/tsp/asymmetric/*.cpp ${PROJECT_SRC}/tsp/asymmetric/*.h)
 add_library(asymmetric_tsp STATIC ${ASYMMETRIC_TSP_SRC})

@@ -1,0 +1,159 @@
+// Copyright (c) 2013 Alexander Ignatyev. All rights reserved.
+
+#include "data_loader.h"
+
+#include <cstdlib>
+
+#include <iostream>
+#include <sstream>
+#include <string>
+#include <functional>
+#include <stdexcept>
+
+#include <common/algo_string.h>
+
+namespace TspCommon {
+
+bool starts_with(const std::string &str, const std::string &pattern) {
+    return str.compare(0, pattern.size(), pattern) == 0;
+}
+
+class TspLibLoader {
+    static const std::string MARKER_DIMENSION;
+    static const std::string MARKER_FORMAT;
+    static const std::string MARKER_DATA;
+    static const std::string MARKER_EOF;
+
+ public:
+    TspLibLoader();
+    void load(std::istream &is, std::vector<value_type> &matrix
+              , size_t &dimension);
+
+    TspLibLoader(const TspLibLoader &) = delete;
+    TspLibLoader &operator=(const TspLibLoader &) = delete;
+
+ private:
+    // actions:
+    void read_common_line(const std::string &line);
+    void read_lower_diag_data_line(const std::string &line);
+    void read_full_matrix_data_line(const std::string &line);
+
+    void read_dimension(const std::string &line);
+    void read_format(const std::string &line);
+    void read_edges(const std::string &line);
+
+    std::function<void(const std::string &)> next_action_;
+    std::function<void(const std::string &)> data_action_;
+    size_t dimension_;
+    std::vector<value_type> matrix_;
+};
+
+const std::string TspLibLoader::MARKER_DIMENSION = "DIMENSION: ";
+const std::string TspLibLoader::MARKER_FORMAT = "EDGE_WEIGHT_FORMAT: ";
+const std::string TspLibLoader::MARKER_DATA = "EDGE_WEIGHT_SECTION";
+const std::string TspLibLoader::MARKER_EOF = "EOF";
+
+TspLibLoader::TspLibLoader(): dimension_(0) {
+}
+
+void TspLibLoader::load(std::istream &is, std::vector<value_type> &matrix
+    , size_t &dimension) {
+    using std::placeholders::_1;
+    matrix_.clear();
+    dimension_ = 0;
+    std::string line;
+    next_action_ = std::bind(&TspLibLoader::read_common_line, this, _1);
+    while (std::getline(is, line)) {
+        next_action_(line);
+    }
+    matrix.swap(matrix_);
+    dimension = dimension_;
+}
+
+void TspLibLoader::read_common_line(const std::string &line) {
+    using std::placeholders::_1;
+    if (starts_with(line, MARKER_DIMENSION)) {
+        read_dimension(line);
+    } else if (starts_with(line, MARKER_FORMAT)) {
+        read_format(line);
+    } else if (starts_with(line, MARKER_DATA)) {
+        next_action_ = data_action_;
+    }
+}
+
+void TspLibLoader::read_lower_diag_data_line(const std::string &line) {
+    using std::placeholders::_1;
+    if (!starts_with(line, MARKER_EOF)) {
+        read_edges(line);
+    } else {
+        // construct matrix
+        std::vector<value_type> data;
+        data.swap(matrix_);
+        matrix_.resize(dimension_*dimension_);
+        size_t pos = 0;
+        for (size_t i = 0; i < dimension_; ++i) {
+            for (size_t j = 0; j < i+1; ++j) {
+                if (i != j) {
+                    matrix_[i*dimension_+j] = data[pos];
+                    matrix_[j*dimension_+i] = data[pos];
+                } else {
+                    matrix_[i*dimension_+j] = M_VAL;
+                }
+                ++pos;
+            }
+        }
+    }
+}
+
+void TspLibLoader::read_full_matrix_data_line(const std::string &line) {
+    using std::placeholders::_1;
+    if (!starts_with(line, MARKER_EOF)) {
+        read_edges(line);
+    } else {
+        // fix diagonal values
+        for (size_t i = 0; i < dimension_; ++i) {
+            matrix_[i*dimension_+i] = M_VAL;
+        }
+    }
+}
+
+void TspLibLoader::read_dimension(const std::string &line) {
+    dimension_ = atoi(line.substr(MARKER_DIMENSION.size()).c_str());
+    matrix_.reserve(dimension_*dimension_);
+}
+
+void TspLibLoader::read_format(const std::string &line) {
+    using std::placeholders::_1;
+    std::string format = line.substr(MARKER_FORMAT.size()).c_str();
+    format = trim(format);
+    if (format == "LOWER_DIAG_ROW") {
+        data_action_ =
+            std::bind(&TspLibLoader::read_lower_diag_data_line, this, _1);
+    } else if (format == "FULL_MATRIX") {
+        data_action_ =
+            std::bind(&TspLibLoader::read_full_matrix_data_line, this, _1);
+    } else {
+        throw std::domain_error("Unknown format: " + format);
+    }
+}
+
+void TspLibLoader::read_edges(const std::string &line) {
+    std::istringstream iss(line);
+    value_type val;
+    iss >> val;
+    while (iss) {
+        matrix_.push_back(val);
+        iss >> val;
+    }
+}
+
+
+bool load_tsplib_problem(std::istream &is, std::vector<value_type> &matrix
+                         , size_t &dimension) {
+    TspLibLoader loader;
+    loader.load(is, matrix, dimension);
+    return true;
+}
+
+}  // namespace TspCommon
+

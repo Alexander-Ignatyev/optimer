@@ -14,20 +14,20 @@
 #include <bnb/giving_scheduler.h>
 #include <bnb/requesting_scheduler.h>
 
+#include <tsp/common/data_loader.h>
 #include <tsp/asymmetric/tsp.h>
-#include <tsp/asymmetric/data_loader.h>
 
 namespace tsp_config {
 
 template <typename BNBSolver>
 void solve(const std::string &problem_path, BNBSolver &solver) {
-    value_type *matrix;
     size_t rank;
     std::ifstream ifs(problem_path);
-    load_tsplib_problem(ifs, matrix, rank);
+    std::vector<value_type> matrix;
+    TspCommon::load_tsplib_problem(ifs, matrix, rank);
     ifs.close();
 
-    TspInitialData data(matrix, rank);
+    TspInitialData data(matrix.data(), rank);
 
     double valuation_time = -1;
     value_type record = 0;
@@ -39,7 +39,6 @@ void solve(const std::string &problem_path, BNBSolver &solver) {
     catch(std::bad_alloc &) {
         std::cout << "Out of memory\n";
     }
-    delete[] matrix;
 
     std::ostringstream oss;
     solver.print_stats(oss);

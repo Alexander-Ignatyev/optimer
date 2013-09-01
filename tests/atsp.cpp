@@ -11,7 +11,7 @@
 #include <bnb/giving_scheduler.h>
 #include <bnb/requesting_scheduler.h>
 
-#include <tsp/asymmetric/data_loader.h>
+#include <tsp/common/data_loader.h>
 #include <tsp/asymmetric/tsp.h>
 
 namespace {
@@ -75,14 +75,14 @@ struct Ftv38Fixture {
 
         size_t dimension;
         std::ifstream ifs("data/ftv38.atsp");
-        load_tsplib_problem(ifs, ftv38_matrix, dimension);
+        TspCommon::load_tsplib_problem(ifs, buffer, dimension);
+        ftv38_matrix = buffer.data();
         ifs.close();
 
         ftv38_instance = new TspInitialData(ftv38_matrix, dimension);
     }
 
     ~Ftv38Fixture() {
-        delete [] ftv38_matrix;
         delete ftv38_instance;
     }
 
@@ -92,6 +92,7 @@ struct Ftv38Fixture {
     TspInitialData *ftv38_instance;
     value_type *ftv38_matrix;
     value_type fvt38_solution;
+    std::vector<value_type> buffer;
 };
 
 SUITE(ATSPTest) {
