@@ -26,7 +26,7 @@ namespace {
         size_t dimension = 12;
 
         stsp::LagrangeanRelaxation lr(dimension);
-        auto solution = lr.solve(matrix, dimension, 0.9, 30.0, 100);
+        auto solution = lr.solve(matrix, dimension, 1790.0, 100);
         CHECK_CLOSE(1760.0, static_cast<double>(solution.value), 0.001);
     }
 }  // namespace

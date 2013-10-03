@@ -15,8 +15,7 @@ namespace stsp {
         MSOneTree::Solution<value_type> solve(
               const std::vector<value_type> &initial_matrix
               , size_t dimension
-              , value_type alpha
-              , value_type initial_step
+              , value_type upper_bound
               , size_t max_iter);
     private:
         std::vector<value_type> matrix_;
