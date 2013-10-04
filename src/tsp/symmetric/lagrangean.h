@@ -11,7 +11,6 @@
 namespace stsp {
     class LagrangeanRelaxation {
     public:
-        explicit LagrangeanRelaxation(size_t max_dimension);
         MSOneTree::Solution<value_type> solve(
               const std::vector<value_type> &initial_matrix
               , size_t dimension

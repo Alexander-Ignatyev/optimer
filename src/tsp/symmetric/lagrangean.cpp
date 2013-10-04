@@ -8,10 +8,6 @@
 #include <numeric>
 
 namespace stsp {
-    LagrangeanRelaxation::LagrangeanRelaxation(size_t max_dimension) {
-        matrix_.resize(max_dimension * max_dimension);
-    }
-
     MSOneTree::Solution<value_type> LagrangeanRelaxation::solve(
             const std::vector<value_type> &initial_matrix
             , size_t dimension
@@ -20,8 +16,14 @@ namespace stsp {
         static const size_t TOUR_DEGREE = 2;
         static const value_type ALPHA_START_VALUE = 2;
 
+        if (dimension * dimension > matrix_.size()) {
+            matrix_.resize(dimension*dimension);
+        }
+
+        value_type *matrix = matrix_.data();
+
         MSOneTree::Solution<value_type> solution;
-        std::memcpy(matrix_.data(), initial_matrix.data()
+        std::memcpy(matrix, initial_matrix.data()
                     , sizeof(value_type)*dimension*dimension);
 
         std::vector<value_type> lambda(dimension, value_type());
@@ -30,7 +32,7 @@ namespace stsp {
         value_type alpha = ALPHA_START_VALUE;
         value_type alpha_reduce = (alpha-0.01) / max_iter;
         while (max_iter--) {
-            auto solution = MSOneTree::solve(matrix_.data(), dimension);
+            solution = MSOneTree::solve(matrix, dimension);
 
             std::fill(gradient.begin(), gradient.end(), 0);
             for (const auto &edge : solution.edges) {
@@ -40,7 +42,7 @@ namespace stsp {
 
             value_type lagrangean = 0;
             for (const auto &edge : solution.edges) {
-                lagrangean += matrix_[edge.first*dimension + edge.second];
+                lagrangean += matrix[edge.first*dimension + edge.second];
             }
             lagrangean -= 2*std::accumulate(lambda.begin()
                                             , lambda.end()
@@ -76,9 +78,9 @@ namespace stsp {
             for (size_t i = 0; i < dimension; ++i) {
                 for (size_t j = 0; j < dimension; ++j) {
                     if (i == j) {
-                        matrix_[i*dimension+j] = M_VAL;
+                        matrix[i*dimension+j] = M_VAL;
                     } else {
-                        matrix_[i*dimension+j] = initial_matrix[i*dimension+j]
+                        matrix[i*dimension+j] = initial_matrix[i*dimension+j]
                         + (lambda[i] + lambda[j]);
                     }
                 }
