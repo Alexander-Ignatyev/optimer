@@ -5,6 +5,34 @@
 #include <set>
 
 namespace stsp {
+    bool two_opt(const value_type *matrix, size_t dimension, Solution *sol) {
+        bool optimized = false;
+        bool bContinue = true;
+
+        while (bContinue) {
+            bContinue = false;
+            auto &route = sol->route;
+            for (unsigned first = 1, second = 2;
+                 second < route.size() - 2;
+                 ++first, ++second) {
+                value_type delta = (
+                      matrix[route[first - 1]*dimension+route[first]]
+                    + matrix[route[first]*dimension+route[second]]
+                    + matrix[route[second]*dimension+route[second + 1]])
+                    - (matrix[route[first- 1]*dimension+route[second]]
+                    + matrix[route[second]*dimension+route[first]]
+                    + matrix[route[first]*dimension+route[second + 1]]);
+                if (delta > 0) {
+                    std::swap(route[first], route[second]);
+                    sol->value -= delta;
+                    optimized = true;
+                    bContinue = true;
+                }
+            }
+        }
+        return optimized;
+    }
+
     Solution get_greedy_solution(const value_type *data, size_t dimension
             , size_t start_vertex) {
         Solution sol;
@@ -44,6 +72,7 @@ namespace stsp {
         best_solution.value = M_VAL;
         for (unsigned i = 0; i < dimension; ++i) {
             Solution sol = get_greedy_solution(matrix.data(), dimension, i);
+            two_opt(matrix.data(), dimension, &sol);
             if (sol.value < best_solution.value) {
                 best_solution = sol;
             }
