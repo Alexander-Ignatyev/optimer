@@ -12,6 +12,7 @@ std::pair<MSOneTree::Solution<value_type>, size_t> LagrangeanRelaxation::solve(
         const std::vector<value_type> &initial_matrix
         , size_t dimension
         , value_type upper_bound
+        , value_type epsilon
         , size_t max_iter) {
     static const size_t TOUR_DEGREE = 2;
     static const value_type ALPHA_START_VALUE = 2;
@@ -50,7 +51,7 @@ std::pair<MSOneTree::Solution<value_type>, size_t> LagrangeanRelaxation::solve(
 
         solution.value = lagrangean;
 
-        if (lagrangean > upper_bound) {
+        if (lagrangean+epsilon > upper_bound) {
             return std::make_pair(solution, iter+1);
         }
 

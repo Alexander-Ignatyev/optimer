@@ -3,6 +3,7 @@
 #include "lagrangean_stsp.h"
 
 #include <cstring>
+#include <stdexcept>
 
 #include <tuple>
 
@@ -10,11 +11,33 @@
 #include <bnb/stats.h>
 
 namespace stsp {
-    const size_t g_subgradient_max_iters = 100;
+    double string_to_double(const std::string &str, double def_val = 0.0) {
+        double result = def_val;
+        try {
+            result = std::stod(str);
+        } catch(std::exception &ex) {
+            LOG(DEBUG) << "Cannot convert '" << str << "' to double:"
+            << ex.what();
+        }
+        return result;
+    }
+
+    double string_to_size_t(const std::string &str, size_t def_val = 0.0) {
+        size_t result = def_val;
+        try {
+            result = std::stoul(str);
+        } catch(std::exception &ex) {
+            LOG(DEBUG) << "Cannot convert '" << str << "' to size_t:"
+                << ex.what();
+        }
+        return result;
+    }
 
     LagrangeanSolver::LagrangeanSolver()
     : dimension_(0)
-    , search_tree_(nullptr) {
+    , search_tree_(nullptr)
+    , gradient_max_iters_(100)
+    , epsilon_(0) {
     }
 
     void LagrangeanSolver::init(const InitialData &data
@@ -25,6 +48,18 @@ namespace stsp {
         matrix_.resize(dimension_*dimension_);
         solution_initial_ = get_greedy_solution(matrix_original_, dimension_);
         LOG(INFO) << "Initial solution: " << solution_initial_.value;
+
+        auto pos = data.parameters.find("epsilon");
+        if (pos != data.parameters.end()) {
+            double epsilon = string_to_double(pos->second, epsilon_);
+            epsilon_ = static_cast<value_type>(epsilon);
+        }
+
+        pos = data.parameters.find("gradinet_max_iters");
+        if (pos != data.parameters.end()) {
+            gradient_max_iters_ = string_to_size_t(pos->second
+                                    , gradient_max_iters_);
+        }
     }
     void LagrangeanSolver::get_initial_node(Node<Set> *node) {
         node->data.level = 0;
@@ -38,7 +73,7 @@ namespace stsp {
 
     void LagrangeanSolver::branch(const Node<Set> *node, value_type &record
             , std::vector<Node<Set> *> &nodes, Solution &sol, Stats &stats) {
-        if (node->data.value >= record) {
+        if (node->data.value+epsilon_ >= record) {
             ++stats.sets_constrained_by_record;
             return;
         }
@@ -52,7 +87,7 @@ namespace stsp {
             child->data.level = node->data.level+1;
             child->data.excluded_points.push_back(move);
             transform_node(child, record, stats);
-            if (child->data.value >= record) {
+            if (child->data.value+epsilon_ >= record) {
                 ++stats.sets_constrained_by_record;
                 search_tree_->release_node(child);
             } else {
@@ -81,7 +116,7 @@ namespace stsp {
         }
 
         auto solution = lr_.solve(matrix_, dimension_, record
-                    , g_subgradient_max_iters);
+                    , epsilon_, gradient_max_iters_);
 
         node->data.ms1_solution = std::move(solution.first.edges);
         node->data.value = solution.first.value;

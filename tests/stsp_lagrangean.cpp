@@ -66,7 +66,7 @@ namespace {
 
     TEST_FIXTURE(Nasini12Fuxture, stsp_lagrengean_relaxation) {
         stsp::LagrangeanRelaxation lr;
-        auto solution = lr.solve(matrix, dimension, 1790.0, 100);
+        auto solution = lr.solve(matrix, dimension, 1790, 0, 100);
         CHECK_CLOSE(solution_value
                     , static_cast<double>(solution.first.value)
                     , 0.001);

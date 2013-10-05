@@ -37,6 +37,9 @@ namespace stsp {
         BnbSearchTree<Set> *search_tree_;
         LagrangeanRelaxation lr_;
         Solution solution_initial_;
+
+        size_t gradient_max_iters_;
+        value_type epsilon_;
     };
 }  // namespace stsp
 

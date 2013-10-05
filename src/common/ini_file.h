@@ -13,6 +13,7 @@ class IniSection {
     std::string &operator[](const std::string &key);
     const std::string &operator[](const std::string &key) const;
 
+    const std::unordered_map<std::string, std::string> &data() const;
  private:
     static const std::string empty_string_;
     std::unordered_map<std::string, std::string> key_values_;

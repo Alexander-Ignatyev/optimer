@@ -15,6 +15,7 @@ namespace stsp {
               const std::vector<value_type> &initial_matrix
               , size_t dimension
               , value_type upper_bound
+              , value_type epsilon
               , size_t max_iter);
     private:
         std::vector<value_type> matrix_;

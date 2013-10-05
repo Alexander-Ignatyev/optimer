@@ -21,6 +21,10 @@ const std::string &IniSection::operator[](const std::string &key) const {
     }
 }
 
+const std::unordered_map<std::string, std::string> &IniSection::data() const {
+    return key_values_;
+}
+
 const std::string IniFile::default_section_name_ = "default";
 const IniSection IniFile::empty_section_;
 

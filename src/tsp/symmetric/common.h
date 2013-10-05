@@ -4,6 +4,8 @@
 #define TSP_SYMMETRIC_COMMON_H_
 
 #include <vector>
+#include <string>
+#include <unordered_map>
 
 #include <bnb/defs.h>
 
@@ -42,6 +44,7 @@ namespace stsp {
 
         const std::vector<value_type> &matrix;
         size_t rank;
+        std::unordered_map<std::string, std::string> parameters;
     };
 
     Solution get_greedy_solution(const std::vector<value_type> &matrix
