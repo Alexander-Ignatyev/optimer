@@ -11,7 +11,7 @@
 namespace stsp {
     class LagrangeanRelaxation {
     public:
-        MSOneTree::Solution<value_type> solve(
+        std::pair<MSOneTree::Solution<value_type>, size_t> solve(
               const std::vector<value_type> &initial_matrix
               , size_t dimension
               , value_type upper_bound

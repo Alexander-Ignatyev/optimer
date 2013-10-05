@@ -13,6 +13,7 @@ struct Stats {
 
     size_t branches;
     size_t sets_generated;
+    size_t bound_problems_solved;
     size_t sets_constrained_by_record;
     size_t sets_sent;
     size_t sets_received;

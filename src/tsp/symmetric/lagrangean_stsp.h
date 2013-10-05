@@ -26,7 +26,7 @@ namespace stsp {
                 , std::vector<Node<Set> *> &nodes, Solution &sol, Stats &stats);
 
     private:
-        void transform_node(Node<Set> *node, value_type record);
+        void transform_node(Node<Set> *node, value_type record, Stats &stats);
         std::vector<Point> select_moves(const Node<Set> *node);
         bool build_solution(const Node<Set> *node, Solution *solution);
 

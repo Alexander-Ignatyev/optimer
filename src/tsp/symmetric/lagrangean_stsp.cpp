@@ -4,6 +4,8 @@
 
 #include <cstring>
 
+#include <tuple>
+
 #include <g2log.h>
 #include <bnb/stats.h>
 
@@ -26,7 +28,8 @@ namespace stsp {
     }
     void LagrangeanSolver::get_initial_node(Node<Set> *node) {
         node->data.level = 0;
-        transform_node(node, solution_initial_.value);
+        Stats stats;
+        transform_node(node, solution_initial_.value, stats);
     }
 
     void LagrangeanSolver::get_initial_solution(Solution *sol) {
@@ -35,8 +38,9 @@ namespace stsp {
 
     void LagrangeanSolver::branch(const Node<Set> *node, value_type &record
             , std::vector<Node<Set> *> &nodes, Solution &sol, Stats &stats) {
-        if (node->data.value > record) {
+        if (node->data.value >= record) {
             ++stats.sets_constrained_by_record;
+            return;
         }
         ++stats.branches;
 
@@ -47,7 +51,7 @@ namespace stsp {
             auto child = search_tree_->create_node(node);
             child->data.level = node->data.level+1;
             child->data.excluded_points.push_back(move);
-            transform_node(child, record);
+            transform_node(child, record, stats);
             if (child->data.value >= record) {
                 ++stats.sets_constrained_by_record;
                 search_tree_->release_node(child);
@@ -63,7 +67,7 @@ namespace stsp {
     }
 
     void LagrangeanSolver::transform_node(Node<Set> *node
-                , value_type record) {
+                , value_type record, Stats &stats) {
         // restore excluded points from branch
         memcpy(matrix_.data(), matrix_original_.data()
                , dimension_*dimension_*sizeof(matrix_original_[0]));
@@ -78,8 +82,10 @@ namespace stsp {
 
         auto solution = lr_.solve(matrix_, dimension_, record
                     , g_subgradient_max_iters);
-        node->data.ms1_solution = std::move(solution.edges);
-        node->data.value = solution.value;
+
+        node->data.ms1_solution = std::move(solution.first.edges);
+        node->data.value = solution.first.value;
+        stats.bound_problems_solved += solution.second;
     }
 
     std::vector<LagrangeanSolver::Point>
