@@ -20,7 +20,8 @@ namespace stsp {
     std::vector<size_t> Set::build_tour() const {
         const auto &edges = ms1_solution;
         std::vector<std::vector<size_t> > adjacency_list(edges.size());
-        std::vector<size_t> tour(edges.size()+1);
+        std::vector<size_t> tour;
+        tour.reserve(edges.size()+1);
         for (auto &edge : edges) {
             adjacency_list[edge.first].push_back(edge.second);
             adjacency_list[edge.second].push_back(edge.first);
