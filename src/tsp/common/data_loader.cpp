@@ -11,6 +11,7 @@
 #include <stdexcept>
 
 #include <common/algo_string.h>
+#include <common/geometry2d.h>
 
 namespace TspCommon {
 
@@ -21,7 +22,9 @@ bool starts_with(const std::string &str, const std::string &pattern) {
 class TspLibLoader {
     static const std::string MARKER_DIMENSION;
     static const std::string MARKER_FORMAT;
+    static const std::string MARKER_DISP_DATA_TYPE;
     static const std::string MARKER_DATA;
+    static const std::string MARKER_DATA_COORDS;
     static const std::string MARKER_EOF;
 
  public:
@@ -37,20 +40,25 @@ class TspLibLoader {
     void read_common_line(const std::string &line);
     void read_lower_diag_data_line(const std::string &line);
     void read_full_matrix_data_line(const std::string &line);
+    void read_coords_data_line(const std::string &line);
 
     void read_dimension(const std::string &line);
     void read_format(const std::string &line);
+    void read_display_data_type(const std::string &line);
     void read_edges(const std::string &line);
 
     std::function<void(const std::string &)> next_action_;
     std::function<void(const std::string &)> data_action_;
     size_t dimension_;
     std::vector<value_type> matrix_;
+    std::vector<Geometry2D::Point> coords_;
 };
 
 const std::string TspLibLoader::MARKER_DIMENSION = "DIMENSION: ";
 const std::string TspLibLoader::MARKER_FORMAT = "EDGE_WEIGHT_FORMAT: ";
+const std::string TspLibLoader::MARKER_DISP_DATA_TYPE = "DISPLAY_DATA_TYPE: ";
 const std::string TspLibLoader::MARKER_DATA = "EDGE_WEIGHT_SECTION";
+const std::string TspLibLoader::MARKER_DATA_COORDS = "NODE_COORD_SECTION";
 const std::string TspLibLoader::MARKER_EOF = "EOF";
 
 TspLibLoader::TspLibLoader(): dimension_(0) {
@@ -76,7 +84,11 @@ void TspLibLoader::read_common_line(const std::string &line) {
         read_dimension(line);
     } else if (starts_with(line, MARKER_FORMAT)) {
         read_format(line);
+    } else if (starts_with(line, MARKER_DISP_DATA_TYPE)) {
+        read_display_data_type(line);
     } else if (starts_with(line, MARKER_DATA)) {
+        next_action_ = data_action_;
+    } else if (starts_with(line, MARKER_DATA_COORDS)) {
         next_action_ = data_action_;
     }
 }
@@ -117,6 +129,34 @@ void TspLibLoader::read_full_matrix_data_line(const std::string &line) {
     }
 }
 
+void TspLibLoader::read_coords_data_line(const std::string &line) {
+    using std::placeholders::_1;
+    if (!starts_with(line, MARKER_EOF)) {
+        Geometry2D::Point point;
+        unsigned coord_index;
+        std::istringstream iss(line);
+        iss >> coord_index >> point.x >> point.y;
+        coords_.push_back(point);
+    } else {
+        if (coords_.size() != dimension_) {
+            throw std::logic_error("Read invalid number of coords");
+        }
+        matrix_.resize(dimension_*dimension_);
+        for (size_t i = 0; i < dimension_; ++i) {
+            for (size_t j = i; j < dimension_; ++j) {
+                if (i != j) {
+                    value_type distance = static_cast<value_type>(
+                            Geometry2D::distance(coords_[i], coords_[j]));
+                    matrix_[i*dimension_+j] = distance;
+                    matrix_[j*dimension_+i] = distance;
+                } else {
+                    matrix_[i*dimension_+i] = M_VAL;
+                }
+            }
+        }
+    }
+}
+
 void TspLibLoader::read_dimension(const std::string &line) {
     dimension_ = atoi(line.substr(MARKER_DIMENSION.size()).c_str());
     matrix_.reserve(dimension_*dimension_);
@@ -134,6 +174,18 @@ void TspLibLoader::read_format(const std::string &line) {
             std::bind(&TspLibLoader::read_full_matrix_data_line, this, _1);
     } else {
         throw std::domain_error("Unknown format: " + format);
+    }
+}
+
+void TspLibLoader::read_display_data_type(const std::string &line) {
+    using std::placeholders::_1;
+    std::string data_type = line.substr(MARKER_DISP_DATA_TYPE.size()).c_str();
+    data_type = trim(data_type);
+    if (data_type == "COORD_DISPLAY") {
+        data_action_ =
+            std::bind(&TspLibLoader::read_coords_data_line, this, _1);
+    } else {
+        throw std::domain_error("Unknown display data type: " + data_type);
     }
 }
 
