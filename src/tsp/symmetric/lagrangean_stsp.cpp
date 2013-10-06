@@ -48,6 +48,9 @@ namespace stsp {
         matrix_.resize(dimension_*dimension_);
         solution_initial_ = get_greedy_solution(matrix_original_, dimension_);
         LOG(INFO) << "Initial solution: " << solution_initial_.value;
+        std::ostringstream oss;
+        solution_initial_.write_as_json(oss);
+        LOG(INFO) << oss.str();
 
         auto pos = data.parameters.find("epsilon");
         if (pos != data.parameters.end()) {
@@ -169,7 +172,7 @@ namespace stsp {
             }
         }
 
-        LOG(DEBUG) << "Found solution " << node->data.value;
+        LOG(INFO) << "Found solution " << node->data.value;
         solution->value = node->data.value;
         solution->route.clear();
         solution->route.resize(dimension_, dimension_);
@@ -187,6 +190,9 @@ namespace stsp {
                 CHECK(false) << "Incorrect solution's route";
             }
         }
+        std::ostringstream oss;
+        solution->write_as_json(oss);
+        LOG(INFO) << oss.str();
         return true;
     }
 }  // namespace stsp

@@ -5,6 +5,7 @@
 
 #include <vector>
 #include <string>
+#include <iosfwd>
 #include <unordered_map>
 
 #include <bnb/defs.h>
@@ -35,6 +36,7 @@ namespace stsp {
     struct Solution {
         value_type value;
         std::vector<size_t> route;
+        void write_as_json(std::ostream &os);
     };
 
     struct InitialData {

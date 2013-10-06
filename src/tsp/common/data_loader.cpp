@@ -10,6 +10,8 @@
 #include <functional>
 #include <stdexcept>
 
+#include <g2log.h>
+
 #include <common/algo_string.h>
 #include <common/geometry2d.h>
 
@@ -17,6 +19,20 @@ namespace TspCommon {
 
 bool starts_with(const std::string &str, const std::string &pattern) {
     return str.compare(0, pattern.size(), pattern) == 0;
+}
+
+void write_coords_as_json(const std::vector<Geometry2D::Point> &coords
+                         , std::ostream &os) {
+    os << '[';
+    if (!coords.empty()) {
+        os << "{x: " << coords[0].x << ", y:" << coords[0].y << "}";
+        for (size_t i = 1; i < coords.size(); ++i) {
+            os << "," << std::endl;
+            os << "{x: " << coords[i].x;
+            os << ", y:" << coords[i].y << "}";
+        }
+    }
+    os << "];" << std::endl;
 }
 
 class TspLibLoader {
@@ -141,6 +157,9 @@ void TspLibLoader::read_coords_data_line(const std::string &line) {
         if (coords_.size() != dimension_) {
             throw std::logic_error("Read invalid number of coords");
         }
+        std::ostringstream oss;
+        write_coords_as_json(coords_, oss);
+        LOG(INFO) << "vertices = " << oss.str();
         matrix_.resize(dimension_*dimension_);
         for (size_t i = 0; i < dimension_; ++i) {
             for (size_t j = i; j < dimension_; ++j) {

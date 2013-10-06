@@ -3,8 +3,20 @@
 #include "common.h"
 
 #include <set>
+#include <iostream>
 
 namespace stsp {
+    void Solution::write_as_json(std::ostream &os) {
+        os << "route = [";
+        if (!route.empty()) {
+            os << route.front();
+            for (size_t i = 1; i < route.size(); ++i) {
+                os << ", " << route[i];
+            }
+        }
+        os << "];";
+    }
+
     bool two_opt(const value_type *matrix, size_t dimension, Solution *sol) {
         bool optimized = false;
         bool bContinue = true;
