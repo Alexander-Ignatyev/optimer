@@ -17,6 +17,37 @@ namespace stsp {
         os << "];";
     }
 
+    std::vector<size_t> Set::build_tour() const {
+        const auto &edges = ms1_solution;
+        std::vector<std::vector<size_t> > adjacency_list(edges.size());
+        std::vector<size_t> tour(edges.size()+1);
+        for (auto &edge : edges) {
+            adjacency_list[edge.first].push_back(edge.second);
+            adjacency_list[edge.second].push_back(edge.first);
+        }
+        for (const auto &adj : adjacency_list) {
+            if (adj.size() != 2) {
+                return tour;
+            }
+        }
+        tour.push_back(0);
+        tour.push_back(adjacency_list[0].front());
+        for (size_t i = 1; i < edges.size(); ++i) {
+            size_t previous_vertex = tour[tour.size()-2];
+            size_t current_vertex = tour.back();
+            const auto &adj = adjacency_list[current_vertex];
+            if (adj.front() == previous_vertex) {
+                tour.push_back(adj.back());
+            } else if (adj.back() == previous_vertex) {
+                tour.push_back(adj.front());
+            } else {
+                tour.clear();
+                return tour;
+            }
+        }
+        return tour;
+    }
+
     bool two_opt(const value_type *matrix, size_t dimension, Solution *sol) {
         bool optimized = false;
         bool bContinue = true;

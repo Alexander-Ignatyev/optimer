@@ -174,22 +174,8 @@ namespace stsp {
 
         LOG(INFO) << "Found solution " << node->data.value;
         solution->value = node->data.value;
-        solution->route.clear();
-        solution->route.resize(dimension_, dimension_);
-        std::vector<size_t> distances(dimension_, dimension_);
-        for (auto &point : node->data.ms1_solution) {
-            if (solution->route[point.first] == dimension_
-                && distances[point.second] == dimension_) {
-                solution->route[point.first] = point.second;
-                distances[point.second] = point.first;
-            } else if (solution->route[point.second] == dimension_
-                       && distances[point.first] == dimension_) {
-                solution->route[point.second] = point.first;
-                distances[point.first] = point.second;
-            } else {
-                CHECK(false) << "Incorrect solution's route";
-            }
-        }
+        solution->route = node->data.build_tour();
+        CHECK(!solution->route.empty()) << "Incorrect solution's route";
         std::ostringstream oss;
         solution->write_as_json(oss);
         LOG(INFO) << oss.str();

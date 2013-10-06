@@ -24,6 +24,7 @@ namespace stsp {
         std::vector<std::pair<size_t, size_t> > ms1_solution;
         std::vector<Point> excluded_points;
         unsigned level;
+        std::vector<size_t> build_tour() const;
         bool operator < (const Set &other) const {
             return value > other.value;
         }
