@@ -16,7 +16,8 @@ namespace stsp {
               , size_t dimension
               , value_type upper_bound
               , value_type epsilon
-              , size_t max_iter);
+              , size_t max_iter
+              , const std::vector<std::pair<size_t, size_t> > &included_edges);
     private:
         std::vector<value_type> matrix_;
     };

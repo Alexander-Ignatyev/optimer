@@ -47,23 +47,22 @@ Solution<T> solve(const T *matrix, size_t size) {
 
     T total_cost = 0;
 
+    std::vector<std::pair<size_t, size_t> > edges;
     std::vector<T> min_values(size, max_val<T>());
     std::vector<size_t> min_indices(size, size);
-    std::vector<std::pair<size_t, size_t> > edges;
+    size_t start_point = 1;
 
     // added first vertex
-    {
-    size_t min_v = 1;
+    size_t min_v = start_point;
     size_t min_vertex =
     std::min_element(&matrix[min_v*size], &matrix[min_v*size+size])
     - &matrix[min_v*size];
     min_values[min_v] = matrix[min_v*size+min_vertex];
     min_indices[min_v] = min_vertex;
-    }
 
     while (edges.size() < size-2) {
         // select min edge
-        size_t min_u = 1;
+        size_t min_u = start_point;
         T min_value = min_values[min_u];
         for (size_t i = min_u+1; i < size; ++i) {
             if (!vertex_is_included(i, min_indices)) {

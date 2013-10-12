@@ -11,47 +11,43 @@
 #include <bnb/defs.h>
 
 namespace stsp {
-    struct Point {
-        Point(const std::pair<size_t, size_t> &pair)
-            : x(pair.first)
-            , y(pair.second) {}
-        size_t x;
-        size_t y;
-    };
 
-    struct Set {
-        value_type value;
-        std::vector<std::pair<size_t, size_t> > ms1_solution;
-        std::vector<Point> excluded_points;
-        unsigned level;
-        std::vector<size_t> build_tour() const;
-        bool operator < (const Set &other) const {
-            return value > other.value;
-        }
-        void clear() {
-            excluded_points.clear();
-        }
-    };
+typedef std::pair<size_t, size_t> Edge;
 
+struct Set {
+    value_type value;
+    std::vector<Edge> relaxation;
+    std::vector<Edge> excluded_edges;
+    std::vector<Edge> included_edges;
+    unsigned level;
+    std::vector<size_t> build_tour() const;
+    bool operator < (const Set &other) const {
+        return value > other.value;
+    }
+    void clear() {
+        excluded_edges.clear();
+        included_edges.clear();
+    }
+};
 
-    struct Solution {
-        value_type value;
-        std::vector<size_t> route;
-        void write_as_json(std::ostream &os);
-    };
+struct Solution {
+    value_type value;
+    std::vector<size_t> route;
+    void write_as_json(std::ostream &os);
+};
 
-    struct InitialData {
-        InitialData(const std::vector<value_type> &m, size_t d)
-            : matrix(m)
-            , rank(d) {}
+struct InitialData {
+    InitialData(const std::vector<value_type> &m, size_t d)
+        : matrix(m)
+        , rank(d) {}
 
-        const std::vector<value_type> &matrix;
-        size_t rank;
-        std::unordered_map<std::string, std::string> parameters;
-    };
+    const std::vector<value_type> &matrix;
+    size_t rank;
+    std::unordered_map<std::string, std::string> parameters;
+};
 
-    Solution get_greedy_solution(const std::vector<value_type> &matrix
-        , size_t dimension);
+Solution get_greedy_solution(const std::vector<value_type> &matrix
+    , size_t dimension);
 }  // namespace stsp
 
 #endif  // TSP_SYMMETRIC_COMMON_H_

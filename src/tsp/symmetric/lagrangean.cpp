@@ -13,7 +13,8 @@ std::pair<MSOneTree::Solution<value_type>, size_t> LagrangeanRelaxation::solve(
         , size_t dimension
         , value_type upper_bound
         , value_type epsilon
-        , size_t max_iter) {
+        , size_t max_iter
+        , const std::vector<std::pair<size_t, size_t> > &included_edges) {
     static const size_t TOUR_DEGREE = 2;
     static const value_type ALPHA_START_VALUE = 2;
 
@@ -27,13 +28,15 @@ std::pair<MSOneTree::Solution<value_type>, size_t> LagrangeanRelaxation::solve(
     std::memcpy(matrix, initial_matrix.data()
                 , sizeof(value_type)*dimension*dimension);
 
-    std::vector<value_type> lambda(dimension, value_type());
     std::vector<int> gradient(dimension);
+    std::vector<value_type> lambda(dimension, value_type());
 
     value_type alpha = ALPHA_START_VALUE;
     value_type alpha_reduce = (alpha-0.01) / max_iter;
+    value_type included_edges_penalty = value_type();
     for (size_t iter = 0; iter < max_iter; ++iter) {
         solution = MSOneTree::solve(matrix, dimension);
+        solution.value += included_edges_penalty;
 
         std::fill(gradient.begin(), gradient.end(), 0);
         for (const auto &edge : solution.edges) {
@@ -41,7 +44,7 @@ std::pair<MSOneTree::Solution<value_type>, size_t> LagrangeanRelaxation::solve(
             ++gradient[edge.second];
         }
 
-        value_type lagrangean = 0;
+        value_type lagrangean = included_edges_penalty;
         for (const auto &edge : solution.edges) {
             lagrangean += matrix[edge.first*dimension + edge.second];
         }
@@ -85,6 +88,14 @@ std::pair<MSOneTree::Solution<value_type>, size_t> LagrangeanRelaxation::solve(
                     + (lambda[i] + lambda[j]);
                 }
             }
+        }
+
+        included_edges_penalty = value_type();
+        for (const auto &edge : included_edges) {
+            size_t index = edge.first*dimension+edge.second;
+            included_edges_penalty += matrix[index];
+            matrix[index] = value_type();
+            matrix[edge.second*dimension+edge.first] = value_type();
         }
     }
     return std::make_pair(solution, max_iter);
