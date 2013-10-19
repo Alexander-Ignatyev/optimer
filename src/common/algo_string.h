@@ -53,4 +53,7 @@ inline std::string &trim(std::string &s) {
     return ltrim(rtrim(s));
 }
 
+double string_to_double(const std::string &str, double def_val = 0.0);
+size_t string_to_size_t(const std::string &str, size_t def_val = 0);
+
 #endif  // COMMON_ALGO_STRING_H_

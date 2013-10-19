@@ -8,9 +8,9 @@
 
 #include <bnb/defs.h>
 
-namespace TspCommon {
+namespace tsp {
     bool load_tsplib_problem(std::istream &is, std::vector<value_type> &matrix
         , size_t &dimension);
-}  // namespace TspCommon
+}  // namespace tsp
 
 #endif  // TSP_COMMON_DATA_LOADER_H_

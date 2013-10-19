@@ -33,7 +33,7 @@ struct Nasini12Fuxture {
             785, 882, 88, 367, 447, 27, 776, 320, 244, 508, 99999, 293,
             762, 150, 507, 580, 446, 872, 81, 524, 290, 77, 293, 99999
         };
-        initial_data.reset(new stsp::InitialData(matrix, dimension));
+        initial_data.reset(new tsp::InitialData(matrix, dimension));
     }
 
     Nasini12Fuxture(const Nasini12Fuxture &) = delete;
@@ -41,7 +41,7 @@ struct Nasini12Fuxture {
 
     std::vector<value_type> matrix;
     size_t dimension;
-    std::shared_ptr<stsp::InitialData> initial_data;
+    std::shared_ptr<tsp::InitialData> initial_data;
     value_type solution_value;
 };
 
@@ -51,10 +51,10 @@ struct Gr17Fixture {
         , solution_value(2085) {
         size_t dimension;
         std::ifstream ifs("data/stsp/gr17.tsp");
-        TspCommon::load_tsplib_problem(ifs, matrix, dimension);
+        tsp::load_tsplib_problem(ifs, matrix, dimension);
         ifs.close();
 
-        initial_data.reset(new stsp::InitialData(matrix, dimension));
+        initial_data.reset(new tsp::InitialData(matrix, dimension));
     }
 
     Gr17Fixture(const Gr17Fixture &) = delete;
@@ -62,13 +62,13 @@ struct Gr17Fixture {
 
     std::vector<value_type> matrix;
     size_t dimension;
-    std::shared_ptr<stsp::InitialData> initial_data;
+    std::shared_ptr<tsp::InitialData> initial_data;
     value_type solution_value;
 };
 
 TEST_FIXTURE(Nasini12Fuxture, stsp_lagrengean_relaxation) {
     stsp::LagrangeanRelaxation lr;
-    std::vector<stsp::Edge> included_edges;
+    std::vector<tsp::Edge> included_edges;
     auto solution = lr.solve(matrix, dimension, 1790, 0, 100, included_edges);
     CHECK_CLOSE(solution_value
                 , static_cast<double>(solution.first.value)

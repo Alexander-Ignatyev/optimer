@@ -4,60 +4,38 @@
 
 #include <cstring>
 
-#include <stdexcept>
 #include <unordered_set>
 #include <tuple>
 
 #include <g2log.h>
+#include <common/algo_string.h>
 #include <bnb/stats.h>
 
 namespace stsp {
 
-double string_to_double(const std::string &str, double def_val = 0.0) {
-    double result = def_val;
-    try {
-        result = std::stod(str);
-    } catch(std::exception &ex) {
-        LOG(DEBUG) << "Cannot convert '" << str << "' to double:"
-        << ex.what();
-    }
-    return result;
-}
-
-double string_to_size_t(const std::string &str, size_t def_val = 0.0) {
-    size_t result = def_val;
-    try {
-        result = std::stoul(str);
-    } catch(std::exception &ex) {
-        LOG(DEBUG) << "Cannot convert '" << str << "' to size_t:"
-            << ex.what();
-    }
-    return result;
-}
-
 struct EdgeHash {
-    std::hash<decltype(Edge::first)> hash_x;
-    std::hash<decltype(Edge::second)> hash_y;
-    size_t operator()(const Edge &edge) const {
+    std::hash<decltype(tsp::Edge::first)> hash_x;
+    std::hash<decltype(tsp::Edge::second)> hash_y;
+    size_t operator()(const tsp::Edge &edge) const {
         return hash_x(edge.first) ^ hash_y(edge.second);
     }
 };
 
 struct EdgeEqualsTo {
-    bool operator()(const Edge &lhs, const Edge &rhs) const {
+    bool operator()(const tsp::Edge &lhs, const tsp::Edge &rhs) const {
         return lhs.first == rhs.first && lhs.second == rhs.second;
     }
 };
 
-typedef std::unordered_set<Edge, EdgeHash, EdgeEqualsTo> EdgesSet;
+typedef std::unordered_set<tsp::Edge, EdgeHash, EdgeEqualsTo> EdgesSet;
 
-EdgesSet get_included_edges(const bnb::Node<Set> *node) {
+EdgesSet get_included_edges(const bnb::Node<LagrangeanSolver::Set> *node) {
     EdgesSet included_edges;
-    const bnb::Node<Set> *tmp_node = node;
+    const bnb::Node<LagrangeanSolver::Set> *tmp_node = node;
     while (tmp_node->parent) {
-        for (const Edge &edge : tmp_node->data.included_edges) {
+        for (const tsp::Edge &edge : tmp_node->data.included_edges) {
             included_edges.insert(edge);
-            Edge rev_edge = std::make_pair(edge.second, edge.first);
+            tsp::Edge rev_edge = std::make_pair(edge.second, edge.first);
             included_edges.insert(rev_edge);
         }
         tmp_node = tmp_node->parent;
@@ -79,7 +57,7 @@ void LagrangeanSolver::init(const InitialData &data, bnb::SearchTree<Set> *mm) {
     dimension_ = data.rank;
     search_tree_ = mm;
     matrix_.resize(dimension_*dimension_);
-    solution_initial_ = get_greedy_solution(matrix_original_, dimension_);
+    solution_initial_ = tsp::get_greedy_solution(matrix_original_, dimension_);
     LOG(INFO) << "Initial solution: " << solution_initial_.value;
     std::ostringstream oss;
     solution_initial_.write_as_json(oss);
@@ -151,7 +129,7 @@ void LagrangeanSolver::branch(const Node *node, value_type &record
 
 LagrangeanSolver::NodeList
 LagrangeanSolver::branching_rule1(const Node *node) {
-    std::vector<Edge> moves;
+    std::vector<tsp::Edge> moves;
 
     std::vector<size_t> degrees(dimension_, 0);
     for (auto &edge : node->data.relaxation) {
@@ -214,7 +192,7 @@ LagrangeanSolver::NodeList LagrangeanSolver::branching_rule2(const Node *node) {
         }
     }
 
-    std::vector<Edge> selected_edges;
+    std::vector<tsp::Edge> selected_edges;
     for (auto &edge : node->data.relaxation) {
         bool is_adj_edge = (edge.first == selected_vertex)
                         || (edge.second == selected_vertex);
@@ -264,7 +242,7 @@ LagrangeanSolver::NodeList LagrangeanSolver::branching_rule3(const Node *node) {
         ++degrees[edge.second];
     }
 
-    Edge selected_edge(0, 0);
+    tsp::Edge selected_edge(0, 0);
     value_type max_length = -1e16;
     for (auto &edge : node->data.relaxation) {
         if (included_edges.find(edge) != included_edges.end()) {
@@ -304,15 +282,15 @@ void LagrangeanSolver::transform_node(Node *node
     // restore excluded edgess from branch
     memcpy(matrix_.data(), matrix_original_.data()
            , matrix_original_.size()*sizeof(matrix_original_[0]));
-    std::vector<Edge> included_edges;
+    std::vector<tsp::Edge> included_edges;
     const Node *tmp_node = node;
     std::vector<std::vector<size_t> > adjacency_list(dimension_);
     while (tmp_node->parent) {
-        for (const Edge &edge : tmp_node->data.excluded_edges) {
+        for (const tsp::Edge &edge : tmp_node->data.excluded_edges) {
             matrix_[edge.first*dimension_+edge.second] = M_VAL;
             matrix_[edge.second*dimension_+edge.first] = M_VAL;
         }
-        for (const Edge &edge : tmp_node->data.included_edges) {
+        for (const tsp::Edge &edge : tmp_node->data.included_edges) {
             included_edges.push_back(std::make_pair(edge.first, edge.second));
             adjacency_list[edge.first].push_back(edge.second);
             adjacency_list[edge.second].push_back(edge.first);
@@ -342,7 +320,7 @@ void LagrangeanSolver::transform_node(Node *node
 }
 
 bool LagrangeanSolver::build_solution(const Node *node, Solution *solution) {
-    solution->route = node->data.build_tour();
+    solution->route = build_tour(node->data);
     if (solution->route.empty()) {
         return false;
     }

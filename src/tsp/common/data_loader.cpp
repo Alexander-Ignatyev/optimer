@@ -15,7 +15,7 @@
 #include <common/algo_string.h>
 #include <common/geometry2d.h>
 
-namespace TspCommon {
+namespace tsp {
 
 bool starts_with(const std::string &str, const std::string &pattern) {
     return str.compare(0, pattern.size(), pattern) == 0;
@@ -226,5 +226,5 @@ bool load_tsplib_problem(std::istream &is, std::vector<value_type> &matrix
     return true;
 }
 
-}  // namespace TspCommon
+}  // namespace tsp
 

@@ -27,7 +27,7 @@ int solve(std::istream &is) {
     std::vector<value_type> matrix;
     size_t dimension;
 
-    TspCommon::load_tsplib_problem(ifs, matrix, dimension);
+    tsp::load_tsplib_problem(ifs, matrix, dimension);
     stsp::LagrangeanSolver::InitialData data(matrix, dimension);
 
     IniSection stsp_section = ini["stsp"];

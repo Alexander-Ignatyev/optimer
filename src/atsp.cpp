@@ -24,7 +24,7 @@ void solve(const std::string &problem_path, BNBSolver &solver) {
     size_t rank;
     std::ifstream ifs(problem_path);
     std::vector<value_type> matrix;
-    TspCommon::load_tsplib_problem(ifs, matrix, rank);
+    tsp::load_tsplib_problem(ifs, matrix, rank);
     ifs.close();
 
     TspInitialData data(matrix.data(), rank);

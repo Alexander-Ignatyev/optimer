@@ -6,6 +6,7 @@
 #include <functional>
 
 #include <bnb/tree.h>
+#include <tsp/common/types.h>
 #include <tsp/symmetric/common.h>
 #include <tsp/symmetric/lagrangean.h>
 
@@ -16,9 +17,9 @@ struct Stats;
 namespace stsp {
 class LagrangeanSolver {
  public:
-    typedef stsp::Set Set;
-    typedef stsp::Solution Solution;
-    typedef stsp::InitialData InitialData;
+    typedef tsp::Set Set;
+    typedef tsp::Solution Solution;
+    typedef tsp::InitialData InitialData;
 
     typedef bnb::Node<Set> Node;
     typedef std::vector<Node *> NodeList;

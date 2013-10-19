@@ -84,7 +84,7 @@ struct Ftv38Fixture {
 
         size_t dimension;
         std::ifstream ifs("data/ftv38.atsp");
-        TspCommon::load_tsplib_problem(ifs, buffer, dimension);
+        tsp::load_tsplib_problem(ifs, buffer, dimension);
         ftv38_matrix = buffer.data();
         ifs.close();
 
