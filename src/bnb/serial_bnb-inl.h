@@ -3,6 +3,7 @@
 #ifndef BNB_SERIAL_BNB_INL_H_
 #define BNB_SERIAL_BNB_INL_H_
 
+namespace bnb {
 template <typename Solver, typename NodesContainer>
 typename Solver::Solution
     SerialBNB<Solver, NodesContainer>::solve(
@@ -12,7 +13,7 @@ typename Solver::Solution
     stats_.clear();
     Solution sol;
     if (data.rank > MIN_RANK_VALUE) {
-        BnbSearchTree<Set> search_tree;
+        SearchTree<Set> search_tree;
         Node<Set> *node = search_tree.create_node();
         Solution initSol;
 
@@ -52,4 +53,5 @@ void SerialBNB<Solver, NodesContainer>::print_stats(std::ostream &os) const {
     os << (stats_.sets_generated / stats_.seconds) << std::endl;
 }
 
+}  // namespace bnb
 #endif  // BNB_SERIAL_BNB_INL_H_

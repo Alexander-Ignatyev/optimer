@@ -12,6 +12,8 @@
 #include <tsp/symmetric/lagrangean.h>
 #include <tsp/symmetric/lagrangean_stsp.h>
 
+using bnb::SerialBNB;
+
 namespace {
 struct Nasini12Fuxture {
     Nasini12Fuxture()

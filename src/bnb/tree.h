@@ -7,6 +7,7 @@
 
 #include <common/allocator.h>
 
+namespace bnb {
 template <typename D>
 struct Node {
     const Node<D> *parent;
@@ -14,10 +15,10 @@ struct Node {
 };
 
 template <typename D>
-class BnbSearchTree {
+class SearchTree {
  public:
-    BnbSearchTree();
-    ~BnbSearchTree();
+    SearchTree();
+    ~SearchTree();
 
     Node<D> *create_node(const Node<D> *parent = nullptr);
     void release_node(Node<D> *node);
@@ -29,6 +30,7 @@ class BnbSearchTree {
     RefCountedAllocator<sizeof(Node<D>)> allocator_;
     std::mutex mutex_;
 };
+}  // namespace bnb
 
 #include "tree-inl.h"
 

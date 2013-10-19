@@ -10,7 +10,11 @@
 
 #include "ap_solver.h"
 
+using bnb::Node;
+
+namespace bnb {
 struct Stats;
+}  // namespace bnb
 
 struct TspInitialData {
     TspInitialData(value_type *m, size_t r): matrix(m), rank(r) {
@@ -52,11 +56,11 @@ class TspSolver {
     TspSolver();
 
     // mandatory function
-    void init(const TspInitialData &data, BnbSearchTree<Set> *mm);
+    void init(const TspInitialData &data, bnb::SearchTree<Set> *mm);
     void get_initial_node(Node<Set> *node);
     void get_initial_solution(Solution *sol);
     void branch(const Node<Set> *node, value_type &record
-       , std::vector<Node<Set> *> &nodes, Solution &sol, Stats &stats);
+       , std::vector<Node<Set> *> &nodes, Solution &sol, bnb::Stats &stats);
 
  private:
     static std::vector<size_t> create_tour(const std::vector<size_t> &ap_sol);
@@ -75,7 +79,7 @@ class TspSolver {
     value_type *matrix_;
     const value_type *matrix_original_;
 
-    BnbSearchTree<Set> *search_tree_;
+    bnb::SearchTree<Set> *search_tree_;
     ApSolver<value_type> ap_solver_;
 };
 

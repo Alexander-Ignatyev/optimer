@@ -8,6 +8,11 @@
 #include <bnb/serial_bnb.h>
 #include <tsp/symmetric/stsp.h>
 
+using bnb::LifoContainer;
+using bnb::PriorityContainer;
+
+using bnb::SerialBNB;
+
 namespace ClassicalSolver {
 
 typedef stsp::ClassicalSolver Solver;

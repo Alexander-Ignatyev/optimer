@@ -44,7 +44,7 @@ TspSolver::TspSolver()
     , matrix_original_(nullptr)
     , search_tree_(nullptr) { }
 
-void TspSolver::init(const TspInitialData &data, BnbSearchTree<Set> *mm) {
+void TspSolver::init(const TspInitialData &data, bnb::SearchTree<Set> *mm) {
     matrix_original_ = data.matrix;
     dimension_ = data.rank;
     search_tree_ = mm;
@@ -83,7 +83,7 @@ bool has_solution(const std::vector<size_t> &ap_sol, size_t dimension) {
 }
 
 void TspSolver::branch(const Node<Set> *node, value_type &record,
-    std::vector<Node<Set> *> &nodes, Solution &sol, Stats &stats) {
+    std::vector<Node<Set> *> &nodes, Solution &sol, bnb::Stats &stats) {
 
     if (node->data.value >= record) {
         ++stats.sets_constrained_by_record;

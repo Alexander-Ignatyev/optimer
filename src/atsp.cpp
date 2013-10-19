@@ -50,7 +50,7 @@ void solve(const std::string &problem_path, BNBSolver &solver) {
 static const std::string g_general_param = "general";
 
 void get_scheduler_params(const IniSection &scheduler
-    , GivingSchedulerParams *params) {
+    , bnb::GivingSchedulerParams *params) {
     params->num_threads = std::stoul(
         scheduler["num_threads"], nullptr, 0);
     params->num_minimum_nodes = std::stoul(
@@ -60,7 +60,7 @@ void get_scheduler_params(const IniSection &scheduler
 }
 
 void get_scheduler_params(const IniSection &scheduler
-    , RequestingSchedulerParams *params) {
+    , bnb::RequestingSchedulerParams *params) {
     params->num_threads = std::stoul(
         scheduler["num_threads"], nullptr, 0);
     params->num_minimum_nodes = std::stoul(
@@ -80,7 +80,7 @@ const std::string &problem_path(const IniFile &ini) {
 
 template <typename Container>
 int process_serial(const IniFile &ini) {
-    SerialBNB<TspSolver, Container > bnb;
+    bnb::SerialBNB<TspSolver, Container > bnb;
     solve(problem_path(ini), bnb);
     return 0;
 }
@@ -90,21 +90,21 @@ int process_parallel_lock(const IniFile &ini) {
     IniSection scheduler = ini["scheduler"];
     std::string scheduler_type = scheduler["type"];
     if (scheduler_type == "giving") {
-        GivingSchedulerParams params;
+        bnb::GivingSchedulerParams params;
         get_scheduler_params(scheduler, &params);
 
-        GivingScheduler<typename TspSolver::Set> scheduler(params);
-        ParallelBNB<TspSolver, Container
-            , GivingScheduler<typename TspSolver::Set>>
+        bnb::GivingScheduler<typename TspSolver::Set> scheduler(params);
+        bnb::ParallelBNB<TspSolver, Container
+            , bnb::GivingScheduler<typename TspSolver::Set>>
             bnb(scheduler);
         solve(problem_path(ini), bnb);
     } else if (scheduler_type == "requesting") {
-        RequestingSchedulerParams params;
+        bnb::RequestingSchedulerParams params;
         get_scheduler_params(scheduler, &params);
 
-        RequestingScheduler<typename TspSolver::Set> scheduler(params);
-        ParallelBNB<TspSolver, Container
-            , RequestingScheduler<typename TspSolver::Set>>
+        bnb::RequestingScheduler<typename TspSolver::Set> scheduler(params);
+        bnb::ParallelBNB<TspSolver, Container
+            , bnb::RequestingScheduler<typename TspSolver::Set>>
             bnb(scheduler);
         solve(problem_path(ini), bnb);
     } else {
@@ -130,9 +130,9 @@ int process_valuation_type(const IniFile &ini) {
 int process_container_type(const IniFile &ini) {
     std::string container = ini[g_general_param]["container_type"];
     if (container == "lifo") {
-        return process_valuation_type<LifoContainer>(ini);
+        return process_valuation_type<bnb::LifoContainer>(ini);
     } else if (container == "priority") {
-        return process_valuation_type<PriorityContainer>(ini);
+        return process_valuation_type<bnb::PriorityContainer>(ini);
     } else {
         std::cerr << "Invalid container type: " << container << std::endl;
         return 1;

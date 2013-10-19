@@ -4,6 +4,7 @@
 
 #include <fstream>
 
+namespace bnb {
 Stats::Stats() {
     clear();
 }
@@ -55,3 +56,4 @@ std::ostream & operator << (std::ostream &os, const Stats &stats) {
     os << "Time: " << stats.seconds << " secs." << std::endl;
     return os;
 }
+}  // namespace bnb

@@ -14,6 +14,7 @@
 #include "tree.h"
 #include "stats.h"
 
+namespace bnb {
 template <typename Solver, typename NodesContainer = LifoContainer>
 class SerialBNB {
     typedef typename Solver::Set Set;
@@ -28,6 +29,7 @@ class SerialBNB {
  private:
     Stats stats_;
 };
+}  // namespace bnb
 
 #include "serial_bnb-inl.h"
 

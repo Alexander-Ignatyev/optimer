@@ -51,9 +51,9 @@ struct EdgeEqualsTo {
 
 typedef std::unordered_set<Edge, EdgeHash, EdgeEqualsTo> EdgesSet;
 
-EdgesSet get_included_edges(const Node<Set> *node) {
+EdgesSet get_included_edges(const bnb::Node<Set> *node) {
     EdgesSet included_edges;
-    const Node<Set> *tmp_node = node;
+    const bnb::Node<Set> *tmp_node = node;
     while (tmp_node->parent) {
         for (const Edge &edge : tmp_node->data.included_edges) {
             included_edges.insert(edge);
@@ -72,7 +72,7 @@ LagrangeanSolver::LagrangeanSolver()
     , epsilon_(0) {
 }
 
-void LagrangeanSolver::init(const InitialData &data, BnbSearchTree<Set> *mm) {
+void LagrangeanSolver::init(const InitialData &data, bnb::SearchTree<Set> *mm) {
     using std::placeholders::_1;
 
     matrix_original_ = data.matrix;
@@ -113,7 +113,7 @@ void LagrangeanSolver::init(const InitialData &data, BnbSearchTree<Set> *mm) {
 
 void LagrangeanSolver::get_initial_node(Node *node) {
     node->data.level = 0;
-    Stats stats;
+    bnb::Stats stats;
     transform_node(node, solution_initial_.value, stats);
 }
 
@@ -122,7 +122,7 @@ void LagrangeanSolver::get_initial_solution(Solution *sol) {
 }
 
 void LagrangeanSolver::branch(const Node *node, value_type &record
-        , NodeList &nodes, Solution &sol, Stats &stats) {
+        , NodeList &nodes, Solution &sol, bnb::Stats &stats) {
     if (node->data.value+epsilon_ >= record) {
         ++stats.sets_constrained_by_record;
         return;
@@ -191,8 +191,6 @@ LagrangeanSolver::branching_rule1(const Node *node) {
 
 // Volgenant and Jonker, 1982
 LagrangeanSolver::NodeList LagrangeanSolver::branching_rule2(const Node *node) {
-    std::vector<Edge> moves;
-
     auto included_edges = get_included_edges(node);
 
     std::vector<size_t> total_degrees(dimension_, 0);
@@ -302,7 +300,7 @@ LagrangeanSolver::NodeList LagrangeanSolver::branching_rule3(const Node *node) {
 }
 
 void LagrangeanSolver::transform_node(Node *node
-            , value_type record, Stats &stats) {
+            , value_type record, bnb::Stats &stats) {
     // restore excluded edgess from branch
     memcpy(matrix_.data(), matrix_original_.data()
            , matrix_original_.size()*sizeof(matrix_original_[0]));

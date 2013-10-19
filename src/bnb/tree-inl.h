@@ -7,18 +7,19 @@
 
 #include <g2log.h>
 
+namespace bnb {
 template <typename D>
-BnbSearchTree<D>::BnbSearchTree()
+SearchTree<D>::SearchTree()
     : num_nodes_(0) {
 }
 
 template <typename D>
-BnbSearchTree<D>::~BnbSearchTree() {
-    CHECK(num_nodes_ == 0) << "BnbSearchTree: unfreed memory: " << num_nodes_;
+SearchTree<D>::~SearchTree() {
+    CHECK(num_nodes_ == 0) << "SearchTree: unfreed memory: " << num_nodes_;
 }
 
 template <typename D>
-Node<D> *BnbSearchTree<D>::create_node(const Node<D> *parent) {
+Node<D> *SearchTree<D>::create_node(const Node<D> *parent) {
     std::lock_guard<std::mutex> lock(mutex_);
 
     ++num_nodes_;
@@ -35,7 +36,7 @@ Node<D> *BnbSearchTree<D>::create_node(const Node<D> *parent) {
 }
 
 template <typename D>
-void BnbSearchTree<D>::release_node(Node<D> *node) {
+void SearchTree<D>::release_node(Node<D> *node) {
     std::lock_guard<std::mutex> lock(mutex_);
     while (node && allocator_.dec_refs(node) == 0) {
         node->~Node<D>();
@@ -46,7 +47,7 @@ void BnbSearchTree<D>::release_node(Node<D> *node) {
 }
 
 template <typename D>
-bool BnbSearchTree<D>::has_cycle(const Node<D> *start) {
+bool SearchTree<D>::has_cycle(const Node<D> *start) {
     const Node<D> *node = start->parent;
     while (node != nullptr) {
         if (node == start) {
@@ -56,5 +57,5 @@ bool BnbSearchTree<D>::has_cycle(const Node<D> *start) {
     }
     return false;
 }
-
+}  // namespace bnb
 #endif  // BNB_TREE_INL_H_

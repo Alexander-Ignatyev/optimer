@@ -33,7 +33,7 @@ int solve(std::istream &is) {
     IniSection stsp_section = ini["stsp"];
     data.parameters = stsp_section.data();
 
-    SerialBNB<stsp::LagrangeanSolver> solver;
+    bnb::SerialBNB<stsp::LagrangeanSolver> solver;
     auto solution = solver.solve(data);
     std::cout << "Solution: " << solution.value << std::endl;
     for (auto point : solution.route) {

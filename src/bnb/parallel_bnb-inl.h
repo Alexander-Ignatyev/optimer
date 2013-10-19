@@ -3,6 +3,7 @@
 #ifndef BNB_PARALLEL_BNB_INL_H_
 #define BNB_PARALLEL_BNB_INL_H_
 
+namespace bnb {
 template <typename Solver, typename NodesContainer, typename Scheduler>
 typename Solver::Solution
 ParallelBNB<Solver, NodesContainer, Scheduler>::solve(
@@ -138,5 +139,6 @@ void ParallelBNB<SolverFactory, NodesContainer, Scheduler>
     os << "# of sets per second: ";
     os << (total_stats.sets_generated / average_stats.seconds) << std::endl;
 }
+}  // namespace bnb
 
 #endif  // BNB_PARALLEL_BNB_INL_H_

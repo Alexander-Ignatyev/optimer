@@ -12,6 +12,7 @@
 #include "tree.h"
 #include "scheduler_common.h"
 
+namespace bnb {
 struct RequestingSchedulerParams {
     unsigned num_threads;
     unsigned num_minimum_nodes;
@@ -86,5 +87,5 @@ class RequestingScheduler {
     std::mutex mutex_sets_;
     std::condition_variable condvar_sets_;
 };
-
+}  // namespace bnb
 #endif  // BNB_REQUESTING_SCHEDULER_H_

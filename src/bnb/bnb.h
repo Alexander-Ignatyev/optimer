@@ -9,6 +9,7 @@
 #include "defs.h"
 #include "tree.h"
 
+namespace bnb {
 struct LifoContainer { };
 
 struct PriorityContainer { };
@@ -58,5 +59,5 @@ std::priority_queue<Node<typename Solver::Set> *
         , PtrNodeComparer<typename Solver::Set> >()
         (first, last);
 }
-
+}  // namespace bnb
 #endif  // BNB_BNB_H_

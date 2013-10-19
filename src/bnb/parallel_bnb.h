@@ -18,6 +18,7 @@
 #include "tree.h"
 #include "stats.h"
 
+namespace bnb {
 template <typename Solver, typename NodesContainer, typename Scheduler>
 class ParallelBNB {
     typedef typename Solver::Set Set;
@@ -48,10 +49,11 @@ class ParallelBNB {
      std::vector<ListNodes> list_nodes_;
      std::vector<Stats> list_stats_;
      Stats initial_stats_;
-     BnbSearchTree<Set> search_tree_;
+     SearchTree<Set> search_tree_;
 
      Scheduler scheduler_;
 };
+}  // namespace bnb
 
 #include "parallel_bnb-inl.h"
 

@@ -5,6 +5,7 @@
 
 #include <iosfwd>
 
+namespace bnb {
 struct Stats {
     Stats();
     void clear();
@@ -23,5 +24,5 @@ struct Stats {
 std::ostream & operator << (std::ostream &os, const Stats &stats);
 
 Stats operator / (Stats lhs, double value);
-
+}  // namespace bnb
 #endif  // BNB_STATS_H_

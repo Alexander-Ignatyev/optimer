@@ -14,6 +14,15 @@
 #include <tsp/common/data_loader.h>
 #include <tsp/asymmetric/tsp.h>
 
+using bnb::LifoContainer;
+using bnb::PriorityContainer;
+
+using bnb::GivingScheduler;
+using bnb::RequestingScheduler;
+
+using bnb::SerialBNB;
+using bnb::ParallelBNB;
+
 namespace {
 template <typename Solver>
 void test_problem(Solver &solver, const TspInitialData &data
