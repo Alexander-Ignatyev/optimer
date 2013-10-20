@@ -31,7 +31,12 @@ struct Set {
 struct Solution {
     value_type value;
     std::vector<size_t> route;
+    void calc_value(const value_type *matrix, size_t dimension);
     void write_as_json(std::ostream &os);
+
+    bool operator < (const Solution &other) const {
+        return value < other.value;
+    }
 };
 
 struct InitialData {
@@ -43,6 +48,7 @@ struct InitialData {
     std::unordered_map<std::string, std::string> parameters;
 };
 
+bool two_opt(const value_type *matrix, size_t dimension, Solution *sol);
 Solution get_greedy_solution(const std::vector<value_type> &matrix
                              , size_t dimension);
 

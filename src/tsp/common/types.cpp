@@ -6,6 +6,13 @@
 #include <set>
 
 namespace tsp {
+void Solution::calc_value(const value_type *matrix, size_t dimension) {
+    value = value_type();
+    for (size_t i = 1; i < route.size(); ++i) {
+        value += matrix[route[i-1]*dimension+route[i]];
+    }
+}
+
 void Solution::write_as_json(std::ostream &os) {
     os << "route = [";
     if (!route.empty()) {

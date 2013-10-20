@@ -97,6 +97,15 @@ set(LIBS ${LIBS} symmetric_tsp)
 add_executable(stsp ${PROJECT_SRC}/stsp.cpp)
 target_link_libraries(stsp ${LIBS})
 
+# aco_tsp library
+file(GLOB ACO_TSP_SRC ${PROJECT_SRC}/heuristics/aco/tsp/*.cpp ${PROJECT_SRC}/heuristics/aco/tsp/*.h)
+add_library(aco_tsp_lib STATIC ${ACO_TSP_SRC})
+set(LIBS ${LIBS} aco_tsp_lib)
+
+# aco_tsp executable
+add_executable(aco_tsp ${PROJECT_SRC}/heuristics/aco/aco_tsp.cpp)
+target_link_libraries(aco_tsp ${LIBS})
+
 if(USE_UNIT_TESTS)
     set(UNIT_TESTS_SRC tests)
 

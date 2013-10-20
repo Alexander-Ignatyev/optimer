@@ -24,3 +24,4 @@ share
 env
 build*
 pms_result*
+*.log
