@@ -115,7 +115,7 @@ if(USE_UNIT_TESTS)
 	set(TEST_LIBS ${TEST_LIBS} UnitTestPP)
 
 	# unittests
-	file (GLOB SRC_TEST_FILES ${UNIT_TESTS_SRC}/*.cpp)
+	file (GLOB SRC_TEST_FILES ${UNIT_TESTS_SRC}/*.cpp ${UNIT_TESTS_SRC}/*.h)
 	add_executable(optimer-tests ${SRC_TEST_FILES})
 	target_link_libraries(optimer-tests ${LIBS} ${TEST_LIBS})
 

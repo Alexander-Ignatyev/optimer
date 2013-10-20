@@ -12,6 +12,8 @@
 #include <tsp/symmetric/lagrangean.h>
 #include <tsp/symmetric/lagrangean_stsp.h>
 
+#include "tsp.h"
+
 using bnb::SerialBNB;
 
 namespace {
@@ -66,6 +68,30 @@ struct Gr17Fixture {
     value_type solution_value;
 };
 
+struct Gr24Fixture {
+    Gr24Fixture()
+    : dimension(0)
+    , solution_value(1272) {
+        size_t dimension;
+        std::ifstream ifs("data/stsp/gr24.tsp");
+        tsp::load_tsplib_problem(ifs, matrix, dimension);
+        ifs.close();
+
+        initial_data.reset(new tsp::InitialData(matrix, dimension));
+        initial_data->parameters["epsilon"] = "0.9";
+        initial_data->parameters["gradinet_max_iters"] = "100";
+        initial_data->parameters["branching_rule"] = "2";
+    }
+
+    Gr24Fixture(const Gr24Fixture &) = delete;
+    Gr24Fixture &operator=(Gr24Fixture &) = delete;
+
+    std::vector<value_type> matrix;
+    size_t dimension;
+    std::shared_ptr<tsp::InitialData> initial_data;
+    value_type solution_value;
+};
+
 TEST_FIXTURE(Nasini12Fuxture, stsp_lagrengean_relaxation) {
     stsp::LagrangeanRelaxation lr;
     std::vector<tsp::Edge> included_edges;
@@ -85,5 +111,44 @@ TEST_FIXTURE(Gr17Fixture, stsp_lr_gr17) {
     SerialBNB<stsp::LagrangeanSolver> solver;
     auto solution = solver.solve(*initial_data);
     CHECK_CLOSE(solution_value, static_cast<double>(solution.value), 0.001);
+}
+
+TEST_FIXTURE(Gr24Fixture, test_serial_GR24_lifo) {
+    UNITTEST_TIME_CONSTRAINT(10000);
+    tsp_test::test_serial_problem_lifo<stsp::LagrangeanSolver>
+        (*initial_data, solution_value);
+}
+
+TEST_FIXTURE(Gr24Fixture, test_serial_GR24_priority) {
+    UNITTEST_TIME_CONSTRAINT(10000);
+    tsp_test::test_serial_problem_priority<stsp::LagrangeanSolver>
+        (*initial_data, solution_value);
+}
+
+TEST_FIXTURE(Gr24Fixture, test_parallel_GR24_lifo) {
+    UNITTEST_TIME_CONSTRAINT(10000);
+    tsp_test::test_parallel_problem_lifo_giving<stsp::LagrangeanSolver, 2, 2>
+        (*initial_data, solution_value);
+}
+
+TEST_FIXTURE(Gr24Fixture, test_parallel_GR24_priority) {
+    UNITTEST_TIME_CONSTRAINT(10000);
+    using tsp_test::test_parallel_problem_priority_giving;
+    test_parallel_problem_priority_giving<stsp::LagrangeanSolver, 2, 2>
+        (*initial_data, solution_value);
+}
+
+TEST_FIXTURE(Gr24Fixture, test_parallel_GR24_lifo_requesting) {
+    UNITTEST_TIME_CONSTRAINT(10000);
+    using::tsp_test::test_parallel_problem_lifo_requesting;
+    test_parallel_problem_lifo_requesting<stsp::LagrangeanSolver, 2, 2>
+        (*initial_data, solution_value);
+}
+
+TEST_FIXTURE(Gr24Fixture, test_parallel_GR24_priority_requesting) {
+    UNITTEST_TIME_CONSTRAINT(10000);
+    using tsp_test::test_parallel_problem_priority_requesting;
+    test_parallel_problem_priority_requesting<stsp::LagrangeanSolver, 2, 2>
+        (*initial_data, solution_value);
 }
 }  // namespace

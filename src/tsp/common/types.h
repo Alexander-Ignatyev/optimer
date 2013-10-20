@@ -23,6 +23,7 @@ struct Set {
         return value > other.value;
     }
     void clear() {
+        relaxation.clear();
         excluded_edges.clear();
         included_edges.clear();
     }

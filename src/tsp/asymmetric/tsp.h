@@ -8,6 +8,8 @@
 #include <bnb/defs.h>
 #include <bnb/tree.h>
 
+#include <tsp/common/types.h>
+
 #include "ap_solver.h"
 
 using bnb::Node;
@@ -16,17 +18,10 @@ namespace bnb {
 struct Stats;
 }  // namespace bnb
 
-struct TspInitialData {
-    TspInitialData(value_type *m, size_t r): matrix(m), rank(r) {
-    }
-
-    const value_type *matrix;
-    size_t rank;
-};
-
 class TspSolver {
  public:
-    typedef TspInitialData InitialData;
+    typedef tsp::InitialData InitialData;
+    typedef tsp::Solution Solution;
     struct Point {
         size_t x;
         size_t y;
@@ -48,15 +43,15 @@ class TspSolver {
         }
     };
 
-    struct Solution {
+    /*struct Solution {
         value_type value;
         std::vector<size_t> route;
-    };
+    };*/
 
     TspSolver();
 
     // mandatory function
-    void init(const TspInitialData &data, bnb::SearchTree<Set> *mm);
+    void init(const tsp::InitialData &data, bnb::SearchTree<Set> *mm);
     void get_initial_node(Node<Set> *node);
     void get_initial_solution(Solution *sol);
     void branch(const Node<Set> *node, value_type &record

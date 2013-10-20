@@ -44,8 +44,8 @@ TspSolver::TspSolver()
     , matrix_original_(nullptr)
     , search_tree_(nullptr) { }
 
-void TspSolver::init(const TspInitialData &data, bnb::SearchTree<Set> *mm) {
-    matrix_original_ = data.matrix;
+void TspSolver::init(const tsp::InitialData &data, bnb::SearchTree<Set> *mm) {
+    matrix_original_ = data.matrix.data();
     dimension_ = data.rank;
     search_tree_ = mm;
     matrix_ = new value_type[dimension_*dimension_];
