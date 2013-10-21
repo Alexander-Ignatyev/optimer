@@ -58,7 +58,7 @@ class ApSolver {
     void dual_update(const std::vector<char> &scanned_u
                     , std::vector<char> *plabeled_v
                     , std::vector<T> *ppi
-                    , Solution *solution);
+                    , Solution *solution) const;
     size_t next_unassigned(const Solution *solution) const;
 
     static const T big_value_;
@@ -201,7 +201,7 @@ template <typename T>
 void ApSolver<T>::dual_update(const std::vector<char> &scanned_u
                               , std::vector<char> *plabeled_v
                               , std::vector<T> *ppi
-                              , Solution *solution) {
+                              , Solution *solution) const {
     std::vector<T> &pi = *ppi;
     std::vector<char> &labeled_v = *plabeled_v;
     T *dual_u = &solution->dual_u[0];
