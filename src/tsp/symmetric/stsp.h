@@ -23,7 +23,6 @@ class ClassicalSolver {
     typedef tsp::InitialData InitialData;
 
     ClassicalSolver();
-    ~ClassicalSolver();
 
     void init(const InitialData &data, bnb::SearchTree<Set> *mm);
     void get_initial_node(Node<Set> *node);
@@ -37,8 +36,8 @@ class ClassicalSolver {
     bool build_solution(const Node<Set> *node, Solution *solution);
 
     size_t dimension_;
-    value_type *matrix_;
-    const value_type *matrix_original_;
+    std::vector<value_type> matrix_;
+    std::vector<value_type> matrix_original_;
 
     bnb::SearchTree<Set> *search_tree_;
 };

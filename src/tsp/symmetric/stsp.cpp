@@ -7,25 +7,19 @@
 #include <g2log.h>
 #include <bnb/stats.h>
 #include <tsp/symmetric/ms_one_tree.h>
+#include <tsp/symmetric/common.h>
 
 namespace stsp {
 ClassicalSolver::ClassicalSolver()
     : dimension_(0)
-    , matrix_(nullptr)
-    , matrix_original_(nullptr)
     , search_tree_(nullptr) {
 }
 
-ClassicalSolver::~ClassicalSolver() {
-    delete [] matrix_;
-}
-
 void ClassicalSolver::init(const InitialData &data, bnb::SearchTree<Set> *mm) {
-    matrix_original_ = data.matrix.data();
+    matrix_original_ = data.matrix;
     dimension_ = data.rank;
     search_tree_ = mm;
-    delete [] matrix_;
-    matrix_ = new value_type[dimension_*dimension_];
+    matrix_.resize(dimension_*dimension_);
 }
 void ClassicalSolver::get_initial_node(Node<Set> *node) {
     node->data.level = 0;
@@ -33,7 +27,7 @@ void ClassicalSolver::get_initial_node(Node<Set> *node) {
 }
 
 void ClassicalSolver::get_initial_solution(Solution *sol) {
-    sol->value = M_VAL;
+    *sol = tsp::get_greedy_solution(matrix_original_, dimension_);
 }
 
 void ClassicalSolver::branch(const Node<Set> *node, value_type &record
@@ -67,7 +61,7 @@ void ClassicalSolver::branch(const Node<Set> *node, value_type &record
 
 void ClassicalSolver::transform_node(Node<Set> *node) {
     // restore excluded points from branch
-    memcpy(matrix_, matrix_original_
+    memcpy(matrix_.data(), matrix_original_.data()
            , dimension_*dimension_*sizeof(matrix_original_[0]));
     const Node<Set> *tmp_node = node;
     while (tmp_node->parent) {
@@ -78,7 +72,7 @@ void ClassicalSolver::transform_node(Node<Set> *node) {
         tmp_node = tmp_node->parent;
     }
 
-    auto solution = MSOneTree::solve(matrix_, dimension_);
+    auto solution = MSOneTree::solve(matrix_.data(), dimension_);
     node->data.relaxation = std::move(solution.edges);
     node->data.value = solution.value;
 }
@@ -116,37 +110,16 @@ ClassicalSolver::select_moves(const Node<Set> *node) {
 
 bool ClassicalSolver::build_solution(const Node<Set> *node
                                     , Solution *solution) {
-    static const size_t BORDER_VALUE = 2;
-    std::vector<size_t> degrees(dimension_, 0);
-    for (auto &edge : node->data.relaxation) {
-        ++degrees[edge.first];
-        ++degrees[edge.second];
-    }
-    for (size_t i = 0; i < degrees.size(); ++i) {
-        size_t degree = degrees[i];
-        if (degree != BORDER_VALUE) {
-            return false;
-        }
+    solution->route = build_tour(node->data);
+    if (solution->route.empty()) {
+        return false;
     }
 
-    LOG(DEBUG) << "Found solution " << node->data.value;
+    LOG(INFO) << "Found solution " << node->data.value;
     solution->value = node->data.value;
-    solution->route.clear();
-    solution->route.resize(dimension_, dimension_);
-    std::vector<size_t> distances(dimension_, dimension_);
-    for (auto &edge : node->data.relaxation) {
-        if (solution->route[edge.first] == dimension_
-                && distances[edge.second] == dimension_) {
-            solution->route[edge.first] = edge.second;
-            distances[edge.second] = edge.first;
-        } else if (solution->route[edge.second] == dimension_
-                && distances[edge.first] == dimension_) {
-            solution->route[edge.second] = edge.first;
-            distances[edge.first] = edge.second;
-        } else {
-            CHECK(false) << "Incorrect solution's route";
-        }
-    }
+    std::ostringstream oss;
+    solution->write_as_json(oss);
+    LOG(INFO) << oss.str();
     return true;
 }
 }  // namespace stsp
