@@ -7,6 +7,7 @@
 
 #include <bnb/defs.h>
 #include <bnb/tree.h>
+#include <tsp/common/types.h>
 
 namespace bnb {
 struct Stats;
@@ -17,40 +18,9 @@ using bnb::Node;
 namespace stsp {
 class ClassicalSolver {
  public:
-    struct Point {
-        Point(const std::pair<size_t, size_t> &pair)
-            : x(pair.first)
-            , y(pair.second) {}
-        size_t x;
-        size_t y;
-    };
-
-    struct Set {
-        value_type value;
-        std::vector<std::pair<size_t, size_t> > ms1_solution;
-        std::vector<Point> excluded_points;
-        unsigned level;
-        bool operator < (const Set &other) const {
-            return value > other.value;
-        }
-        void clear() {
-            excluded_points.clear();
-        }
-    };
-
-
-    struct Solution {
-        value_type value;
-        std::vector<size_t> route;
-    };
-
-    struct InitialData {
-        InitialData(value_type *m, size_t r): matrix(m), rank(r) {
-        }
-
-        const value_type *matrix;
-        size_t rank;
-    };
+    typedef tsp::Set Set;
+    typedef tsp::Solution Solution;
+    typedef tsp::InitialData InitialData;
 
     ClassicalSolver();
     ~ClassicalSolver();
@@ -63,7 +33,7 @@ class ClassicalSolver {
 
  private:
     void transform_node(Node<Set> *node);
-    std::vector<Point> select_moves(const Node<Set> *node);
+    std::vector<tsp::Edge> select_moves(const Node<Set> *node);
     bool build_solution(const Node<Set> *node, Solution *solution);
 
     size_t dimension_;

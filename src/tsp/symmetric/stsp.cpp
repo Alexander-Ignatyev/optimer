@@ -21,7 +21,7 @@ ClassicalSolver::~ClassicalSolver() {
 }
 
 void ClassicalSolver::init(const InitialData &data, bnb::SearchTree<Set> *mm) {
-    matrix_original_ = data.matrix;
+    matrix_original_ = data.matrix.data();
     dimension_ = data.rank;
     search_tree_ = mm;
     delete [] matrix_;
@@ -43,13 +43,13 @@ void ClassicalSolver::branch(const Node<Set> *node, value_type &record
     }
     ++stats.branches;
 
-    auto moves = select_moves(node);
-    CHECK(!moves.empty()) << "Cannot select moves";
-    for (auto move : moves) {
+    auto edges = select_moves(node);
+    CHECK(!edges.empty()) << "Cannot select moves";
+    for (auto edge : edges) {
         ++stats.sets_generated;
         auto child = search_tree_->create_node(node);
         child->data.level = node->data.level+1;
-        child->data.excluded_points.push_back(move);
+        child->data.excluded_edges.push_back(edge);
         transform_node(child);
         if (child->data.value >= record) {
             ++stats.sets_constrained_by_record;
@@ -71,24 +71,24 @@ void ClassicalSolver::transform_node(Node<Set> *node) {
            , dimension_*dimension_*sizeof(matrix_original_[0]));
     const Node<Set> *tmp_node = node;
     while (tmp_node->parent) {
-        for (const Point &point : tmp_node->data.excluded_points) {
-            matrix_[point.x*dimension_+point.y] = M_VAL;
-            matrix_[point.y*dimension_+point.x] = M_VAL;
+        for (const tsp::Edge &edge : tmp_node->data.excluded_edges) {
+            matrix_[edge.first*dimension_+edge.second] = M_VAL;
+            matrix_[edge.second*dimension_+edge.first] = M_VAL;
         }
         tmp_node = tmp_node->parent;
     }
 
     auto solution = MSOneTree::solve(matrix_, dimension_);
-    node->data.ms1_solution = std::move(solution.edges);
+    node->data.relaxation = std::move(solution.edges);
     node->data.value = solution.value;
 }
 
-std::vector<ClassicalSolver::Point>
+std::vector<tsp::Edge>
 ClassicalSolver::select_moves(const Node<Set> *node) {
-    std::vector<Point> moves;
+    std::vector<tsp::Edge> edges;
 
     std::vector<size_t> degrees(dimension_, 0);
-    for (auto &point : node->data.ms1_solution) {
+    for (auto &point : node->data.relaxation) {
         ++degrees[point.first];
         ++degrees[point.second];
     }
@@ -104,23 +104,23 @@ ClassicalSolver::select_moves(const Node<Set> *node) {
         }
     }
 
-    for (auto &point : node->data.ms1_solution) {
-        if (point.first == selected_vertex
-            || point.second == selected_vertex) {
-            moves.push_back(point);
+    for (auto &edge : node->data.relaxation) {
+        if (edge.first == selected_vertex
+            || edge.second == selected_vertex) {
+            edges.push_back(edge);
         }
     }
 
-    return moves;
+    return edges;
 }
 
 bool ClassicalSolver::build_solution(const Node<Set> *node
                                     , Solution *solution) {
     static const size_t BORDER_VALUE = 2;
     std::vector<size_t> degrees(dimension_, 0);
-    for (auto &point : node->data.ms1_solution) {
-        ++degrees[point.first];
-        ++degrees[point.second];
+    for (auto &edge : node->data.relaxation) {
+        ++degrees[edge.first];
+        ++degrees[edge.second];
     }
     for (size_t i = 0; i < degrees.size(); ++i) {
         size_t degree = degrees[i];
@@ -134,15 +134,15 @@ bool ClassicalSolver::build_solution(const Node<Set> *node
     solution->route.clear();
     solution->route.resize(dimension_, dimension_);
     std::vector<size_t> distances(dimension_, dimension_);
-    for (auto &point : node->data.ms1_solution) {
-        if (solution->route[point.first] == dimension_
-                && distances[point.second] == dimension_) {
-            solution->route[point.first] = point.second;
-            distances[point.second] = point.first;
-        } else if (solution->route[point.second] == dimension_
-                && distances[point.first] == dimension_) {
-            solution->route[point.second] = point.first;
-            distances[point.first] = point.second;
+    for (auto &edge : node->data.relaxation) {
+        if (solution->route[edge.first] == dimension_
+                && distances[edge.second] == dimension_) {
+            solution->route[edge.first] = edge.second;
+            distances[edge.second] = edge.first;
+        } else if (solution->route[edge.second] == dimension_
+                && distances[edge.first] == dimension_) {
+            solution->route[edge.second] = edge.first;
+            distances[edge.first] = edge.second;
         } else {
             CHECK(false) << "Incorrect solution's route";
         }

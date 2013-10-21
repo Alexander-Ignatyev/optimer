@@ -5,6 +5,7 @@
 #include <UnitTest++.h>
 #undef CHECK
 
+#include <tsp/common/types.h>
 #include <bnb/serial_bnb.h>
 #include <tsp/symmetric/stsp.h>
 
@@ -49,7 +50,7 @@ struct Simple6Fuxture {
                     3, 1, 3, 1000, 3, 3,
                     3, 1, 3, 3, 1000, 1,
                     3, 3, 3, 3, 1, 1000};
-        initial_data = new InitialData(matrix.data(), 6);
+        initial_data = new tsp::InitialData(matrix, 6);
     }
 
     ~Simple6Fuxture() {
@@ -60,7 +61,7 @@ struct Simple6Fuxture {
     Simple6Fuxture &operator=(Simple6Fuxture &) = delete;
 
     std::vector<value_type> matrix;
-    InitialData *initial_data;
+    tsp::InitialData *initial_data;
     value_type solution;
 };
 
