@@ -12,6 +12,7 @@
 #include <algorithm>
 
 #include <common/timer.h>
+#include <common/signals.h>
 
 #include "defs.h"
 #include "bnb.h"

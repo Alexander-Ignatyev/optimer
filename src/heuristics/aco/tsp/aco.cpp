@@ -6,6 +6,8 @@
 
 #include <g2log.h>
 
+#include <common/signals.h>
+
 #include "ant.h"
 #include "params.h"
 
@@ -16,6 +18,8 @@ void update_pheromone(const Params &params
                       , size_t dimension);
 
 tsp::Solution solve(const tsp::InitialData &data) {
+    Signals::InterruptingSignalGuard signalGuard;
+
     size_t dimension = data.rank;
     std::vector<value_type> matrix_dist = data.matrix;
     std::vector<value_type> matrix_theta(dimension*dimension, 1);
@@ -45,7 +49,9 @@ tsp::Solution solve(const tsp::InitialData &data) {
     std::vector<tsp::Solution> solutions(ants.size());
     tsp::Solution best_solution;
     best_solution.value = M_VAL;
-    for (size_t n = 0; n < params.iterations; ++n) {
+    for (size_t n = 0
+         ; n < params.iterations && !Signals::is_interrupted()
+         ; ++n) {
         for (size_t k = 0; k < ants.size(); ++k) {
             solutions[k] = ants[k].solve();
         }

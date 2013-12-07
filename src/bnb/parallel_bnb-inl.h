@@ -4,6 +4,15 @@
 #define BNB_PARALLEL_BNB_INL_H_
 
 namespace bnb {
+template <typename Container, typename Set>
+void clean_nodes(Container &nodes, SearchTree<Set> &search_tree) {
+    while (!nodes.empty()) {
+        Node<Set> *node = nodes.top();
+        nodes.pop();
+        search_tree.release_node(node);
+    }
+}
+
 template <typename Solver, typename NodesContainer, typename Scheduler>
 typename Solver::Solution
 ParallelBNB<Solver, NodesContainer, Scheduler>::solve(
@@ -12,10 +21,12 @@ ParallelBNB<Solver, NodesContainer, Scheduler>::solve(
     , value_type record) {
     static const size_t MIN_RANK_VALUE = 2;
 
+    Signals::InterruptingSignalGuard signal_guard;
+
     initial_data_ = &data;
 
     Solution sol;
-    auto nodes = make_nodes_container<Solver>(LifoContainer());
+    auto nodes = make_nodes_container<Solver>(NodesContainer());
     initial_stats_.clear();
     if (data.rank > MIN_RANK_VALUE) {
         Solver solver;
@@ -35,7 +46,8 @@ ParallelBNB<Solver, NodesContainer, Scheduler>::solve(
             scheduler_.num_minimum_nodes() * scheduler_.num_threads();
         Timer timer;
         while (!nodes.empty()
-            && nodes.size() < num_minimum_nodes) {
+            && nodes.size() < num_minimum_nodes
+            && !Signals::is_interrupted()) {
             node = nodes.top();
             nodes.pop();
 
@@ -46,26 +58,31 @@ ParallelBNB<Solver, NodesContainer, Scheduler>::solve(
             tmp_nodes.clear();
             search_tree_.release_node(node);
         }
+
         record_ = record;
         initial_stats_.seconds = timer.elapsed_seconds();
     }
 
-    // parallel part
-    const unsigned num_threads = scheduler_.num_threads();
-    list_nodes_.resize(num_threads);
-    list_stats_.resize(num_threads);
-    for (unsigned i = 0; !nodes.empty(); ++i) {
-        list_nodes_[i % num_threads].push_back(nodes.top());
-        nodes.pop();
+    if (!Signals::is_interrupted()) {
+        // parallel part
+        const unsigned num_threads = scheduler_.num_threads();
+        list_nodes_.resize(num_threads);
+        list_stats_.resize(num_threads);
+        for (unsigned i = 0; !nodes.empty(); ++i) {
+            list_nodes_[i % num_threads].push_back(nodes.top());
+            nodes.pop();
+        }
+
+        std::vector<std::thread> threads(num_threads);
+        for (unsigned i = 0; i < num_threads; ++i) {
+            threads[i] = std::thread(&ParallelBNB::start, this, i);
+        }
+
+        std::for_each(threads.begin(), threads.end(),
+            std::mem_fn(&std::thread::join));
     }
 
-    std::vector<std::thread> threads(num_threads);
-    for (unsigned i = 0; i < num_threads; ++i) {
-        threads[i] = std::thread(&ParallelBNB::start, this, i);
-    }
-
-    std::for_each(threads.begin(), threads.end(),
-        std::mem_fn(&std::thread::join));
+    clean_nodes(nodes, search_tree_);
 
     list_nodes_.clear();
 
@@ -89,7 +106,7 @@ void ParallelBNB<Solver, NodesContainer, Scheduler>::start(unsigned threadID) {
     std::vector<Node<Set> * > tmp_nodes;
 
     Timer timer;
-    while (!nodes.empty()) {
+    while (!nodes.empty() && !Signals::is_interrupted()) {
         node = nodes.top();
         nodes.pop();
 
@@ -114,6 +131,9 @@ void ParallelBNB<Solver, NodesContainer, Scheduler>::start(unsigned threadID) {
         list_stats_[threadID].sets_sent += scheduler_stats.sets_sent;
         list_stats_[threadID].sets_received += scheduler_stats.sets_received;
     }
+
+    clean_nodes(nodes, search_tree_);
+
     list_stats_[threadID].seconds += timer.elapsed_seconds();
 }
 
@@ -139,6 +159,7 @@ void ParallelBNB<SolverFactory, NodesContainer, Scheduler>
     os << "# of sets per second: ";
     os << (total_stats.sets_generated / average_stats.seconds) << std::endl;
 }
+
 }  // namespace bnb
 
 #endif  // BNB_PARALLEL_BNB_INL_H_

@@ -8,6 +8,9 @@ template <typename Solver, typename NodesContainer>
 typename Solver::Solution
     SerialBNB<Solver, NodesContainer>::solve(
     const InitialData &data, size_t max_branches, value_type record) {
+
+    Signals::InterruptingSignalGuard signal_guard;
+
     static const size_t MIN_RANK_VALUE = 2;
 
     stats_.clear();
@@ -27,7 +30,7 @@ typename Solver::Solution
         std::vector<Node<Set> * > tmp_nodes;
         nodes.push(node);
         Timer timer;
-        while (!nodes.empty()) {
+        while (!nodes.empty() && !Signals::is_interrupted()) {
             node = nodes.top();
             nodes.pop();
 
@@ -36,6 +39,13 @@ typename Solver::Solution
                 nodes.push(set);
             }
             tmp_nodes.clear();
+            search_tree.release_node(node);
+        }
+
+        // cleaning in case of intterrupting
+        while (!nodes.empty()) {
+            node = nodes.top();
+            nodes.pop();
             search_tree.release_node(node);
         }
         stats_.seconds = timer.elapsed_seconds();
