@@ -4,7 +4,7 @@
 
 #include <algorithm>
 
-#include <g2log.h>
+#include <common/log.h>
 
 namespace aco_tsp {
 Ant::Ant()

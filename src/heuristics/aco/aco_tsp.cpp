@@ -4,10 +4,8 @@
 #include <fstream>
 #include <vector>
 
-#include <g2log.h>
-#include <g2logworker.h>
-
 #include <bnb/defs.h>
+#include <common/log.h>
 #include <common/ini_file.h>
 #include <common/timer.h>
 #include <tsp/common/data_loader.h>
@@ -42,8 +40,7 @@ int solve(std::istream &is) {
 }
 
 int main(int argc, char *argv[]) {
-    g2LogWorker g2log("aco-tsp", "");
-    g2::initializeLogging(&g2log);
+    init_logger("aco-tsp");
 
     std::string config_path = "config/default.ini";
     if (argc > 1) {

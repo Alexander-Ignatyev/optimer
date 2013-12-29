@@ -3,8 +3,9 @@
 #include "stsp.h"
 
 #include <cstring>
+#include <sstream>
 
-#include <g2log.h>
+#include <common/log.h>
 #include <bnb/stats.h>
 #include <tsp/symmetric/ms_one_tree.h>
 #include <tsp/symmetric/common.h>

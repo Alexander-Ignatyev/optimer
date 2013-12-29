@@ -10,7 +10,7 @@
 #include <functional>
 #include <stdexcept>
 
-#include <g2log.h>
+#include <common/log.h>
 
 #include <common/algo_string.h>
 #include <common/geometry2d.h>

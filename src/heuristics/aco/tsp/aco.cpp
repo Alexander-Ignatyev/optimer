@@ -3,8 +3,9 @@
 #include "aco.h"
 
 #include <algorithm>
+#include <sstream>
 
-#include <g2log.h>
+#include <common/log.h>
 
 #include <common/signals.h>
 
@@ -61,7 +62,9 @@ tsp::Solution solve(const tsp::InitialData &data) {
                 best_solution = solutions[k];
                 LOG(INFO) << "Record: " << best_solution.value
                     << " on iter: " << n;
-                best_solution.write_as_json(LOG(INFO));
+                std::ostringstream oss;
+                best_solution.write_as_json(oss);
+                LOG(INFO) << oss.str();
             }
         }
 

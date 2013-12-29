@@ -4,12 +4,13 @@
 
 #include <cstring>
 
+#include <sstream>
 #include <algorithm>
 #include <vector>
 #include <set>
 #include <unordered_set>
 
-#include <g2log.h>
+#include <common/log.h>
 
 #include <bnb/stats.h>
 

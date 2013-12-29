@@ -4,15 +4,12 @@
 #include <fstream>
 #include <string>
 
-#include <g2log.h>
-#include <g2logworker.h>
-
+#include <common/log.h>
 #include <tsp/common/config.h>
 #include <tsp/symmetric/lagrangean_stsp.h>
 
 int main(int argc, char *argv[]) {
-    g2LogWorker g2log("optimer-stsp", "");
-    g2::initializeLogging(&g2log);
+    init_logger("optimer-stsp");
 
     std::string config_path = "config/default_stsp.ini";
     if (argc > 1) {

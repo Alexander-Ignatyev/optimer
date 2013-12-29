@@ -7,7 +7,7 @@
 #include <unordered_set>
 #include <tuple>
 
-#include <g2log.h>
+#include <common/log.h>
 #include <common/algo_string.h>
 #include <bnb/stats.h>
 

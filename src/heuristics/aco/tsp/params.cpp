@@ -4,7 +4,7 @@
 
 #include <sstream>
 
-#include <g2log.h>
+#include <common/log.h>
 
 #include <common/algo_string.h>
 

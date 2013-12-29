@@ -6,7 +6,7 @@
 #include <thread>
 #include <condition_variable>
 
-#include <g2log.h>
+#include <common/log.h>
 
 #include "tree.h"
 #include "scheduler_common.h"

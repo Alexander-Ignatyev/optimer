@@ -5,7 +5,7 @@
 
 #include <cassert>
 
-#include <g2log.h>
+#include <common/log.h>
 
 namespace bnb {
 template <typename D>

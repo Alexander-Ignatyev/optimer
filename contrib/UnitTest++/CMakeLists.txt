@@ -1,6 +1,6 @@
 # Copyright (c) 2013 Alexander Ignatyev. All rights reserved.
 
-cmake_minimum_required(VERSION 2.8)
+cmake_minimum_required(VERSION 2.6)
 enable_language(CXX)
 enable_testing()
 
