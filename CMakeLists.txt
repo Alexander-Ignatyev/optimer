@@ -1,4 +1,4 @@
-# Copyright (c) 2013 Alexander Ignatyev. All rights reserved.
+# Copyright (c) 2013-2014 Alexander Ignatyev. All rights reserved.
 # CMakeLists.txt cmake configuration for optimer
 # 
 # Build instruction:
@@ -23,9 +23,10 @@
 
 cmake_minimum_required(VERSION 2.6)
 enable_language(CXX)
-enable_testing()
 
 project(optimer)
+
+include(utils.cmake)
 
 option (USE_UNIT_TESTS "Create unit tests" ON)
 option (USE_G2LOG "Use g2log" ON)
@@ -64,66 +65,21 @@ if(USE_G2LOG)
     # gl2log: https://bitbucket.org/KjellKod/g2log/src
     include_directories("${CMAKE_HOME_DIRECTORY}/contrib/g2log/src")
     add_subdirectory (contrib/g2log)
-    set (LIBS ${LIBS} lib_g2logger)
+    set (OPTIMER_LIBS ${OPTIMER_LIBS} lib_g2logger CACHE INTERNAL "")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DUSE_G2LOG")
 endif()
 
-# common lib
-file(GLOB COMMON_SRC ${PROJECT_SRC}/common/*.cpp ${PROJECT_SRC}/common/*.h)
-add_library(common STATIC ${COMMON_SRC})
-set(LIBS ${LIBS} common)
+# libs
+add_subdirectory(${PROJECT_SRC}/common)
+add_subdirectory(${PROJECT_SRC}/bnb)
+add_subdirectory(${PROJECT_SRC}/tsp)
+add_subdirectory(${PROJECT_SRC}/heuristics)
 
-# bnb lib
-file(GLOB BNB_SRC ${PROJECT_SRC}/bnb/*.cpp ${PROJECT_SRC}/bnb/*.h)
-add_library(bnb STATIC ${BNB_SRC})
-set(LIBS ${LIBS} bnb)
-
-# tsp common
-file(GLOB TSP_COMMON_SRC ${PROJECT_SRC}/tsp/common/*.cpp ${PROJECT_SRC}/tsp/common/*.h)
-add_library(tsp_common STATIC ${TSP_COMMON_SRC})
-set(LIBS ${LIBS} tsp_common)
-
-# atsp library
-file(GLOB ASYMMETRIC_TSP_SRC ${PROJECT_SRC}/tsp/asymmetric/*.cpp ${PROJECT_SRC}/tsp/asymmetric/*.h)
-add_library(asymmetric_tsp STATIC ${ASYMMETRIC_TSP_SRC})
-set(LIBS ${LIBS} asymmetric_tsp)
-
-# atsp executable
-add_executable(atsp ${PROJECT_SRC}/atsp.cpp)
-target_link_libraries(atsp ${LIBS})
-
-# stsp library
-file(GLOB SYMMETRIC_TSP_SRC ${PROJECT_SRC}/tsp/symmetric/*.cpp ${PROJECT_SRC}/tsp/symmetric/*.h)
-add_library(symmetric_tsp STATIC ${SYMMETRIC_TSP_SRC})
-set(LIBS ${LIBS} symmetric_tsp)
-
-# stsp executable
-add_executable(stsp ${PROJECT_SRC}/stsp.cpp)
-target_link_libraries(stsp ${LIBS})
-
-# aco_tsp library
-file(GLOB ACO_TSP_SRC ${PROJECT_SRC}/heuristics/aco/tsp/*.cpp ${PROJECT_SRC}/heuristics/aco/tsp/*.h)
-add_library(aco_tsp_lib STATIC ${ACO_TSP_SRC})
-set(LIBS ${LIBS} aco_tsp_lib)
-
-# aco_tsp executable
-add_executable(aco_tsp ${PROJECT_SRC}/heuristics/aco/aco_tsp.cpp)
-target_link_libraries(aco_tsp ${LIBS})
+# executables
+add_optimer_executable(${PROJECT_SRC}/atsp.cpp)
+add_optimer_executable(${PROJECT_SRC}/stsp.cpp)
+add_optimer_executable(${PROJECT_SRC}/heuristics/aco/aco_tsp.cpp)
 
 if(USE_UNIT_TESTS)
-    set(UNIT_TESTS_SRC tests)
-
-	# UnitTest++
-	include_directories("${CMAKE_HOME_DIRECTORY}/contrib/UnitTest++/src")
-	add_subdirectory(contrib/UnitTest++)
-	set(TEST_LIBS ${TEST_LIBS} UnitTestPP)
-
-	# unittests
-	file (GLOB SRC_TEST_FILES ${UNIT_TESTS_SRC}/*.cpp ${UNIT_TESTS_SRC}/*.h)
-	add_executable(optimer-tests ${SRC_TEST_FILES})
-	target_link_libraries(optimer-tests ${LIBS} ${TEST_LIBS})
-
-	add_test(NAME optimer-tests
-			WORKING_DIRECTORY "${CMAKE_HOME_DIRECTORY}"
-			COMMAND "${PROJECT_BINARY_DIR}/optimer-tests")
+    add_unit_tests()
 endif()
