@@ -32,6 +32,10 @@ macro(add_optimer_executable main_cpp_path)
     target_link_libraries("${EXECUTABLE_NAME}" ${OPTIMER_LIBS})
 endmacro(add_optimer_executable)
 
+macro(add_optimer_unit_test file_name)
+    set(SRC_TEST_FILES ${SRC_TEST_FILES} ${file_name} CACHE INTERNAL "")
+endmacro(add_optimer_unit_test)
+
 macro(add_unit_tests)
     enable_testing()
 
@@ -43,8 +47,7 @@ macro(add_unit_tests)
     set(TEST_OPTIMER_LIBS ${TEST_OPTIMER_LIBS} UnitTestPP)
 
     # unittests
-    file (GLOB SRC_TEST_FILES ${UNIT_TESTS_SRC}/*.cpp ${UNIT_TESTS_SRC}/*.h)
-    add_executable(optimer-tests ${SRC_TEST_FILES})
+    add_executable(optimer-tests ${CMAKE_SOURCE_DIR}/tests/main.cpp ${SRC_TEST_FILES})
     target_link_libraries(optimer-tests ${OPTIMER_LIBS} ${TEST_OPTIMER_LIBS})
 
     add_test(NAME optimer-tests
