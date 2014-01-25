@@ -27,6 +27,8 @@ enable_language(CXX)
 project(optimer)
 include(utils.cmake)
 
+init_optimer()
+
 option (CXX11_ENABLED "C++11 is enabled" ON)
 option (USE_UNIT_TESTS "Create unit tests" ON)
 option (USE_G2LOG "Use g2log" ON)

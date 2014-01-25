@@ -1,5 +1,11 @@
 # Copyright (c) 2014 Alexander Ignatyev. All rights reserved.
 
+macro(init_optimer)
+    # clear global lists
+    set(OPTIMER_LIBS "" CACHE INTERNAL "")
+    set(SRC_TEST_FILES "" CACHE INTERNAL "")
+endmacro(init_optimer)
+
 macro(list_contains var value)
   set(${var})
   foreach(value2 ${ARGN})
