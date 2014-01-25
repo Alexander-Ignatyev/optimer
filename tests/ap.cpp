@@ -1,4 +1,4 @@
-// Copyright (c) 2013 Alexander Ignatyev. All rights reserved.
+// Copyright (c) 2013-2014 Alexander Ignatyev. All rights reserved.
 
 #include <algorithm>
 #include <UnitTest++.h>
@@ -7,7 +7,7 @@
 namespace {
 void test_problem(const double *data, size_t dimension
     , const std::vector<size_t> &expected_result
-    , const std::vector<size_t> &partial_solution = {}) {
+    , const std::vector<size_t> &partial_solution = std::vector<size_t>()) {
     ApSolver<double> solver;
     ApSolver<double>::Solution ap_solution_new;
     if (!partial_solution.empty()) {
@@ -24,12 +24,16 @@ void test_problem(const double *data, size_t dimension
 SUITE(APTest) {
     TEST(testCase1) {
         double data[] = {1, 2, 3, 6, 5, 4, 1, 1, 1};
-        test_problem(data, 3, {0, 2, 1});
+        size_t array[] = {0, 2, 1};
+        std::vector<size_t> expected_result(array, array+3);
+        test_problem(data, 3, expected_result);
     }
 
     TEST(testCase2) {
         double data[] = {5, 9, 7, 10, 3, 2, 8, 7, 4};
-        test_problem(data, 3, {0, 1, 2});
+        size_t array[] = {0, 1, 2};
+        std::vector<size_t> expected_result(array, array+3);
+        test_problem(data, 3, expected_result);
     }
 
     TEST(testCase3) {
@@ -37,7 +41,9 @@ SUITE(APTest) {
                             , 2, 8, 5, 7
                             , 1, 6, 6, 9
                             , 3, 6, 2, 2};
-        test_problem(data, 4, {1, 2, 0, 3});
+        size_t array[] = {1, 2, 0, 3};
+        std::vector<size_t> expected_result(array, array+4);
+        test_problem(data, 4, expected_result);
     }
 
     TEST(testCase3_partial_solution) {
@@ -45,7 +51,11 @@ SUITE(APTest) {
                             , 2, 8, 5, 7
                             , 1, 6, 6, 9
                             , 3, 6, 2, 2};
-        test_problem(data, 4, {1, 2, 0, 3}, {1, 4, 0, 3});
+        size_t array_er[] = {1, 2, 0, 3};
+        std::vector<size_t> expected_result(array_er, array_er+4);
+        size_t array_ps[] = {1, 4, 0, 3};
+        std::vector<size_t> partial_solution(array_ps, array_ps+4);
+        test_problem(data, 4, expected_result, partial_solution);
     }
 }
 }  // namespace

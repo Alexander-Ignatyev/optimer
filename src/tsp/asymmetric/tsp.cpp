@@ -1,4 +1,4 @@
-// Copyright (c) 2013 Alexander Ignatyev. All rights reserved.
+// Copyright (c) 2013-2014 Alexander Ignatyev. All rights reserved.
 
 #include "tsp.h"
 
@@ -8,7 +8,6 @@
 #include <algorithm>
 #include <vector>
 #include <set>
-#include <unordered_set>
 
 #include <common/log.h>
 
@@ -21,32 +20,24 @@ bool is_m(value_type val) {
 
 }
 
-struct EdgeHash {
-    std::hash<decltype(tsp::Edge::first)> hash_x;
-    std::hash<decltype(tsp::Edge::second)> hash_y;
-    size_t operator()(const tsp::Edge &edge) const {
-        return hash_x(edge.first+edge.second) ^ hash_y(edge.second);
-    }
-};
-
-struct EdgeEqualsTo {
-    bool operator()(const tsp::Edge &lhs
-        , const tsp::Edge &rhs) const {
-        return lhs.first == rhs.first && lhs.second == rhs.second;
-    }
-};
-
 TspSolver::TspSolver()
     : dimension_(0)
     , matrix_(nullptr)
     , matrix_original_(nullptr)
+    , edge_map_(nullptr)
     , search_tree_(nullptr) { }
 
+TspSolver::~TspSolver() {
+    delete [] matrix_;
+    delete [] edge_map_;
+}
+
 void TspSolver::init(const tsp::InitialData &data, bnb::SearchTree<Set> *mm) {
-    matrix_original_ = data.matrix.data();
+    matrix_original_ = &data.matrix[0];
     dimension_ = data.rank;
     search_tree_ = mm;
     matrix_ = new value_type[dimension_*dimension_];
+    edge_map_ = new int[dimension_*dimension_];
     initial_solution_ = tsp::get_greedy_solution(data.matrix, data.rank);
 }
 
@@ -87,7 +78,8 @@ void TspSolver::branch(const Node *node, value_type &record,
     }
 
     std::vector<tsp::Edge> included_edges;
-    for (auto edge : edges) {
+    for (size_t i = 0; i < edges.size(); ++i) {
+        const tsp::Edge &edge = edges[i];
         Node *new_node = search_tree_->create_node(node);
         new_node->data.level = node->data.level+1;
         new_node->data.included_edges = included_edges;
@@ -143,17 +135,19 @@ std::vector<size_t> TspSolver::create_tour(const std::vector<size_t> &ap_sol) {
 bool TspSolver::select_move(const Node &node
                             , std::vector<tsp::Edge> *edges) const {
     std::vector<char> selected_vertices(dimension_, 0);
-    std::unordered_set<tsp::Edge, EdgeHash, EdgeEqualsTo> included_edges;
+    memset(edge_map_, 0, sizeof(edge_map_[0])*dimension_*dimension_);
     const Node *tmp_node = &node;
     while (tmp_node->parent) {
-        included_edges.insert(
-            tmp_node->data.included_edges.begin()
-            , tmp_node->data.included_edges.end());
+        std::vector<tsp::Edge>::const_iterator pos, end;
+        end = tmp_node->data.included_edges.end();
+        for (pos = tmp_node->data.included_edges.begin(); pos != end; ++pos) {
+            edge_map_[pos->first*dimension_ + pos->second] = 1;
+        }
         tmp_node = tmp_node->parent;
     }
     size_t selected_path_start = dimension_;
     size_t selected_path_length = M_VAL;
-    auto ap_solution = node.data.ap_solution.primal.data();
+    const size_t *ap_solution = &node.data.ap_solution.primal[0];
     while (selected_path_length != 2) {
         size_t start = 0;
         for (; start != dimension_ && selected_vertices[start] != 0; ++start) {}
@@ -176,17 +170,17 @@ bool TspSolver::select_move(const Node &node
     }
 
     if (selected_path_start < dimension_) {
-        auto start = selected_path_start;
-        auto finish = ap_solution[start];
+        size_t start = selected_path_start;
+        size_t finish = ap_solution[start];
         for (; selected_path_start != finish; ) {
-            tsp::Edge edge = {start, finish};
-            if (included_edges.find(edge) == included_edges.end()) {
+            tsp::Edge edge(start, finish);
+            if (edge_map_[edge.first*dimension_ + edge.second] == 0) {
                 edges->push_back(edge);
             }
             start = finish;
             finish = ap_solution[finish];
         }
-        tsp::Edge edge = {start, finish};
+        tsp::Edge edge(start, finish);
         edges->push_back(edge);
     }
     return !edges->empty();
@@ -209,7 +203,8 @@ void TspSolver::transform_node(Node *node) {
 
     std::vector<size_t> i_original_to_new(dimension_, 0);
     std::vector<size_t> j_original_to_new(dimension_, 0);
-    for (const tsp::Edge &edge : included_points) {
+    for (size_t i = 0; i < included_points.size(); ++i) {
+        const tsp::Edge &edge = included_points[i];
         i_original_to_new[edge.first] = dimension_;
         j_original_to_new[edge.second] = dimension_;
     }
@@ -255,7 +250,8 @@ void TspSolver::transform_node(Node *node) {
         ++i_new;
     }
 
-    for (const tsp::Edge &edge : excluded_points) {
+    for (size_t i = 0; i < excluded_points.size(); ++i) {
+        const tsp::Edge &edge = excluded_points[i];
         if (i_original_to_new[edge.first] == dimension_
             || j_original_to_new[edge.second] == dimension_) {
                 continue;
@@ -269,7 +265,8 @@ void TspSolver::transform_node(Node *node) {
     ApSolver<value_type>::Solution ap_solution_new;
     if (node->parent) {
         ap_solution_new.init(dimension_new);
-        const auto &tmp = node->parent->data.ap_solution;
+        const ApSolver<value_type>::Solution &tmp
+            = node->parent->data.ap_solution;
         i_new = 0;
         for (size_t i_original = 0; i_original < dimension_; ++i_original) {
             if (i_original_to_new[i_original] != dimension_) {
@@ -286,7 +283,8 @@ void TspSolver::transform_node(Node *node) {
                 ++j_new;
             }
         }
-        for (auto edge : node->data.excluded_edges) {
+        for (size_t i = 0; i < node->data.excluded_edges.size(); ++i) {
+            const tsp::Edge &edge = node->data.excluded_edges[i];
             i_new = i_original_to_new[edge.first];
             j_new = j_original_to_new[edge.second];
             CHECK(i_new < dimension_new);
@@ -297,15 +295,15 @@ void TspSolver::transform_node(Node *node) {
 
     ap_solver_.solve(matrix_, dimension_new, &ap_solution_new);
 
-    const auto ap_primal_new = ap_solution_new.primal.data();
-    const auto ap_dual_u_new = ap_solution_new.dual_u.data();
-    const auto ap_dual_v_new = ap_solution_new.dual_v.data();
+    const size_t *ap_primal_new = &ap_solution_new.primal[0];
+    const value_type *ap_dual_u_new = &ap_solution_new.dual_u[0];
+    const value_type *ap_dual_v_new = &ap_solution_new.dual_v[0];
 
     node->data.ap_solution.init(dimension_);
 
-    auto ap_primal_original = node->data.ap_solution.primal.data();
-    auto ap_dual_u_original = node->data.ap_solution.dual_u.data();
-    auto ap_dual_v_original = node->data.ap_solution.dual_v.data();
+    size_t *ap_primal_original = &node->data.ap_solution.primal[0];
+    value_type *ap_dual_u_original = &node->data.ap_solution.dual_u[0];
+    value_type *ap_dual_v_original = &node->data.ap_solution.dual_v[0];
 
     i_new = 0;
     for (size_t i_original = 0; i_original < dimension_; ++i_original) {
@@ -326,14 +324,15 @@ void TspSolver::transform_node(Node *node) {
         ap_dual_v_original[j_original] = ap_dual_v_new[j_new];
         ++j_new;
     }
-    for (auto edge : included_points) {
+    for (size_t i = 0; i < included_points.size(); ++i) {
+        const tsp::Edge &edge = included_points[i];
         ap_primal_original[edge.first] = edge.second;
     }
 
     // calculate value
     value_type value = 0;
     for (size_t i = 0; i < dimension_; ++i) {
-        auto cost = matrix_original_[i*dimension_ + ap_primal_original[i]];
+        value_type cost = matrix_original_[i*dimension_+ap_primal_original[i]];
         LOG_IF(WARNING, is_m(cost)) << "transform_node: invalid ap_solve (" <<
             i << ", " << ap_primal_original[i] << ")";
         value += cost;
@@ -356,7 +355,7 @@ void TspSolver::print_matrix(const value_type *matrix
     os << std::endl;
 }
 
-void TspSolver::check_route(const decltype(Solution::route) &route
+void TspSolver::check_route(const std::vector<size_t> &route
     , const Node *node) {
     if (route.empty()) {
         dump_to_log(node);
@@ -384,13 +383,13 @@ std::ostream &operator<<(std::ostream &os, const TspSolver::Set &set) {
     os << "<< Set: " << std::endl;
     os << "Value: " << set.value << std::endl;
     os << "Included Points: ";
-    for (auto edge : set.included_edges) {
-        os << edge;
+    for (size_t i = 0; i < set.included_edges.size(); ++i) {
+        os << set.included_edges[i];
     }
     os << std::endl;
     os << "Excluded Points: ";
-    for (auto edge : set.excluded_edges) {
-        os << edge;
+    for (size_t i = 0; i < set.excluded_edges.size(); ++i) {
+        os << set.excluded_edges[i];
     }
     os << std::endl;
     os << "Level: " << set.level << std::endl;

@@ -1,4 +1,4 @@
-// Copyright (c) 2013 Alexander Ignatyev. All rights reserved.
+// Copyright (c) 2013-2014 Alexander Ignatyev. All rights reserved.
 
 #ifndef TSP_ASYMMETRIC_TSP_H_
 #define TSP_ASYMMETRIC_TSP_H_
@@ -41,6 +41,7 @@ class TspSolver {
     typedef std::vector<Node *> NodeList;
 
     TspSolver();
+    ~TspSolver();
 
     // mandatory function
     void init(const InitialData &data, bnb::SearchTree<Set> *mm);
@@ -50,18 +51,22 @@ class TspSolver {
        , NodeList &nodes, Solution &sol, bnb::Stats &stats);
 
  private:
+    TspSolver(const TspSolver &);
+    TspSolver &operator=(const TspSolver &);
+
+ private:
     static std::vector<size_t> create_tour(const std::vector<size_t> &ap_sol);
     bool select_move(const Node &node, std::vector<tsp::Edge> *edges) const;
     void transform_node(Node *node);
     static void print_matrix(const value_type *matrix, size_t rank
         , std::ostream &logger = std::cout);
-    void check_route(const decltype(Solution::route) &route
-        , const Node *node);
+    void check_route(const std::vector<size_t> &route, const Node *node);
     void dump_to_log(const Node *node);
 
     size_t dimension_;
     value_type *matrix_;
     const value_type *matrix_original_;
+    int *edge_map_;
     tsp::Solution initial_solution_;
 
     bnb::SearchTree<Set> *search_tree_;

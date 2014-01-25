@@ -5,7 +5,7 @@
 
 template <size_t N>
 struct RefCountedAllocator<N>::Element {
-    union {
+    union header_t {
         Element *next;
         size_t refs;
     } header;
@@ -70,7 +70,7 @@ template <size_t N>
 typename RefCountedAllocator<N>::Element *
     RefCountedAllocator<N>::element(void *data) {
     return reinterpret_cast<Element *>(
-        reinterpret_cast<char *>(data) - sizeof(Element::header));
+        reinterpret_cast<char *>(data) - sizeof(typename Element::header_t));
 }
 
 #endif  // COMMON_ALLOCATOR_INL_H_

@@ -1,4 +1,4 @@
-// Copyright (c) 2013 Alexander Ignatyev. All rights reserved.
+// Copyright (c) 2013-2014 Alexander Ignatyev. All rights reserved.
 
 #ifndef COMMON_TIMER_H_
 #define COMMON_TIMER_H_
@@ -20,7 +20,7 @@ class Timer {
         using std::chrono::duration;
         using std::chrono::steady_clock;
 
-        return duration_cast<duration<double>>(
+        return duration_cast<duration<double> >(
             steady_clock::now() - start_).count();
     }
 
