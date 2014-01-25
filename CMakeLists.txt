@@ -69,16 +69,14 @@ if(USE_G2LOG)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DUSE_G2LOG")
 endif()
 
-# libs
+# components
 add_subdirectory(${PROJECT_SRC}/common)
 add_subdirectory(${PROJECT_SRC}/bnb)
 add_subdirectory(${PROJECT_SRC}/tsp)
 add_subdirectory(${PROJECT_SRC}/heuristics)
 
-# executables
 add_optimer_executable(${PROJECT_SRC}/atsp.cpp)
 add_optimer_executable(${PROJECT_SRC}/stsp.cpp)
-add_optimer_executable(${PROJECT_SRC}/heuristics/aco/aco_tsp.cpp)
 
 if(USE_UNIT_TESTS)
     add_unit_tests()
