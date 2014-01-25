@@ -1,4 +1,4 @@
-// Copyright (c) 2013 Alexander Ignatyev. All rights reserved.
+// Copyright (c) 2013-2014 Alexander Ignatyev. All rights reserved.
 
 #include <fstream>
 #include <UnitTest++.h>
@@ -23,7 +23,7 @@ TEST(ATSP_FTV33) {
     data.parameters["q"] = "1300";
     data.parameters["candidate_list_factor"] = "0.25";
 
-    auto solution = aco_tsp::solve(data);
+    tsp::Solution solution = aco_tsp::solve(data);
     CHECK_CLOSE(expected_solution, solution.value, 100);
 }
 
@@ -42,7 +42,7 @@ TEST(STSP_GR24) {
     data.parameters["q"] = "1300";
     data.parameters["candidate_list_factor"] = "0.25";
 
-    auto solution = aco_tsp::solve(data);
+    tsp::Solution solution = aco_tsp::solve(data);
     CHECK_CLOSE(expected_solution, solution.value, 100);
 }
 }

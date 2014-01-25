@@ -1,15 +1,15 @@
-// Copyright (c) 2008-2013 Alexander Ignatyev. All rights reserved.
+// Copyright (c) 2008-2014 Alexander Ignatyev. All rights reserved.
 
 #ifndef HEURISTICS_ACO_TSP_PARAMS_H_
 #define HEURISTICS_ACO_TSP_PARAMS_H_
 
 #include <string>
-#include <unordered_map>
+#include <map>
 
 namespace aco_tsp {
 struct Params {
     Params();
-    void init(const std::unordered_map<std::string, std::string> &parameters);
+    void init(const std::map<std::string, std::string> &parameters);
     double alpha;
     double beta;
     double p;

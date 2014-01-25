@@ -1,4 +1,4 @@
-// Copyright (c) 2013 Alexander Ignatyev. All rights reserved.
+// Copyright (c) 2013-2014 Alexander Ignatyev. All rights reserved.
 
 #include "types.h"
 
@@ -30,7 +30,7 @@ bool two_opt(const value_type *matrix, size_t dimension, Solution *sol) {
 
     while (bContinue) {
         bContinue = false;
-        auto &route = sol->route;
+        std::vector<size_t> &route = sol->route;
         for (unsigned first = 1, second = 2;
              second < route.size() - 2;
              ++first, ++second) {
@@ -69,7 +69,9 @@ Solution get_greedy_solution(const value_type *data, size_t dimension
     sol.route.push_back(curr_vertex);
     while (!vertices.empty()) {
         min_value = M_VAL + 10;
-        for (auto vertex : vertices) {
+        std::set<size_t>::const_iterator pos, end = vertices.end();
+        for (pos = vertices.begin(); pos != end; ++pos) {
+            size_t vertex = *pos;
             if (data[curr_vertex*dimension+vertex] < min_value) {
                 min_value = data[curr_vertex*dimension+vertex];
                 min_vertex = vertex;

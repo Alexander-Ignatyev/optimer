@@ -1,4 +1,4 @@
-// Copyright (c) 2013 Alexander Ignatyev. All rights reserved.
+// Copyright (c) 2013-2014 Alexander Ignatyev. All rights reserved.
 
 #ifndef BNB_TREE_INL_H_
 #define BNB_TREE_INL_H_
@@ -20,7 +20,9 @@ SearchTree<D>::~SearchTree() {
 
 template <typename D>
 Node<D> *SearchTree<D>::create_node(const Node<D> *parent) {
+#ifndef SINGLE_THREADED
     std::lock_guard<std::mutex> lock(mutex_);
+#endif
 
     ++num_nodes_;
     Node<D> *result = static_cast<Node<D> *>(allocator_.allocate());
@@ -37,7 +39,9 @@ Node<D> *SearchTree<D>::create_node(const Node<D> *parent) {
 
 template <typename D>
 void SearchTree<D>::release_node(Node<D> *node) {
+#ifndef SINGLE_THREADED
     std::lock_guard<std::mutex> lock(mutex_);
+#endif
     while (node && allocator_.dec_refs(node) == 0) {
         node->~Node<D>();
         --num_nodes_;

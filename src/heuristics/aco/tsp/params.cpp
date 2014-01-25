@@ -1,4 +1,4 @@
-// Copyright (c) 2008-2013 Alexander Ignatyev. All rights reserved.
+// Copyright (c) 2008-2014 Alexander Ignatyev. All rights reserved.
 
 #include "params.h"
 
@@ -18,9 +18,10 @@ Params::Params()
     , iterations(1000) {
 }
 
-void Params::init(const std::unordered_map<std::string
-                  , std::string> &parameters) {
-    auto pos = parameters.find("alpha");
+void Params::init(const std::map<std::string, std::string> &parameters) {
+    std::map<std::string, std::string>::const_iterator pos;
+
+    pos = parameters.find("alpha");
     if (pos != parameters.end()) {
         alpha = string_to_double(pos->second, alpha);
     }

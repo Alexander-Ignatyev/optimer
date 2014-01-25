@@ -1,9 +1,11 @@
-// Copyright (c) 2013 Alexander Ignatyev. All rights reserved.
+// Copyright (c) 2013-2014 Alexander Ignatyev. All rights reserved.
 
 #ifndef BNB_TREE_H_
 #define BNB_TREE_H_
 
+#ifndef SINGLE_THREADED
 #include <mutex>
+#endif
 
 #include <common/allocator.h>
 
@@ -28,7 +30,9 @@ class SearchTree {
 
     size_t num_nodes_;
     RefCountedAllocator<sizeof(Node<D>)> allocator_;
+#ifndef SINGLE_THREADED
     std::mutex mutex_;
+#endif
 };
 }  // namespace bnb
 

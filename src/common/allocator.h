@@ -1,9 +1,10 @@
-// Copyright (c) 2013 Alexander Ignatyev. All rights reserved.
+// Copyright (c) 2013-2014 Alexander Ignatyev. All rights reserved.
 
 #ifndef COMMON_ALLOCATOR_H_
 #define COMMON_ALLOCATOR_H_
 
 #include <list>
+#include <common/nullptr.h>
 
 template <size_t N>
 class RefCountedAllocator {
@@ -11,14 +12,14 @@ class RefCountedAllocator {
     explicit RefCountedAllocator(size_t capacity = 1024);
     ~RefCountedAllocator();
 
-    RefCountedAllocator(const RefCountedAllocator &) = delete;
-    RefCountedAllocator &operator=(const RefCountedAllocator &) = delete;
-
     void *allocate();
     static size_t inc_refs(void *data);
     size_t dec_refs(void *data);
 
  private:
+    RefCountedAllocator(const RefCountedAllocator &);
+    RefCountedAllocator &operator=(const RefCountedAllocator &);
+
     struct Element;
     void reserve();
     static Element *element(void *data);

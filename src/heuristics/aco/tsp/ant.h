@@ -1,10 +1,9 @@
-// Copyright (c) 2008-2013 Alexander Ignatyev. All rights reserved.
+// Copyright (c) 2008-2014 Alexander Ignatyev. All rights reserved.
 
 #ifndef HEURISTICS_ACO_TSP_ANT_H_
 #define HEURISTICS_ACO_TSP_ANT_H_
 
 #include <vector>
-#include <random>
 
 #include <bnb/defs.h>
 #include <tsp/common/types.h>
@@ -40,7 +39,6 @@ class Ant {
     std::vector<size_t> candidate_vertices_;
     std::vector<value_type> probabilities_;
     Params params_;
-    std::mt19937 random_;
 };
 }  // namespace aco_tsp
 #endif  // HEURISTICS_ACO_TSP_ANT_H_

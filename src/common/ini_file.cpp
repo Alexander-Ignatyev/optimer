@@ -1,4 +1,4 @@
-// Copyright (c) 2013 Alexander Ignatyev. All rights reserved.
+// Copyright (c) 2013-2014 Alexander Ignatyev. All rights reserved.
 
 #include "ini_file.h"
 
@@ -13,7 +13,7 @@ std::string &IniSection::operator[](const std::string &key) {
 }
 
 const std::string &IniSection::operator[](const std::string &key) const {
-    auto pos = key_values_.find(key);
+    data_type::const_iterator pos = key_values_.find(key);
     if (pos == key_values_.end()) {
         return empty_string_;
     } else {
@@ -21,7 +21,7 @@ const std::string &IniSection::operator[](const std::string &key) const {
     }
 }
 
-const std::unordered_map<std::string, std::string> &IniSection::data() const {
+const std::map<std::string, std::string> &IniSection::data() const {
     return key_values_;
 }
 
@@ -33,8 +33,8 @@ IniFile::IniFile(std::istream &is): num_parse_errors_(0) {
     std::string section_name = default_section_name_;
     while (std::getline(is, line)) {
         line = trim(line);
-        if (line.front() == '[') {
-            if (line.back() == ']') {
+        if (line[0] == '[') {
+            if (line[line.size()-1] == ']') {
                 section_name = line.substr(1, line.size() - 2);
             } else {
                 ++num_parse_errors_;
@@ -51,7 +51,7 @@ IniFile::IniFile(std::istream &is): num_parse_errors_(0) {
 }
 
 const IniSection &IniFile::operator[](const std::string &section_name) const {
-    auto pos = sections_.find(section_name);
+    sections_type::const_iterator pos = sections_.find(section_name);
     if (pos != sections_.end()) {
         return pos->second;
     } else {

@@ -1,10 +1,13 @@
-// Copyright (c) 2008-2013 Alexander Ignatyev. All rights reserved.
+// Copyright (c) 2008-2014 Alexander Ignatyev. All rights reserved.
 
 #include "ant.h"
 
+#include <cstdlib>
+#include <cmath>
 #include <algorithm>
 
 #include <common/log.h>
+#include <common/nullptr.h>
 
 namespace aco_tsp {
 Ant::Ant()
@@ -31,7 +34,7 @@ void Ant::init(const std::vector<value_type> &matrix_dist
     candidate_vertices_.resize(dimension_);
     probabilities_.resize(dimension_);
     params_ = params;
-    random_.seed(start_point_);
+    std::srand(start_point_);
 }
 
 size_t Ant::get_list_points(size_t *points) const {
@@ -88,7 +91,7 @@ size_t Ant::get_next_point(size_t curr_vertex) {
 
     value_type sum = 0;
     size_t result = dimension_;
-    unsigned random_value = (random_() - random_.min()) % 100;
+    unsigned random_value = rand() % 100;
     multinv /= 100.0f;
     for (unsigned i = 0; i < npoints; ++i) {
         sum += probabilities[i] / multinv;

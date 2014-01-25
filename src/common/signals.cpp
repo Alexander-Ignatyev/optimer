@@ -1,4 +1,4 @@
-// Copyright (c) 2013 Alexander Ignatyev. All rights reserved.
+// Copyright (c) 2013-2014 Alexander Ignatyev. All rights reserved.
 
 #include "signals.h"
 
@@ -39,9 +39,9 @@ class InterruptingSignalGuard::Impl {
     }
 
     ~Impl() {
-        for (auto pos = old_handlers_.begin()
-             ; pos != old_handlers_.end()
-             ; ++pos) {
+        std::map<int, struct sigaction>::iterator pos
+            , end = old_handlers_.end();
+        for (pos = old_handlers_.begin(); pos != end; ++pos) {
             if (sigaction(pos->first, &pos->second, 0) < 0) {
                 std::cerr << "~InterruptingSignalGuard: sigaction error"
                     << std::endl;
@@ -55,6 +55,10 @@ class InterruptingSignalGuard::Impl {
 
 InterruptingSignalGuard::InterruptingSignalGuard()
     : impl_(new InterruptingSignalGuard::Impl()) {
+}
+
+InterruptingSignalGuard::~InterruptingSignalGuard() {
+    delete impl_;
 }
 
 bool is_interrupted() {

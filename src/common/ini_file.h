@@ -1,22 +1,23 @@
-// Copyright (c) 2013 Alexander Ignatyev. All rights reserved.
+// Copyright (c) 2013-2014 Alexander Ignatyev. All rights reserved.
 
 #ifndef COMMON_INI_FILE_H_
 #define COMMON_INI_FILE_H_
 
 #include <iosfwd>
 #include <string>
-#include <unordered_map>
+#include <map>
 
 class IniSection {
  public:
+    typedef std::map<std::string, std::string> data_type;
     IniSection() {}
     std::string &operator[](const std::string &key);
     const std::string &operator[](const std::string &key) const;
 
-    const std::unordered_map<std::string, std::string> &data() const;
+    const data_type &data() const;
  private:
     static const std::string empty_string_;
-    std::unordered_map<std::string, std::string> key_values_;
+    data_type key_values_;
 };
 
 class IniFile {
@@ -32,7 +33,8 @@ class IniFile {
     static const IniSection empty_section_;
 
     unsigned num_parse_errors_;
-    std::unordered_map<std::string, IniSection> sections_;
+    typedef std::map<std::string, IniSection> sections_type;
+    sections_type sections_;
 };
 
 #endif  // COMMON_INI_FILE_H_

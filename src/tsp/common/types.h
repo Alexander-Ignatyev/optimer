@@ -1,4 +1,4 @@
-// Copyright (c) 2013 Alexander Ignatyev. All rights reserved.
+// Copyright (c) 2013-2014 Alexander Ignatyev. All rights reserved.
 
 #ifndef TSP_COMMON_TYPES_H_
 #define TSP_COMMON_TYPES_H_
@@ -6,7 +6,7 @@
 #include <vector>
 #include <string>
 #include <iosfwd>
-#include <unordered_map>
+#include <map>
 
 #include <bnb/defs.h>
 
@@ -46,7 +46,7 @@ struct InitialData {
                 , rank(d) {}
     const std::vector<value_type> &matrix;
     size_t rank;
-    std::unordered_map<std::string, std::string> parameters;
+    std::map<std::string, std::string> parameters;
 };
 
 bool two_opt(const value_type *matrix, size_t dimension, Solution *sol);

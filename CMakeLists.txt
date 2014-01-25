@@ -25,43 +25,30 @@ cmake_minimum_required(VERSION 2.6)
 enable_language(CXX)
 
 project(optimer)
-
 include(utils.cmake)
 
+option (CXX11_ENABLED "C++11 is enabled" ON)
 option (USE_UNIT_TESTS "Create unit tests" ON)
 option (USE_G2LOG "Use g2log" ON)
 
-get_filename_component(CXX ${CMAKE_CXX_COMPILER} NAME)
-message("[OPTIMER]: Compiler: ${CXX}")
-
-# compiler flags
-if(${CXX} MATCHES "^clang*" OR ${CXX} MATCHES "g\\+\\+" OR ${CXX} MATCHES "^icpc")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
-endif()
-if (${CXX} MATCHES "^clang*")
-   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++")
-   set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -fsanitize-undefined-trap-on-error")
-   set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -fsanitize-address")
-endif()
-if(MSVC)
-	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /EHsc")
+set_cpp_flags()
+if(CXX11_ENABLED)
+    set_cpp11_flags()
+else()
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DSINGLE_THREADED")
 endif()
 
+message("[OPTIMER]: Compiler: ${CMAKE_CXX_COMPILER}")
 message("[OPTIMER]: Compiler flags: ${CMAKE_CXX_FLAGS}")
 message("[OPTIMER]: Debug compiler flags: ${CMAKE_CXX_FLAGS_DEBUG}")
 message("[OPTIMER]: Minsizerel compiler flags: ${CMAKE_CXX_FLAGS_MINSIZEREL}")
 message("[OPTIMER]: Release compiler flags: ${CMAKE_CXX_FLAGS_RELEASE}")
 
-if(XCODE_VERSION)
-    set(CMAKE_XCODE_ATTRIBUTE_CLANG_CXX_LANGUAGE_STANDARD "c++11")
-    set(CMAKE_XCODE_ATTRIBUTE_CLANG_CXX_LIBRARY "libc++")
-endif()
-
 # set paths
 set(PROJECT_SRC ${CMAKE_CURRENT_SOURCE_DIR}/src)
 include_directories(${PROJECT_SRC})
 
-if(USE_G2LOG)
+if(USE_G2LOG AND CPP11_ENABLED)
     # gl2log: https://bitbucket.org/KjellKod/g2log/src
     include_directories("${CMAKE_HOME_DIRECTORY}/contrib/g2log/src")
     add_subdirectory (contrib/g2log)
@@ -75,8 +62,11 @@ add_subdirectory(${PROJECT_SRC}/bnb)
 add_subdirectory(${PROJECT_SRC}/tsp)
 add_subdirectory(${PROJECT_SRC}/heuristics)
 
-add_optimer_executable(${PROJECT_SRC}/atsp.cpp)
-add_optimer_executable(${PROJECT_SRC}/stsp.cpp)
+# executables
+if(CXX11_ENABLED)
+    add_optimer_executable(${PROJECT_SRC}/atsp.cpp)
+    add_optimer_executable(${PROJECT_SRC}/stsp.cpp)
+endif()
 
 if(USE_UNIT_TESTS)
     add_unit_tests()

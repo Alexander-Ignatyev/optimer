@@ -1,4 +1,4 @@
-// Copyright (c) 2013 Alexander Ignatyev. All rights reserved.
+// Copyright (c) 2013-2014 Alexander Ignatyev. All rights reserved.
 
 #include "data_loader.h"
 
@@ -48,10 +48,9 @@ class TspLibLoader {
     void load(std::istream &is, std::vector<value_type> &matrix
               , size_t &dimension);
 
-    TspLibLoader(const TspLibLoader &) = delete;
-    TspLibLoader &operator=(const TspLibLoader &) = delete;
-
  private:
+    TspLibLoader(const TspLibLoader &);
+    TspLibLoader &operator=(const TspLibLoader &);
     // actions:
     void read_common_line(const std::string &line);
     void read_lower_diag_data_line(const std::string &line);
@@ -63,8 +62,9 @@ class TspLibLoader {
     void read_display_data_type(const std::string &line);
     void read_edges(const std::string &line);
 
-    std::function<void(const std::string &)> next_action_;
-    std::function<void(const std::string &)> data_action_;
+    typedef void (TspLibLoader::*action_ptr)(const std::string &);
+    action_ptr next_action_;
+    action_ptr data_action_;
     size_t dimension_;
     std::vector<value_type> matrix_;
     std::vector<Geometry2D::Point> coords_;
@@ -82,20 +82,18 @@ TspLibLoader::TspLibLoader(): dimension_(0) {
 
 void TspLibLoader::load(std::istream &is, std::vector<value_type> &matrix
     , size_t &dimension) {
-    using std::placeholders::_1;
     matrix_.clear();
     dimension_ = 0;
     std::string line;
-    next_action_ = std::bind(&TspLibLoader::read_common_line, this, _1);
+    next_action_ = &TspLibLoader::read_common_line;
     while (std::getline(is, line)) {
-        next_action_(line);
+        (this->*next_action_)(line);
     }
     matrix.swap(matrix_);
     dimension = dimension_;
 }
 
 void TspLibLoader::read_common_line(const std::string &line) {
-    using std::placeholders::_1;
     if (starts_with(line, MARKER_DIMENSION)) {
         read_dimension(line);
     } else if (starts_with(line, MARKER_FORMAT)) {
@@ -110,7 +108,6 @@ void TspLibLoader::read_common_line(const std::string &line) {
 }
 
 void TspLibLoader::read_lower_diag_data_line(const std::string &line) {
-    using std::placeholders::_1;
     if (!starts_with(line, MARKER_EOF)) {
         read_edges(line);
     } else {
@@ -134,7 +131,6 @@ void TspLibLoader::read_lower_diag_data_line(const std::string &line) {
 }
 
 void TspLibLoader::read_full_matrix_data_line(const std::string &line) {
-    using std::placeholders::_1;
     if (!starts_with(line, MARKER_EOF)) {
         read_edges(line);
     } else {
@@ -146,7 +142,6 @@ void TspLibLoader::read_full_matrix_data_line(const std::string &line) {
 }
 
 void TspLibLoader::read_coords_data_line(const std::string &line) {
-    using std::placeholders::_1;
     if (!starts_with(line, MARKER_EOF)) {
         Geometry2D::Point point;
         unsigned coord_index;
@@ -182,27 +177,22 @@ void TspLibLoader::read_dimension(const std::string &line) {
 }
 
 void TspLibLoader::read_format(const std::string &line) {
-    using std::placeholders::_1;
     std::string format = line.substr(MARKER_FORMAT.size()).c_str();
     format = trim(format);
     if (format == "LOWER_DIAG_ROW") {
-        data_action_ =
-            std::bind(&TspLibLoader::read_lower_diag_data_line, this, _1);
+        data_action_ = &TspLibLoader::read_lower_diag_data_line;
     } else if (format == "FULL_MATRIX") {
-        data_action_ =
-            std::bind(&TspLibLoader::read_full_matrix_data_line, this, _1);
+        data_action_ = &TspLibLoader::read_full_matrix_data_line;
     } else {
         throw std::domain_error("Unknown format: " + format);
     }
 }
 
 void TspLibLoader::read_display_data_type(const std::string &line) {
-    using std::placeholders::_1;
     std::string data_type = line.substr(MARKER_DISP_DATA_TYPE.size()).c_str();
     data_type = trim(data_type);
     if (data_type == "COORD_DISPLAY") {
-        data_action_ =
-            std::bind(&TspLibLoader::read_coords_data_line, this, _1);
+        data_action_ = &TspLibLoader::read_coords_data_line;
     } else {
         throw std::domain_error("Unknown display data type: " + data_type);
     }

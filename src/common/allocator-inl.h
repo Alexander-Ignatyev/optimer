@@ -1,9 +1,7 @@
-// Copyright (c) 2013 Alexander Ignatyev. All rights reserved.
+// Copyright (c) 2013-2014 Alexander Ignatyev. All rights reserved.
 
 #ifndef COMMON_ALLOCATOR_INL_H_
 #define COMMON_ALLOCATOR_INL_H_
-
-#include <cstdint>
 
 template <size_t N>
 struct RefCountedAllocator<N>::Element {
@@ -22,8 +20,9 @@ RefCountedAllocator<N>::RefCountedAllocator(size_t capacity)
 
 template <size_t N>
 RefCountedAllocator<N>::~RefCountedAllocator() {
-    for (auto area : area_list_) {
-        delete [] area;
+    typename std::list<Element *>::iterator pos, end = area_list_.end();
+    for (pos = area_list_.begin(); pos != end; ++pos) {
+        delete [] *pos;
     }
 }
 
@@ -71,9 +70,7 @@ template <size_t N>
 typename RefCountedAllocator<N>::Element *
     RefCountedAllocator<N>::element(void *data) {
     return reinterpret_cast<Element *>(
-        reinterpret_cast<int8_t *>(data) - sizeof(Element::header));
+        reinterpret_cast<char *>(data) - sizeof(Element::header));
 }
-
-#include "allocator-inl.h"
 
 #endif  // COMMON_ALLOCATOR_INL_H_
