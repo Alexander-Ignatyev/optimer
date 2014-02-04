@@ -3,10 +3,6 @@
 #ifndef BNB_TREE_H_
 #define BNB_TREE_H_
 
-#ifndef SINGLE_THREADED
-#include <mutex>
-#endif
-
 #include <common/allocator.h>
 
 namespace bnb {
@@ -22,17 +18,14 @@ class SearchTree {
     SearchTree();
     ~SearchTree();
 
-    Node<D> *create_node(const Node<D> *parent = nullptr);
-    void release_node(Node<D> *node);
+    virtual Node<D> *create_node(const Node<D> *parent = nullptr);
+    virtual void release_node(Node<D> *node);
 
  private:
     bool has_cycle(const Node<D> *start);
 
     size_t num_nodes_;
     RefCountedAllocator<sizeof(Node<D>)> allocator_;
-#ifndef SINGLE_THREADED
-    std::mutex mutex_;
-#endif
 };
 }  // namespace bnb
 

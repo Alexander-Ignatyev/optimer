@@ -1,4 +1,4 @@
-// Copyright (c) 2013 Alexander Ignatyev. All rights reserved.
+// Copyright (c) 2013-2014 Alexander Ignatyev. All rights reserved.
 
 #ifndef BNB_PARALLEL_BNB_H_
 #define BNB_PARALLEL_BNB_H_
@@ -16,7 +16,7 @@
 
 #include "defs.h"
 #include "bnb.h"
-#include "tree.h"
+#include "locked_tree.h"
 #include "stats.h"
 
 namespace bnb {
@@ -50,7 +50,7 @@ class ParallelBNB {
      std::vector<ListNodes> list_nodes_;
      std::vector<Stats> list_stats_;
      Stats initial_stats_;
-     SearchTree<Set> search_tree_;
+     LockedSearchTree<Set> search_tree_;
 
      Scheduler scheduler_;
 };

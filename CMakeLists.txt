@@ -36,8 +36,6 @@ option (USE_G2LOG "Use g2log" ON)
 set_cpp_flags()
 if(CXX11_ENABLED)
     set_cpp11_flags()
-else()
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DSINGLE_THREADED")
 endif()
 
 message("[OPTIMER]: Compiler: ${CMAKE_CXX_COMPILER}")

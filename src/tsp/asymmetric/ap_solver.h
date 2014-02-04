@@ -1,4 +1,4 @@
-// Copyright (c) 2013 Alexander Ignatyev. All rights reserved.
+// Copyright (c) 2013-2014 Alexander Ignatyev. All rights reserved.
 
 #ifndef TSP_ASYMMETRIC_AP_SOLVER_H_
 #define TSP_ASYMMETRIC_AP_SOLVER_H_
@@ -49,7 +49,7 @@ class ApSolver {
          }
      };
 
-    ApSolver(): dimension_(0), matrix_(nullptr) {}
+    ApSolver(): dimension_(0), matrix_(0) {}
     void solve(const T *matrix, size_t dimension, Solution *solution);
 
  private:
