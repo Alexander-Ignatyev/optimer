@@ -7,7 +7,7 @@
 # use -c for clean build
 
 if [ "$1" != "" ]; then
-    CXX=$1
+    export CXX=$1
 fi
 
 NUMBER_OF_CORES=1
