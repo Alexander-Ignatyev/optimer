@@ -1,4 +1,4 @@
-// Copyright (c) 2013 Alexander Ignatyev. All rights reserved.
+// Copyright (c) 2014 Alexander Ignatyev. All rights reserved.
 
 #include <string>
 #include <fstream>
@@ -36,7 +36,7 @@ struct Ftv38Fixture {
     Ftv38Fixture &operator=(const Ftv38Fixture &);
 };
 
-SUITE(ATSPTest) {
+SUITE(SimpleATSPTest) {
     TEST_FIXTURE(Ftv38Fixture, test_simple_FTV38) {
         UNITTEST_TIME_CONSTRAINT(10000);
         bnb::SimpleBNB<TspSolver> solver;
