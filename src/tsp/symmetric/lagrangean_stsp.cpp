@@ -1,69 +1,35 @@
-// Copyright (c) 2013 Alexander Ignatyev. All rights reserved.
+// Copyright (c) 2013-2014 Alexander Ignatyev. All rights reserved.
 
 #include "lagrangean_stsp.h"
 
 #include <cstring>
-
-#include <unordered_set>
-#include <tuple>
 
 #include <common/log.h>
 #include <common/algo_string.h>
 #include <bnb/stats.h>
 
 namespace stsp {
-
-struct EdgeHash {
-    std::hash<decltype(tsp::Edge::first)> hash_x;
-    std::hash<decltype(tsp::Edge::second)> hash_y;
-    size_t operator()(const tsp::Edge &edge) const {
-        return hash_x(edge.first) ^ hash_y(edge.second);
-    }
-};
-
-struct EdgeEqualsTo {
-    bool operator()(const tsp::Edge &lhs, const tsp::Edge &rhs) const {
-        return lhs.first == rhs.first && lhs.second == rhs.second;
-    }
-};
-
-typedef std::unordered_set<tsp::Edge, EdgeHash, EdgeEqualsTo> EdgesSet;
-
-EdgesSet get_included_edges(const bnb::Node<LagrangeanSolver::Set> *node) {
-    EdgesSet included_edges;
-    const bnb::Node<LagrangeanSolver::Set> *tmp_node = node;
-    while (tmp_node->parent) {
-        for (const tsp::Edge &edge : tmp_node->data.included_edges) {
-            included_edges.insert(edge);
-            tsp::Edge rev_edge = std::make_pair(edge.second, edge.first);
-            included_edges.insert(rev_edge);
-        }
-        tmp_node = tmp_node->parent;
-    }
-    return included_edges;
-}
-
 LagrangeanSolver::LagrangeanSolver()
     : dimension_(0)
-    , search_tree_(nullptr)
+    , search_tree_(0)
     , gradient_max_iters_(100)
     , epsilon_(0) {
 }
 
 void LagrangeanSolver::init(const InitialData &data, bnb::SearchTree<Set> *mm) {
-    using std::placeholders::_1;
-
     matrix_original_ = data.matrix;
     dimension_ = data.rank;
     search_tree_ = mm;
     matrix_.resize(dimension_*dimension_);
+    edge_map_.resize(matrix_.size());
     solution_initial_ = tsp::get_greedy_solution(matrix_original_, dimension_);
     LOG(INFO) << "Initial solution: " << solution_initial_.value;
     std::ostringstream oss;
     solution_initial_.write_as_json(oss);
     LOG(INFO) << oss.str();
 
-    auto pos = data.parameters.find("epsilon");
+    std::map<std::string, std::string>::const_iterator pos;
+    pos = data.parameters.find("epsilon");
     if (pos != data.parameters.end()) {
         double epsilon = string_to_double(pos->second, epsilon_);
         epsilon_ = static_cast<value_type>(epsilon);
@@ -75,16 +41,14 @@ void LagrangeanSolver::init(const InitialData &data, bnb::SearchTree<Set> *mm) {
                                 , gradient_max_iters_);
     }
 
-    branching_rule = std::bind(&LagrangeanSolver::branching_rule1, this, _1);
+    branching_rule = &LagrangeanSolver::branching_rule1;
     pos = data.parameters.find("branching_rule");
     if (pos != data.parameters.end()) {
         size_t rule = string_to_size_t(pos->second, 1);
         if (rule == 2) {
-            branching_rule = std::bind(&LagrangeanSolver::branching_rule2
-                                       , this, _1);
+            branching_rule = &LagrangeanSolver::branching_rule2;
         } else if (rule == 3) {
-            branching_rule = std::bind(&LagrangeanSolver::branching_rule3
-                                       , this, _1);
+            branching_rule = &LagrangeanSolver::branching_rule3;
         }
     }
 }
@@ -107,10 +71,11 @@ void LagrangeanSolver::branch(const Node *node, value_type &record
     }
     ++stats.branches;
 
-    auto new_nodes = branching_rule(node);
+    NodeList new_nodes = (this->*branching_rule)(node);
 
     // transform nodes
-    for (auto child : new_nodes) {
+    for (size_t i = 0; i < new_nodes.size(); ++i) {
+        Node *child = new_nodes[i];
         ++stats.sets_generated;
         transform_node(child, record, stats);
         if (child->data.value+epsilon_ >= record) {
@@ -132,7 +97,8 @@ LagrangeanSolver::branching_rule1(const Node *node) {
     std::vector<tsp::Edge> moves;
 
     std::vector<size_t> degrees(dimension_, 0);
-    for (auto &edge : node->data.relaxation) {
+    for (size_t i = 0; i < node->data.relaxation.size(); ++i) {
+        const tsp::Edge &edge = node->data.relaxation[i];
         ++degrees[edge.first];
         ++degrees[edge.second];
     }
@@ -148,7 +114,8 @@ LagrangeanSolver::branching_rule1(const Node *node) {
         }
     }
 
-    for (auto &edge : node->data.relaxation) {
+    for (size_t i = 0; i < node->data.relaxation.size(); ++i) {
+        const tsp::Edge &edge = node->data.relaxation[i];
         if (edge.first == selected_vertex
             || edge.second == selected_vertex) {
             moves.push_back(edge);
@@ -157,8 +124,9 @@ LagrangeanSolver::branching_rule1(const Node *node) {
 
     NodeList created_nodes;
 
-    for (auto move : moves) {
-        auto child = search_tree_->create_node(node);
+    for (size_t i = 0; i < moves.size(); ++i) {
+        const tsp::Edge &move = moves[i];
+        Node *child = search_tree_->create_node(node);
         child->data.level = node->data.level+1;
         child->data.excluded_edges.push_back(move);
         created_nodes.push_back(child);
@@ -169,14 +137,16 @@ LagrangeanSolver::branching_rule1(const Node *node) {
 
 // Volgenant and Jonker, 1982
 LagrangeanSolver::NodeList LagrangeanSolver::branching_rule2(const Node *node) {
-    auto included_edges = get_included_edges(node);
+    get_included_edges(node, edge_map_);
 
     std::vector<size_t> total_degrees(dimension_, 0);
     std::vector<size_t> free_degrees(dimension_, 0);
-    for (auto &edge : node->data.relaxation) {
+    for (size_t i = 0; i < node->data.relaxation.size(); ++i) {
+        const tsp::Edge &edge = node->data.relaxation[i];
         ++total_degrees[edge.first];
         ++total_degrees[edge.second];
-        if (included_edges.find(edge) == included_edges.end()) {
+        // if edge is not included
+        if (edge_map_[edge.first*dimension_+edge.second] == 0) {
             ++free_degrees[edge.first];
             ++free_degrees[edge.second];
         }
@@ -193,10 +163,12 @@ LagrangeanSolver::NodeList LagrangeanSolver::branching_rule2(const Node *node) {
     }
 
     std::vector<tsp::Edge> selected_edges;
-    for (auto &edge : node->data.relaxation) {
+    for (size_t i = 0; i < node->data.relaxation.size(); ++i) {
+        const tsp::Edge &edge = node->data.relaxation[i];
         bool is_adj_edge = (edge.first == selected_vertex)
                         || (edge.second == selected_vertex);
-        if (is_adj_edge && included_edges.find(edge) == included_edges.end()) {
+        if (is_adj_edge
+                && (edge_map_[edge.first*dimension_+edge.second] == 0)) {
             selected_edges.push_back(edge);
             if (selected_edges.size() == BORDER_VALUE) {
                 break;
@@ -209,7 +181,7 @@ LagrangeanSolver::NodeList LagrangeanSolver::branching_rule2(const Node *node) {
     NodeList created_nodes;
     if (total_degrees[selected_vertex] == free_degrees[selected_vertex]) {
         // node #1
-        auto child = search_tree_->create_node(node);
+        Node *child = search_tree_->create_node(node);
         child->data.level = node->data.level+1;
         child->data.included_edges.push_back(selected_edges.front());
         child->data.included_edges.push_back(selected_edges.back());
@@ -217,7 +189,7 @@ LagrangeanSolver::NodeList LagrangeanSolver::branching_rule2(const Node *node) {
     }
 
     // node #2
-    auto child = search_tree_->create_node(node);
+    Node *child = search_tree_->create_node(node);
     child->data.level = node->data.level+1;
     child->data.included_edges.push_back(selected_edges.front());
     child->data.excluded_edges.push_back(selected_edges.back());
@@ -235,17 +207,20 @@ LagrangeanSolver::NodeList LagrangeanSolver::branching_rule2(const Node *node) {
 // select the edge with maximum weight and endpoint degree > 2
 LagrangeanSolver::NodeList LagrangeanSolver::branching_rule3(const Node *node) {
     static const size_t BORDER_VALUE = 2;
-    auto included_edges = get_included_edges(node);
+    get_included_edges(node, edge_map_);
     std::vector<size_t> degrees(dimension_);
-    for (auto &edge : node->data.relaxation) {
+    for (size_t i = 0; i < node->data.relaxation.size(); ++i) {
+        const tsp::Edge &edge = node->data.relaxation[i];
         ++degrees[edge.first];
         ++degrees[edge.second];
     }
 
     tsp::Edge selected_edge(0, 0);
     value_type max_length = -1e16;
-    for (auto &edge : node->data.relaxation) {
-        if (included_edges.find(edge) != included_edges.end()) {
+    for (size_t i = 0; i < node->data.relaxation.size(); ++i) {
+        const tsp::Edge &edge = node->data.relaxation[i];
+        // if edge is included
+        if (edge_map_[edge.first*dimension_ + edge.second] != 0) {
             continue;
         }
         value_type length = matrix_original_[edge.first*dimension_+edge.second];
@@ -265,7 +240,7 @@ LagrangeanSolver::NodeList LagrangeanSolver::branching_rule3(const Node *node) {
     if (selected_edge.first == 0 && selected_edge.second == 0) {
         return created_nodes;
     }
-    auto child = search_tree_->create_node(node);
+    Node *child = search_tree_->create_node(node);
     child->data.level = node->data.level+1;
     child->data.excluded_edges.push_back(selected_edge);
     created_nodes.push_back(child);
@@ -286,11 +261,13 @@ void LagrangeanSolver::transform_node(Node *node
     const Node *tmp_node = node;
     std::vector<std::vector<size_t> > adjacency_list(dimension_);
     while (tmp_node->parent) {
-        for (const tsp::Edge &edge : tmp_node->data.excluded_edges) {
+        for (size_t i = 0; i < tmp_node->data.excluded_edges.size(); ++i) {
+            const tsp::Edge &edge = tmp_node->data.excluded_edges[i];
             matrix_[edge.first*dimension_+edge.second] = M_VAL;
             matrix_[edge.second*dimension_+edge.first] = M_VAL;
         }
-        for (const tsp::Edge &edge : tmp_node->data.included_edges) {
+        for (size_t i = 0; i < tmp_node->data.included_edges.size(); ++i) {
+            const tsp::Edge &edge = tmp_node->data.included_edges[i];
             included_edges.push_back(std::make_pair(edge.first, edge.second));
             adjacency_list[edge.first].push_back(edge.second);
             adjacency_list[edge.second].push_back(edge.first);
@@ -311,10 +288,11 @@ void LagrangeanSolver::transform_node(Node *node
         }
     }
 
-    auto solution = lr_.solve(matrix_, dimension_, record
+    std::pair<MSOneTree::Solution<value_type>, size_t> solution =
+    lr_.solve(matrix_, dimension_, record
                 , epsilon_, gradient_max_iters_, included_edges);
 
-    node->data.relaxation = std::move(solution.first.edges);
+    node->data.relaxation = solution.first.edges;
     node->data.value = solution.first.value;
     stats.bound_problems_solved += solution.second;
 }
@@ -331,5 +309,20 @@ bool LagrangeanSolver::build_solution(const Node *node, Solution *solution) {
     solution->write_as_json(oss);
     LOG(INFO) << oss.str();
     return true;
+}
+
+void LagrangeanSolver::get_included_edges(
+                                const bnb::Node<LagrangeanSolver::Set> *node
+                                , std::vector<int> &edge_map) const {
+    memset(&edge_map[0], 0, sizeof(edge_map[0])*edge_map.size());
+    const bnb::Node<LagrangeanSolver::Set> *tmp_node = node;
+    while (tmp_node->parent) {
+        for (size_t i = 0; i < tmp_node->data.included_edges.size(); ++i) {
+            const tsp::Edge &edge = tmp_node->data.included_edges[i];
+            edge_map[edge.first*dimension_ + edge.second] = 1;
+            edge_map[edge.second*dimension_ + edge.first] = 1;
+        }
+        tmp_node = tmp_node->parent;
+    }
 }
 }  // namespace stsp

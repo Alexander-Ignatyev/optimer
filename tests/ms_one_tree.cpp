@@ -1,4 +1,4 @@
-//  Copyright (c) 2013 Alexander Ignatyev. All rights reserved.
+//  Copyright (c) 2013-2014 Alexander Ignatyev. All rights reserved.
 
 #include <iostream>
 #include <limits>
@@ -10,7 +10,8 @@ template <typename T>
 void print_solution(std::ostream &os, const T *matrix, size_t size
             , const typename MSOneTree::Solution<T> &solution) {
     os << solution.value << std::endl;
-    for (auto edge : solution.edges) {
+    for (size_t i = 0; i < solution.edges.size(); ++i) {
+        const std::pair<size_t, size_t> &edge = solution.edges[i];
         os << (edge.first+1) << ",\t" << (edge.second+1) << ":\t";
         os << matrix[edge.first * size + edge.second] << "\t\t\t";
         os << edge.first << ",\t" << edge.second;
@@ -27,7 +28,8 @@ T max_val() {
 template <typename T>
 void exclude_edges(T *matrix, size_t size
                    , std::vector<std::pair<size_t, size_t> > &excluded_edges) {
-    for (const auto &edge : excluded_edges) {
+    for (size_t i = 0; i < excluded_edges.size(); ++i) {
+        const std::pair<size_t, size_t> &edge = excluded_edges[i];
         matrix[edge.first*size + edge.second] = max_val<T>();
         matrix[edge.second*size + edge.first] = max_val<T>();
     }
@@ -49,7 +51,7 @@ TEST(kormen_prim) {
     };
 
     size_t size = 10;
-    auto solution = MSOneTree::solve(matrix, size);
+    MSOneTree::Solution<int> solution = MSOneTree::solve(matrix, size);
 
     CHECK_EQUAL(45, solution.value);
 }
@@ -74,7 +76,7 @@ TEST(nasini12_prim) {
     size_t size = 12;
 
     std::vector<std::pair<size_t, size_t> > excluded_edges;
-    auto solution = MSOneTree::solve(matrix, size);
+    MSOneTree::Solution<int> solution = MSOneTree::solve(matrix, size);
     CHECK_EQUAL(1462, solution.value);
 
     excluded_edges.push_back(make_pair(0, 4));

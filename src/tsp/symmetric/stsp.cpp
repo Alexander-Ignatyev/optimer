@@ -1,4 +1,4 @@
-// Copyright (c) 2013 Alexander Ignatyev. All rights reserved.
+// Copyright (c) 2013-2014 Alexander Ignatyev. All rights reserved.
 
 #include "stsp.h"
 
@@ -13,7 +13,7 @@
 namespace stsp {
 ClassicalSolver::ClassicalSolver()
     : dimension_(0)
-    , search_tree_(nullptr) {
+    , search_tree_(0) {
 }
 
 void ClassicalSolver::init(const InitialData &data, bnb::SearchTree<Set> *mm) {
@@ -38,11 +38,12 @@ void ClassicalSolver::branch(const Node<Set> *node, value_type &record
     }
     ++stats.branches;
 
-    auto edges = select_moves(node);
+    std::vector<tsp::Edge> edges = select_moves(node);
     CHECK(!edges.empty()) << "Cannot select moves";
-    for (auto edge : edges) {
+    for (size_t i = 0; i < edges.size(); ++i) {
+        const tsp::Edge &edge = edges[i];
         ++stats.sets_generated;
-        auto child = search_tree_->create_node(node);
+        Node<Set> *child = search_tree_->create_node(node);
         child->data.level = node->data.level+1;
         child->data.excluded_edges.push_back(edge);
         transform_node(child);
@@ -66,15 +67,17 @@ void ClassicalSolver::transform_node(Node<Set> *node) {
            , dimension_*dimension_*sizeof(matrix_original_[0]));
     const Node<Set> *tmp_node = node;
     while (tmp_node->parent) {
-        for (const tsp::Edge &edge : tmp_node->data.excluded_edges) {
+        for (size_t i = 0; i < tmp_node->data.excluded_edges.size(); ++i) {
+            const tsp::Edge &edge = tmp_node->data.excluded_edges[i];
             matrix_[edge.first*dimension_+edge.second] = M_VAL;
             matrix_[edge.second*dimension_+edge.first] = M_VAL;
         }
         tmp_node = tmp_node->parent;
     }
 
-    auto solution = MSOneTree::solve(matrix_.data(), dimension_);
-    node->data.relaxation = std::move(solution.edges);
+    MSOneTree::Solution<value_type> solution
+        = MSOneTree::solve(matrix_.data(), dimension_);
+    node->data.relaxation = solution.edges;
     node->data.value = solution.value;
 }
 
@@ -83,7 +86,8 @@ ClassicalSolver::select_moves(const Node<Set> *node) {
     std::vector<tsp::Edge> edges;
 
     std::vector<size_t> degrees(dimension_, 0);
-    for (auto &point : node->data.relaxation) {
+    for (size_t i = 0; i < node->data.relaxation.size(); ++i) {
+        const tsp::Edge &point = node->data.relaxation[i];
         ++degrees[point.first];
         ++degrees[point.second];
     }
@@ -99,7 +103,8 @@ ClassicalSolver::select_moves(const Node<Set> *node) {
         }
     }
 
-    for (auto &edge : node->data.relaxation) {
+    for (size_t i = 0; i < node->data.relaxation.size(); ++i) {
+        const tsp::Edge &edge = node->data.relaxation[i];
         if (edge.first == selected_vertex
             || edge.second == selected_vertex) {
             edges.push_back(edge);

@@ -1,4 +1,4 @@
-// Copyright (c) 2013 Alexander Ignatyev. All rights reserved.
+// Copyright (c) 2013-2014 Alexander Ignatyev. All rights reserved.
 
 #include "common.h"
 
@@ -9,16 +9,17 @@
 namespace stsp {
 std::vector<size_t> build_tour(const tsp::Set &set) {
     std::set<size_t> added_vertices;
-    const auto &edges = set.relaxation;
+    const std::vector<tsp::Edge> &edges = set.relaxation;
     std::vector<std::vector<size_t> > adjacency_list(edges.size());
     std::vector<size_t> tour;
     tour.reserve(edges.size()+1);
-    for (auto &edge : edges) {
-        adjacency_list[edge.first].push_back(edge.second);
-        adjacency_list[edge.second].push_back(edge.first);
+    std::vector<tsp::Edge>::const_iterator pos, end = edges.end();
+    for (pos = edges.begin(); pos != end; ++pos) {
+        adjacency_list[pos->first].push_back(pos->second);
+        adjacency_list[pos->second].push_back(pos->first);
     }
-    for (const auto &adj : adjacency_list) {
-        if (adj.size() != 2) {
+    for (size_t i = 0; i < adjacency_list.size(); ++i) {
+        if (adjacency_list[i].size() != 2) {
             return tour;
         }
     }
@@ -28,7 +29,7 @@ std::vector<size_t> build_tour(const tsp::Set &set) {
     for (size_t i = 1; i < edges.size(); ++i) {
         size_t previous_vertex = tour[tour.size()-2];
         size_t current_vertex = tour.back();
-        const auto &adj = adjacency_list[current_vertex];
+        const std::vector<size_t> &adj = adjacency_list[current_vertex];
         if (adj.front() == previous_vertex) {
             tour.push_back(adj.back());
         } else if (adj.back() == previous_vertex) {

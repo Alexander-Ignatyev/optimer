@@ -1,4 +1,4 @@
-// Copyright (c) 2013 Alexander Ignatyev. All rights reserved.
+// Copyright (c) 2013-2014 Alexander Ignatyev. All rights reserved.
 
 #include "lagrangean.h"
 
@@ -39,14 +39,16 @@ std::pair<MSOneTree::Solution<value_type>, size_t> LagrangeanRelaxation::solve(
         solution.value += included_edges_penalty;
 
         std::fill(gradient.begin(), gradient.end(), 0);
-        for (const auto &edge : solution.edges) {
-            ++gradient[edge.first];
-            ++gradient[edge.second];
+        std::vector<std::pair<size_t, size_t> >::const_iterator pos
+            , end = solution.edges.end();
+        for (pos = solution.edges.begin(); pos != end; ++pos) {
+            ++gradient[pos->first];
+            ++gradient[pos->second];
         }
 
         value_type lagrangean = included_edges_penalty;
-        for (const auto &edge : solution.edges) {
-            lagrangean += matrix[edge.first*dimension + edge.second];
+        for (pos = solution.edges.begin(); pos != end; ++pos) {
+            lagrangean += matrix[pos->first*dimension + pos->second];
         }
         lagrangean -= 2*std::accumulate(lambda.begin()
                                         , lambda.end()
@@ -58,19 +60,24 @@ std::pair<MSOneTree::Solution<value_type>, size_t> LagrangeanRelaxation::solve(
             return std::make_pair(solution, iter+1);
         }
 
-        auto pos = std::find_if(gradient.begin(), gradient.end()
-                                , [](int g) {return g != TOUR_DEGREE;});
-        if (pos == gradient.end()) {
+        bool isGradientsRightDegree = true;
+        for (size_t i = 0; i < gradient.size(); ++i) {
+            if (gradient[i] != TOUR_DEGREE) {
+                isGradientsRightDegree = false;
+                break;
+            }
+        }
+        if (isGradientsRightDegree) {
             solution.value = lagrangean;
             return std::make_pair(solution, iter+1);
         }
 
-        value_type sum_gradient = std::accumulate(gradient.begin()
-                , gradient.end()
-                , value_type()
-                , [](const value_type &sum, const value_type &val) {
-                    return sum + (val-TOUR_DEGREE)*(val-TOUR_DEGREE);
-                });
+        int sum_gradient = 0;
+        for (size_t i = 0; i < gradient.size(); ++i) {
+            int val = gradient[i] - TOUR_DEGREE;
+            sum_gradient += val*val;
+        }
+
         value_type step = alpha*(upper_bound - lagrangean)/sum_gradient;
 
         for (size_t i = 0; i < dimension; ++i) {
@@ -91,7 +98,8 @@ std::pair<MSOneTree::Solution<value_type>, size_t> LagrangeanRelaxation::solve(
         }
 
         included_edges_penalty = value_type();
-        for (const auto &edge : included_edges) {
+        for (size_t i = 0; i < included_edges.size(); ++i) {
+            const std::pair<size_t, size_t> &edge = included_edges[i];
             size_t index = edge.first*dimension+edge.second;
             included_edges_penalty += matrix[index];
             matrix[index] = value_type();

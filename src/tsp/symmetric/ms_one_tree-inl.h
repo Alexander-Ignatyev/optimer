@@ -1,11 +1,11 @@
-// Copyright (c) 2013 Alexander Ignatyev. All rights reserved.
+// Copyright (c) 2013-2014 Alexander Ignatyev. All rights reserved.
 
 #ifndef TSP_SYMMETRIC_MS_ONE_TREE_INL_H_
 #define TSP_SYMMETRIC_MS_ONE_TREE_INL_H_
 
 namespace MSOneTree {
 template <typename T>
-constexpr T max_val() {
+const T max_val() {
     return std::numeric_limits<T>::max() / 2;
 }
 
@@ -21,8 +21,8 @@ void update_mins(const T *matrix
     assert(pmin_indices);
     assert(pmin_values);
 
-    auto &min_indices = *pmin_indices;
-    auto &min_values = *pmin_values;
+    std::vector<size_t> &min_indices = *pmin_indices;
+    std::vector<T> &min_values = *pmin_values;
 
     for (size_t i = 1; i < size; ++i) {
         if (min_indices[i] == index) {
@@ -31,7 +31,7 @@ void update_mins(const T *matrix
                 if (vertex_is_included(j, min_indices)) {
                     continue;
                 }
-                auto value = matrix[i*size + j];
+                T value = matrix[i*size + j];
                 if (value < min_values[i]) {
                     min_values[i] = value;
                     min_indices[i] = j;
@@ -84,7 +84,10 @@ Solution<T> solve(const T *matrix, size_t size) {
 
         total_cost += min_value;
     }
-    return {total_cost, edges};
+    Solution<T> solution;
+    solution.value = total_cost;
+    solution.edges = edges;
+    return solution;
 }
 }  // namespace Prim
 
@@ -93,7 +96,7 @@ template <typename T>
 Solution<T> solve(const T *matrix, size_t size) {
     using std::swap;
     assert(size > 2);
-    auto solution = Prim::solve(matrix, size);
+    Solution<T> solution = Prim::solve(matrix, size);
     T min_values[] = {max_val<T>(), max_val<T>()};
     size_t min_indices[] = {size, size};
 

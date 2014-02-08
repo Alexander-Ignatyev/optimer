@@ -1,9 +1,7 @@
-// Copyright (c) 2013 Alexander Ignatyev. All rights reserved.
+// Copyright (c) 2013-2014 Alexander Ignatyev. All rights reserved.
 
 #ifndef TSP_SYMMETRIC_LAGRANGEAN_STSP_H_
 #define TSP_SYMMETRIC_LAGRANGEAN_STSP_H_
-
-#include <functional>
 
 #include <bnb/tree.h>
 #include <tsp/common/types.h>
@@ -38,12 +36,16 @@ class LagrangeanSolver {
     NodeList branching_rule3(const Node *node);
     void transform_node(Node *node, value_type record, bnb::Stats &stats);
     bool build_solution(const Node *node, Solution *solution);
+    void get_included_edges(const bnb::Node<LagrangeanSolver::Set> *node
+        , std::vector<int> &edge_map) const;
 
-    std::function<NodeList(const Node *node)> branching_rule;
+    typedef NodeList (LagrangeanSolver::*branching_rule_ptr) (const Node *);
+    branching_rule_ptr branching_rule;
 
     size_t dimension_;
     std::vector<value_type> matrix_;
     std::vector<value_type> matrix_original_;
+    std::vector<int> edge_map_;
 
     bnb::SearchTree<Set> *search_tree_;
     LagrangeanRelaxation lr_;

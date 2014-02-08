@@ -68,6 +68,7 @@ if(CXX11_ENABLED)
     add_optimer_executable(${PROJECT_SRC}/stsp.cpp)
 endif()
 add_optimer_executable(${PROJECT_SRC}/simple_atsp.cpp)
+add_optimer_executable(${PROJECT_SRC}/simple_stsp.cpp)
 
 if(USE_UNIT_TESTS)
     add_unit_tests()
