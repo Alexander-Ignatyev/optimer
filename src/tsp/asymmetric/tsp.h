@@ -56,12 +56,27 @@ class TspSolver {
 
  private:
     static std::vector<size_t> create_tour(const std::vector<size_t> &ap_sol);
+    void fill_edges_map(const Node *node, int *map) const;
+    std::vector<size_t> mincard_subtour(const size_t *ap_solution) const;
     bool select_move(const Node &node, std::vector<tsp::Edge> *edges) const;
+    // Little, Murty, Sweeney & Carel, 1963
+    NodeList branching_rule1(const Node *node);
+    // Eastman, 1958; Shapiro, 1966
+    NodeList branching_rule2(const Node *node);
+    // Murty, 1968; Bellmore & Mallone, 1971; Smith, Srinivasan & Thomson, 1977
+    NodeList branching_rule3(const Node *node);
+    // Bellmore & Mallone, 1971
+    NodeList branching_rule4(const Node *node);
+    // Garfinkel, 1973;
+    NodeList branching_rule5(const Node *node);
     void transform_node(Node *node);
     static void print_matrix(const value_type *matrix, size_t rank
         , std::ostream &logger = std::cout);
     void check_route(const std::vector<size_t> &route, const Node *node);
     void dump_to_log(const Node *node);
+
+    typedef NodeList (TspSolver::*branching_rule_ptr) (const Node *);
+    branching_rule_ptr branching_rule;
 
     size_t dimension_;
     value_type *matrix_;

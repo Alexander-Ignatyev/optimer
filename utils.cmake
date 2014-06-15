@@ -33,7 +33,7 @@ endmacro(set_cpp11_flags)
 
 macro(set_cpp_flags)
     get_filename_component(CXX ${CMAKE_CXX_COMPILER} NAME_WE)
-    if (${CXX} MATCHES "^clang*")
+    if (${CXX} MATCHES "^clang*" AND NOT XCODE_VERSION)
        set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -fsanitize-undefined-trap-on-error")
        set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -fsanitize-address")
     endif()

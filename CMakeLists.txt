@@ -48,7 +48,7 @@ message("[OPTIMER]: Release compiler flags: ${CMAKE_CXX_FLAGS_RELEASE}")
 set(PROJECT_SRC ${CMAKE_CURRENT_SOURCE_DIR}/src)
 include_directories(${PROJECT_SRC})
 
-if(USE_G2LOG AND CPP11_ENABLED)
+if(USE_G2LOG AND CXX11_ENABLED)
     # gl2log: https://bitbucket.org/KjellKod/g2log/src
     include_directories("${CMAKE_HOME_DIRECTORY}/contrib/g2log/src")
     add_subdirectory (contrib/g2log)
