@@ -5,6 +5,7 @@
 # Set parameters in function main()
 
 import os
+import os.path
 import sys
 import time
 import datetime
@@ -200,7 +201,6 @@ class Config(object):
         with NamedTemporaryFile(delete=False) as file:
             filename = file.name
             file.writelines(lines)
-        print filename
         return filename
 
 def run_configs(module, num_runs, config_files, timeout):
@@ -253,7 +253,7 @@ def prepare_results(all_runs):
 def main():
     # set params section
     module = 'build_clang++/atsp'
-    problem_path = 'data/ftv38.atsp'
+    problem_paths = ['data/ftv33.atsp', 'data/ftv38.atsp']
     num_runs = 10
 
     params = ConfigParams()
@@ -266,19 +266,25 @@ def main():
     params.num_maximum_nodes = [10, 20, 40, 80]
     # end set params section
 
-    print 'generating tasks...'
-    config = Config()
-    config_files = config.generate_tasks(params, problem_path)
+    for problem_path in problem_paths:
+        problem_name = os.path.basename(problem_path)
+        problem_name = os.path.splitext(problem_name)[0]
+        print 'generating tasks for', problem_name, '...'
+        config = Config()
+        config_files = config.generate_tasks(params, problem_path)
 
-    all_runs = run_configs(module, num_runs, config_files, 10)
+        all_runs = run_configs(module, num_runs, config_files, 10)
 
-    print 'preparing results...'
-    lines = prepare_results(all_runs)
+        print 'preparing results...'
+        lines = prepare_results(all_runs)
 
-    result_filename = 'pms_result.'+datetime.datetime.now().strftime('%Y%m%d-%H%M%S')+'.txt'
-    print 'saving results to', result_filename, '...'
-    with open(result_filename, 'w') as f:
-        f.writelines(lines)
+        result_filename = 'pms_result.'
+        result_filename += problem_name+'.'
+        result_filename += datetime.datetime.now().strftime('%Y%m%d-%H%M%S')
+        result_filename += '.txt'
+        print 'saving results to', result_filename, '...'
+        with open(result_filename, 'w') as f:
+            f.writelines(lines)
 
     print 'done'
 
