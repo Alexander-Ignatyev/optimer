@@ -8,6 +8,7 @@ import os
 import sys
 import time
 import datetime
+import threading
 import subprocess
 from copy import copy
 from tempfile import NamedTemporaryFile
@@ -26,10 +27,19 @@ class Timer(object):
     def elapsed(self):
         return self.timer() - self.start_time
 
+def terminate_process(popen):
+    popen.terminate()
+
 class RunningResult(object):
-    def __init__(self, process):
+    def __init__(self, process, timeout=-1):
         timer = Timer()
+        termTimer = None
+        if (timeout > 0):
+            termTimer = threading.Timer(timeout, terminate_process, [process])
+            termTimer.start()
         self.stdout, self.stderr = process.communicate()
+        if (termTimer != None):
+            termTimer.cancel();
         self.running_time = timer.elapsed()
         self.return_code = process.returncode
         self.log_filename = ''
@@ -51,14 +61,15 @@ class RunningResult(object):
         log_filename = os.path.basename(self.get_log_filename())
         return '<<return: {0}, total time: {1}>>'.format(self.return_code, self.running_time)
 
-def run_task(args):
+def run_task(args, timeout):
     process = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
-    return RunningResult(process)
+    return RunningResult(process, timeout)
 
 class ConfigParams(object):
     default_valuations = ['serial', 'parallel-lock']
     default_containers = ['lifo', 'priority']
+    default_branching_rules = [3]
     default_schedulers = ['giving', 'requesting']
     default_num_threads = [4]
     default_num_minimum_nodes = [8]
@@ -67,10 +78,12 @@ class ConfigParams(object):
     def __init__(self
         , valuations = None
         , containers = None
+        , branching_rules = None
         , schedulers = None
         , num_threads = None
         , num_minimum_nodes = None
-        , num_maximum_nodes = None):
+        , num_maximum_nodes = None
+        ):
         if valuations:
             self.valuations = valuations
         else:
@@ -80,6 +93,11 @@ class ConfigParams(object):
             self.containers = containers
         else:
             self.containers = copy(ConfigParams.default_containers)
+            
+        if branching_rules:
+            self.branching_rules = branching_rules
+        else:
+            self.branching_rules = copy(ConfigParams.default_branching_rules)
 
         if schedulers:
             self.schedulers = schedulers
@@ -123,10 +141,14 @@ class Config(object):
     def __generate_serial_tasks(self, config):
         general = config['general']
         general['valuation_type'] = 'serial'
+        tsp = {}
+        config['tsp'] = tsp
         for container in self.params.containers:
             general['container_type'] = container
-            name = Config.__build_name(config)
-            self.config_files[name] = Config.__save_config(config)
+            for branching_rule in self.params.branching_rules:
+                tsp['branching_rule'] = branching_rule
+                name = Config.__build_name(config)
+                self.config_files[name] = Config.__save_config(config)
 
     def __generate_parallel_lock_tasks(self, config):
         general = config['general']
@@ -157,6 +179,8 @@ class Config(object):
         parts.append(os.path.basename(general['problem_path']))
         parts.append(general['valuation_type'])
         parts.append(general['container_type'])
+        tsp = config['tsp']
+        parts.append(str(tsp['branching_rule']))
         if general['valuation_type'] == 'parallel-lock':
             scheduler = config['scheduler']
             parts.append(scheduler['type'])
@@ -176,9 +200,10 @@ class Config(object):
         with NamedTemporaryFile(delete=False) as file:
             filename = file.name
             file.writelines(lines)
+        print filename
         return filename
 
-def run_configs(module, num_runs, config_files):
+def run_configs(module, num_runs, config_files, timeout):
     num = 0
     num_configs = len(config_files)
     all_runs = {}
@@ -188,7 +213,7 @@ def run_configs(module, num_runs, config_files):
         print '[{0: 3}/{1}] '.format(num, num_configs), 'running ', task_name, '...'
         runs = []
         for _ in xrange(num_runs):
-            res = run_task([module, filename])
+            res = run_task([module, filename], timeout)
             runs.append(res)
             if res.return_code != 0:
                 print 'stdout: ['+res.stdout+']'
@@ -221,18 +246,20 @@ def prepare_results(all_runs):
             with open(run.get_log_filename()) as f:
                 for line in f:
                     lines.append('\t\t{0}'.format(line))
-            os.unlink(run.get_log_filename())
+            #os.unlink(run.get_log_filename())
             lines.append('\n')
     return lines
 
 def main():
     # set params section
-    module = 'build_clang++_release/atsp'
+    module = 'build_clang++/atsp'
     problem_path = 'data/ftv38.atsp'
-    num_runs = 2
+    num_runs = 10
 
     params = ConfigParams()
-    params.valuations = ['serial', 'parallel-lock']
+    params.valuations = ['serial']
+    params.branching_rules = range(1,6)
+    print params.branching_rules
     params.schedulers = ['requesting']
     params.num_threads = [2, 4, 8]
     params.num_minimum_nodes = [4, 8]
@@ -243,7 +270,7 @@ def main():
     config = Config()
     config_files = config.generate_tasks(params, problem_path)
 
-    all_runs = run_configs(module, num_runs, config_files)
+    all_runs = run_configs(module, num_runs, config_files, 10)
 
     print 'preparing results...'
     lines = prepare_results(all_runs)
