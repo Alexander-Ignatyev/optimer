@@ -7,6 +7,7 @@
 import os
 import os.path
 import sys
+import re
 import time
 import datetime
 import threading
@@ -32,6 +33,9 @@ def terminate_process(popen):
     popen.terminate()
 
 class RunningResult(object):
+    re_generated_sets = re.compile('\s*Generated sets:\s+(\d+)')
+    re_constrained_by_record = re.compile('\s*Constrained by record:\s+(\d+)')
+
     def __init__(self, process, timeout=-1):
         timer = Timer()
         termTimer = None
@@ -44,6 +48,12 @@ class RunningResult(object):
         self.running_time = timer.elapsed()
         self.return_code = process.returncode
         self.log_filename = ''
+        self.generated_sets = -1
+        self.constrained_by_record = -1
+
+        self.parsers = []
+        self.parsers.append(self._parse_generated_sets)
+        self.parsers.append(self._parse_constrained_by_record)
 
     def get_log_filename(self):
         pattern = 'log location:'
@@ -61,6 +71,83 @@ class RunningResult(object):
     def __repr__(self):
         log_filename = os.path.basename(self.get_log_filename())
         return '<<return: {0}, total time: {1}>>'.format(self.return_code, self.running_time)
+
+    def _parse_generated_sets(self, line):
+        res = RunningResult.re_generated_sets.match(line)
+        if res:
+            self.generated_sets = int(res.groups()[0])
+            return True
+        return False
+    
+    def _parse_constrained_by_record(self, line):
+        res = RunningResult.re_constrained_by_record.match(line)
+        if res:
+            self.constrained_by_record = int(res.groups()[0])
+            return True
+        return False
+
+    def parse_log(self):
+        with open(self.get_log_filename()) as f:
+            for line in f:
+                for parser in self.parsers:
+                    if parser(line):
+                        break
+        if self.generated_sets < 0:
+            raise RuntimeError('incorrect generated_sets for '+self.get_log_filename())
+        if self.constrained_by_record < 0:
+            raise RuntimeError('incorrect constrained_by_record for '+self.get_log_filename())
+
+class LaTeXWriter(object):
+    
+    @staticmethod
+    def generate(all_runs):
+        lines = []
+        lines += LaTeXWriter._header()
+        for task_name in sorted(all_runs.iterkeys()):
+            lines += LaTeXWriter._line(all_runs, task_name)
+        lines += LaTeXWriter._footer()
+        return lines
+    
+    @staticmethod
+    def _line(all_runs, task_name):
+        runs = all_runs[task_name]
+        generated_sets = 0
+        constrained_by_record = 0
+        running_time = 0
+        num_runs = len(runs)
+        for run in runs:
+            run.parse_log()
+            generated_sets += run.generated_sets
+            constrained_by_record += run.constrained_by_record
+            running_time += run.running_time
+        generated_sets /= num_runs
+        constrained_by_record /= num_runs
+        running_time /= num_runs
+        
+        sep = ' & '
+        end_line = ' \\\\'
+        
+        line = task_name + sep + '{:10.3f}'.format(running_time) + sep + str(generated_sets) + sep + str(constrained_by_record) + end_line + '\n'
+        line += '\\hline\n'
+        return [line]
+        
+    @staticmethod
+    def _header():
+        return ["""\\begin{table}
+\\caption{TABLE CAPTION.}
+\\label{tab:1}
+\\begin{center}
+\\begin{tabular}{|l|l|l|l|}
+\\hline
+"""]
+
+    @staticmethod
+    def _footer():
+        return ["""\\end{tabular}
+\\end{center}
+\\end{table}
+"""]
+        
 
 def run_task(args, timeout):
     process = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
@@ -232,6 +319,9 @@ def prepare_results(all_runs):
     for task_name in sorted(all_avg_times.iterkeys()):
         lines.append('{0} {1}\n'.format(task_name, all_avg_times[task_name]))
 
+    lines.append('\nLaTeX table:\n')
+    lines += LaTeXWriter.generate(all_runs)
+
     lines.append('\nResults:\n')
     for task_name in sorted(all_runs.iterkeys()):
         lines.append('{0} {1}\n'.format(task_name, all_runs[task_name]))
@@ -253,13 +343,13 @@ def prepare_results(all_runs):
 def main():
     # set params section
     module = 'build_clang++/atsp'
-    problem_paths = ['data/ftv33.atsp', 'data/ftv38.atsp']
-    num_runs = 10
+    problem_paths = ['data/ftv33.atsp', 'data/ftv38.atsp', 'data/ftv47.atsp', 'data/ftv64.atsp', 'data/ftv70.atsp', 'data/rbg403.atsp', 'data/rbg443.atsp']
+    #problem_paths = ['data/ftv33.atsp']
+    num_runs = 5
 
     params = ConfigParams()
     params.valuations = ['serial']
-    params.branching_rules = range(1,6)
-    print params.branching_rules
+    params.branching_rules = range(2,5)
     params.schedulers = ['requesting']
     params.num_threads = [2, 4, 8]
     params.num_minimum_nodes = [4, 8]
@@ -273,7 +363,7 @@ def main():
         config = Config()
         config_files = config.generate_tasks(params, problem_path)
 
-        all_runs = run_configs(module, num_runs, config_files, 10)
+        all_runs = run_configs(module, num_runs, config_files, 600)
 
         print 'preparing results...'
         lines = prepare_results(all_runs)
