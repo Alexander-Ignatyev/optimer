@@ -95,6 +95,8 @@ void TspSolver::branch(const Node *node, value_type &record,
         return;
     }
 
+    ++stats.branches;
+
     NodeList new_nodes = (this->*branching_rule)(node);
 
     // transform nodes

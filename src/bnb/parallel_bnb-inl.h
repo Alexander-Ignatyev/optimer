@@ -3,6 +3,8 @@
 #ifndef BNB_PARALLEL_BNB_INL_H_
 #define BNB_PARALLEL_BNB_INL_H_
 
+#include <common/stats.h>
+
 namespace bnb {
 template <typename Container, typename Set>
 void clean_nodes(Container &nodes, SearchTree<Set> &search_tree) {
@@ -156,8 +158,27 @@ void ParallelBNB<SolverFactory, NodesContainer, Scheduler>
     os << "Average stats:\n";
     os << average_stats << std::endl;
 
-    os << "# of sets per second: ";
-    os << (total_stats.sets_generated / average_stats.seconds) << std::endl;
+    std::vector<double> times;
+    for (size_t i = 0; i < list_stats_.size(); ++i) {
+        times.push_back(list_stats_[i].seconds);
+    }
+    double seconds_mean = ::Stats::mean(&times[0], times.size());
+    double seconds_variance = ::Stats::variance(&times[0], times.size());
+    double seconds_max = ::Stats::max(&times[0], times.size());
+    double seconds_min = ::Stats::min(&times[0], times.size());
+
+    os << "Time mean in seconds: " << seconds_mean << std::endl;
+    os << "Time variance: " << seconds_variance << std::endl;
+
+    os << "Time max / min / difference: ";
+    os << seconds_max << " / " << seconds_min;
+    os << " / " << (seconds_max-seconds_min) << std::endl;
+
+    os << "# of sets per mean time: ";
+    os << (total_stats.sets_generated / seconds_mean) << std::endl;
+
+    os << "# of sets per max time: ";
+    os << (total_stats.sets_generated / seconds_max) << std::endl;
 }
 
 }  // namespace bnb
