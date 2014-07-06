@@ -1,0 +1,71 @@
+# common params
+module: build_clang++/atsp
+num_runs: 1
+timeout: 1200
+
+# problem settings generator
+section:
+    name: general
+    childs:
+        - property:
+            name: problem_path
+            values: [data/ft53.atsp]
+            childs:
+                - property: 
+                    name: container_type
+                    values: [priority]
+                    childs:
+                        - property:
+                            name: valuation_type
+                            values: [parallel-lock]
+                            childs:
+                                - section:
+                                    name: tsp
+                                    childs:
+                                        - property:
+                                            name: branching_rule
+                                            values: [3]
+                                            childs:
+                                                - section:
+                                                    name: scheduler
+                                                    childs:
+                                                        - property:
+                                                            name: type
+                                                            values: [giving]
+                                                            childs:
+                                                                - property:
+                                                                    name: num_threads
+                                                                    values: [2,4]
+                                                                    childs:
+                                                                        - property:
+                                                                            name: num_minimum_nodes
+                                                                            values: [10]
+                                                                            childs:
+                                                                                - property:
+                                                                                    name: num_maximum_nodes
+                                                                                    values: [20, 30, 40, 50]
+                                                                        - property:
+                                                                            name: num_minimum_nodes
+                                                                            values: [20]
+                                                                            childs:
+                                                                                - property:
+                                                                                    name: num_maximum_nodes
+                                                                                    values: [30, 40, 50]
+                                                                        - property:
+                                                                            name: num_minimum_nodes
+                                                                            values: [30]
+                                                                            childs:
+                                                                                - property:
+                                                                                    name: num_maximum_nodes
+                                                                                    values: [40, 50]
+                                                        - property:
+                                                            name: type
+                                                            values: [requesting]
+                                                            childs:
+                                                                - property:
+                                                                    name: num_threads
+                                                                    values: [2,4]
+                                                                    childs:
+                                                                        - property:
+                                                                            name: num_minimum_nodes
+                                                                            values: [10, 20, 30]
