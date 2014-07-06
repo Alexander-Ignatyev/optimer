@@ -1,0 +1,27 @@
+# common params
+module: build_clang++/atsp
+num_runs: 5
+timeout: 600
+
+# problem settings generator
+section:
+    name: general
+    childs:
+        - property:
+            name: problem_path
+            values: [data/ftv33.atsp, data/ftv38.atsp, data/ftv47.atsp, data/ftv64.atsp, data/ftv70.atsp, data/rbg403.atsp, data/rbg443.atsp]
+            childs:
+                - property: 
+                    name: container_type
+                    values: [lifo, priority]
+                    childs:
+                        - property:
+                            name: valuation_type
+                            values: [serial]
+                            childs:
+                                - section:
+                                    name: tsp
+                                    childs:
+                                        - property:
+                                            name: branching_rule
+                                            values: [2, 3, 4, 5]

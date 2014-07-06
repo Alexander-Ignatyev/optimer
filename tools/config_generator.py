@@ -7,7 +7,7 @@ from __future__ import print_function
 from copy import deepcopy
 import yaml
 
-class Settings(object):
+class Config(object):
     def __init__(self, lines = None):
         if not lines:
             self.__lines = []
@@ -15,7 +15,7 @@ class Settings(object):
             self.__lines = lines
 
     def append(self, line):
-        return Settings(deepcopy(self.__lines)+[line])
+        return Config(deepcopy(self.__lines)+[line])
     
     def write(self, file):
         for line in self.__lines:
@@ -27,6 +27,9 @@ class Settings(object):
 
     def __repr__(self):
         return self.__str__()
+    
+    def name(self):
+        return ':'.join([line for line in self.__lines])
 
 class _Node(object):
     def __init__(self):
@@ -35,21 +38,21 @@ class _Node(object):
     def add_child(self, child):
         self.childs.append(child)
     
-    def __process_childs(self, settings, settings_list):
+    def __process_childs(self, config, config_list):
         for child in self.childs:
-            child.process(settings, settings_list)
+            child.process(config, config_list)
         if not self.childs:
-            settings_list.append(settings)
+            config_list.append(config)
     
-    def _process_property(self, root_settings, settings_list):
+    def _process_property(self, root_config, config_list):
         for value in self.values:
             line = self.name + '=' + str(value)
-            settings = root_settings.append(line)
-            self.__process_childs(settings, settings_list)
+            config = root_config.append(line)
+            self.__process_childs(config, config_list)
     
-    def _process_section(self, root_settings, settings_list):
-        settings = root_settings.append('['+self.name+']')
-        self.__process_childs(settings, settings_list)
+    def _process_section(self, root_config, config_list):
+        config = root_config.append('['+self.name+']')
+        self.__process_childs(config, config_list)
 
 def Section(name):
     node = _Node()
@@ -64,33 +67,32 @@ def Property(name, values):
     node.process = node._process_property
     return node
 
-def _read_config_section(data):
+def _read_section(data):
     data = data['section']
     node = Section(data['name'])
-    _read_config_childs(data, node)
+    _read_childs(data, node)
     return node
 
-def _read_config_property(data):
+def _read_property(data):
     data = data['property']
     node = Property(data['name'], data['values'])
-    _read_config_childs(data, node)
+    _read_childs(data, node)
     return node
 
-def _read_config_childs(data, parent):
+def _read_childs(data, parent):
     if not 'childs' in data:
         return
     for child in data['childs']:
         if 'section' in child:
-            node = _read_config_section(child)
+            node = _read_section(child)
             parent.add_child(node)
         elif 'property' in child:
-            node = _read_config_property(child)
+            node = _read_property(child)
             parent.add_child(node)
         else:
             raise Exception('incorrect child node:' + child)
 
-def read_config(filepath):
-    data = yaml.load(open(filepath))
+def read_settings(data):
     root = None
     if 'section' in data:
         data = data['section']
@@ -100,12 +102,12 @@ def read_config(filepath):
         root = Property(data['name'], data['values'])
     else:
         raise Exception('incorrect config file: ' + filepath)
-    _read_config_childs(data, root)
+    _read_childs(data, root)
     return root
 
 def _test():
     root_node = Section('main')
-    settings_list = []
+    config_list = []
     param_branching_rule = Property('branching_rule', [3,4])
     root_node.add_child(param_branching_rule)
 
@@ -120,23 +122,24 @@ def _test():
     param_threads = Property('num_threads', range(2,10,2))
     section_scheduller.add_child(param_threads)
 
-    root_node.process(Settings(), settings_list)
+    root_node.process(Config(), config_list)
 
-    for settings in settings_list:
-        print(settings)
+    for config in config_list:
+        print(config)
         print('')
 
-def _test_config(filename):
-    root = read_config(filename)
-    settings_list = []
-    root.process(Settings(), settings_list)
+def _test_config(filepath):
+    data = yaml.load(open(filepath))
+    root = read_settings(data)
+    config_list = []
+    root.process(Config(), config_list)
     
-    for settings in settings_list:
-        print(settings)
+    for config in config_list:
+        print(config)
         print('')   
 
 if __name__ == '__main__':
-    _test_config('config.yaml')
+    _test_config('settings.yaml')
     
     
 
