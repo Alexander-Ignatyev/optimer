@@ -14,11 +14,6 @@ SearchTree<D>::SearchTree()
 }
 
 template <typename D>
-SearchTree<D>::~SearchTree() {
-    CHECK(num_nodes_ == 0) << "SearchTree: unfreed memory: " << num_nodes_;
-}
-
-template <typename D>
 Node<D> *SearchTree<D>::create_node(const Node<D> *parent) {
     ++num_nodes_;
     Node<D> *result = static_cast<Node<D> *>(allocator_.allocate());

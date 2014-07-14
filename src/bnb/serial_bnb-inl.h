@@ -1,4 +1,4 @@
-// Copyright (c) 2013 Alexander Ignatyev. All rights reserved.
+// Copyright (c) 2013-2014 Alexander Ignatyev. All rights reserved.
 
 #ifndef BNB_SERIAL_BNB_INL_H_
 #define BNB_SERIAL_BNB_INL_H_
@@ -49,6 +49,9 @@ typename Solver::Solution
             search_tree.release_node(node);
         }
         stats_.seconds = timer.elapsed_seconds();
+
+        CHECK(search_tree.num_unfreed_nodes() == 0) <<
+            "SearchTree: unfreed memory: " << search_tree.num_unfreed_nodes();
     }
 
     sol.value = record;

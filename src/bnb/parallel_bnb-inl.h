@@ -1,4 +1,4 @@
-// Copyright (c) 2013 Alexander Ignatyev. All rights reserved.
+// Copyright (c) 2013-2014 Alexander Ignatyev. All rights reserved.
 
 #ifndef BNB_PARALLEL_BNB_INL_H_
 #define BNB_PARALLEL_BNB_INL_H_
@@ -27,14 +27,15 @@ ParallelBNB<Solver, NodesContainer, Scheduler>::solve(
 
     initial_data_ = &data;
 
+    SearchTree<Set> *search_tree  = search_tree_->thread_local_tree();
     Solution sol;
     auto nodes = make_nodes_container<Solver>(NodesContainer());
     initial_stats_.clear();
     if (data.rank > MIN_RANK_VALUE) {
         Solver solver;
-        solver.init(data, &search_tree_);
+        solver.init(data, search_tree);
 
-        Node<Set> *node = search_tree_.create_node();
+        Node<Set> *node = search_tree->create_node();
         solver.get_initial_node(node);
         nodes.push(node);
 
@@ -58,7 +59,7 @@ ParallelBNB<Solver, NodesContainer, Scheduler>::solve(
                 nodes.push(set);
             }
             tmp_nodes.clear();
-            search_tree_.release_node(node);
+            search_tree->release_node(node);
         }
 
         record_ = record;
@@ -84,12 +85,15 @@ ParallelBNB<Solver, NodesContainer, Scheduler>::solve(
             std::mem_fn(&std::thread::join));
     }
 
-    clean_nodes(nodes, search_tree_);
+    clean_nodes(nodes, *search_tree);
 
     list_nodes_.clear();
 
     sol.value = record_;
     sol.route.clear();
+
+    CHECK(search_tree_->num_unfreed_nodes() == 0) <<
+        "SearchTree: unfreed memory: " << search_tree_->num_unfreed_nodes();
     return std::move(sol);
 }
 
@@ -97,13 +101,14 @@ template <typename Solver, typename NodesContainer, typename Scheduler>
 void ParallelBNB<Solver, NodesContainer, Scheduler>::start(unsigned threadID) {
     list_stats_[threadID].clear();
     value_type record = record_;
+    SearchTree<Set> *search_tree = search_tree_->thread_local_tree();
     Solution sol;
     auto nodes = make_nodes_container<Solver>(LifoContainer()
         , list_nodes_[threadID].begin(), list_nodes_[threadID].end());
     list_nodes_[threadID].clear();
     Node<Set> *node;
     Solver solver;
-    solver.init(*initial_data_, &search_tree_);
+    solver.init(*initial_data_, search_tree);
 
     std::vector<Node<Set> * > tmp_nodes;
 
@@ -118,7 +123,7 @@ void ParallelBNB<Solver, NodesContainer, Scheduler>::start(unsigned threadID) {
             nodes.push(set);
         }
         tmp_nodes.clear();
-        search_tree_.release_node(node);
+        search_tree->release_node(node);
 
         if (record < record_) {
             std::lock_guard<std::mutex> lock(mutex_record_);
@@ -134,7 +139,7 @@ void ParallelBNB<Solver, NodesContainer, Scheduler>::start(unsigned threadID) {
         list_stats_[threadID].sets_received += scheduler_stats.sets_received;
     }
 
-    clean_nodes(nodes, search_tree_);
+    clean_nodes(nodes, *search_tree);
 
     list_stats_[threadID].seconds += timer.elapsed_seconds();
 }

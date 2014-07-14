@@ -9,6 +9,7 @@
 #include <vector>
 #include <stack>
 #include <queue>
+#include <memory>
 #include <algorithm>
 
 #include <common/timer.h>
@@ -16,6 +17,7 @@
 
 #include "defs.h"
 #include "bnb.h"
+#include "mt_tree.h"
 #include "locked_tree.h"
 #include "stats.h"
 
@@ -31,6 +33,7 @@ class ParallelBNB {
     explicit ParallelBNB(const Scheduler &scheduler)
         : initial_data_(nullptr)
         , record_(0)
+        , search_tree_(new MTSearchTree<Set>())
         , scheduler_(scheduler) { }
 
     Solution solve(const InitialData &data
@@ -40,19 +43,19 @@ class ParallelBNB {
     void print_stats(std::ostream &os) const;
 
  private:
-     void start(unsigned threadID);
+    void start(unsigned threadID);
 
-     const InitialData *initial_data_;
+    const InitialData *initial_data_;
 
-     volatile value_type record_;
-     std::mutex mutex_record_;
+    volatile value_type record_;
+    std::mutex mutex_record_;
 
-     std::vector<ListNodes> list_nodes_;
-     std::vector<Stats> list_stats_;
-     Stats initial_stats_;
-     LockedSearchTree<Set> search_tree_;
+    std::vector<ListNodes> list_nodes_;
+    std::vector<Stats> list_stats_;
+    Stats initial_stats_;
+    std::unique_ptr<SearchTree<Set> > search_tree_;
 
-     Scheduler scheduler_;
+    Scheduler scheduler_;
 };
 }  // namespace bnb
 
