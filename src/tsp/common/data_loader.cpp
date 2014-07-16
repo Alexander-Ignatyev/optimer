@@ -214,7 +214,7 @@ bool load_tsplib_problem(std::istream &is, std::vector<value_type> &matrix
     loader.load(is, matrix, dimension);
 
     // shrink to max size if needed
-    if (max_dimension < dimension) {
+    if (max_dimension != 0 && max_dimension < dimension) {
         std::vector<value_type> new_matrix(max_dimension*max_dimension);
         for (size_t i = 0; i < max_dimension; ++i) {
             for (size_t j = 0; j < max_dimension; ++j) {
