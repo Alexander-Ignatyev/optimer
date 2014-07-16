@@ -1,4 +1,4 @@
-// Copyright (c) 2013 Alexander Ignatyev. All rights reserved.
+// Copyright (c) 2013-2014 Alexander Ignatyev. All rights reserved.
 
 #ifndef TSP_COMMON_CONFIG_H_
 #define TSP_COMMON_CONFIG_H_
@@ -9,6 +9,7 @@
 #include <string>
 
 #include <common/ini_file.h>
+#include <common/algo_string.h>
 #include <bnb/parallel_bnb.h>
 #include <bnb/serial_bnb.h>
 #include <bnb/giving_scheduler.h>
@@ -23,12 +24,18 @@ const std::string &problem_path(const IniFile &ini) {
     return ini[g_general_param]["problem_path"];
 }
 
+size_t problem_size(const IniFile &ini) {
+    std::string str_value = ini[g_general_param]["problem_size"];
+    return string_to_size_t(str_value, -1);
+}
+
 template <typename BNBSolver>
 void solve(const IniFile &ini, BNBSolver &solver) {
     size_t rank;
+    size_t max_rank = problem_size(ini);
     std::ifstream ifs(problem_path(ini));
     std::vector<value_type> matrix;
-    tsp::load_tsplib_problem(ifs, matrix, rank);
+    tsp::load_tsplib_problem(ifs, matrix, rank, max_rank);
     ifs.close();
 
     tsp::InitialData data(matrix, rank);

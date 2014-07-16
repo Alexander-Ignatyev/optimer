@@ -208,11 +208,23 @@ void TspLibLoader::read_edges(const std::string &line) {
     }
 }
 
-
 bool load_tsplib_problem(std::istream &is, std::vector<value_type> &matrix
-                         , size_t &dimension) {
+                         , size_t &dimension, size_t max_dimension) {
     TspLibLoader loader;
     loader.load(is, matrix, dimension);
+
+    // shrink to max size if needed
+    if (max_dimension < dimension) {
+        std::vector<value_type> new_matrix(max_dimension*max_dimension);
+        for (size_t i = 0; i < max_dimension; ++i) {
+            for (size_t j = 0; j < max_dimension; ++j) {
+                new_matrix[i+j*max_dimension] = matrix[i+j*dimension];
+            }
+        }
+        dimension = max_dimension;
+        matrix.swap(new_matrix);
+    }
+
     return true;
 }
 

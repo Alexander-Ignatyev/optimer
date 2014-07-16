@@ -10,7 +10,7 @@
 
 namespace tsp {
     bool load_tsplib_problem(std::istream &is, std::vector<value_type> &matrix
-        , size_t &dimension);
+        , size_t &dimension, size_t max_dimension = -1);
 }  // namespace tsp
 
 #endif  // TSP_COMMON_DATA_LOADER_H_
