@@ -55,6 +55,9 @@ void solve(const IniFile &ini, BNBSolver &solver) {
     std::ostringstream oss;
     solver.print_stats(oss);
     LOG(INFO) << oss.str();
+    LOG(INFO) << "Found Record: " << record;
+    LOG(INFO) << "Valuation Time: " << valuation_time;
+
     std::cout << "Found Record: " << record << std::endl;
     std::cout << "Valuation Time: " << valuation_time << std::endl;
 }
