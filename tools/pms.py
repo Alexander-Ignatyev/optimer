@@ -140,7 +140,7 @@ def main(config_path):
     with open(result_filename, 'w') as f:
         f.write(yaml.dump(params_data))
 
-    pms_report.parse(result_filename)
+    pms_report.main(result_filename)
     print 'done'
 
 if __name__ == '__main__':

@@ -4,12 +4,7 @@
 
 #include <sys/time.h>
 
-namespace {
-double timeval_to_seconds(const timeval &tv) {
-    static const double MICROSECS_IN_SEC = 1000000.0;
-    return tv.tv_sec + tv.tv_usec / MICROSECS_IN_SEC;
-}
-}  //
+#include "unix_time_utils.h"
 
 UnixTimer::UnixTimer(): start_time_(0) {
     reset();

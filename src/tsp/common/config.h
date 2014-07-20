@@ -10,6 +10,7 @@
 
 #include <common/ini_file.h>
 #include <common/algo_string.h>
+#include <common/resource_utilization.h>
 #include <bnb/parallel_bnb.h>
 #include <bnb/serial_bnb.h>
 #include <bnb/giving_scheduler.h>
@@ -29,6 +30,11 @@ size_t problem_size(const IniFile &ini) {
     return string_to_size_t(str_value, -1);
 }
 
+value_type initial_record(const IniFile &ini) {
+    std::string str_value = ini[g_general_param]["record"];
+    return static_cast<value_type>(string_to_double(str_value, M_VAL));
+}
+
 template <typename BNBSolver>
 void solve(const IniFile &ini, BNBSolver &solver) {
     size_t rank;
@@ -42,24 +48,29 @@ void solve(const IniFile &ini, BNBSolver &solver) {
     data.parameters = ini["tsp"].data();
 
     double valuation_time = -1;
-    value_type record = 0;
+    value_type record = initial_record(ini);
     try {
         Timer timer;
-        record = solver.solve(data).value;
+        record = solver.solve(data, -1, record).value;
         valuation_time = timer.elapsed_seconds();
     }
     catch(std::bad_alloc &) {
         std::cout << "Out of memory\n";
     }
 
+    ResourceUtilization ru;
     std::ostringstream oss;
     solver.print_stats(oss);
     LOG(INFO) << oss.str();
     LOG(INFO) << "Found Record: " << record;
     LOG(INFO) << "Valuation Time: " << valuation_time;
+    LOG(INFO) << "User Time: " << ru.user_time();
+    LOG(INFO) << "System Time: " << ru.system_time();
 
     std::cout << "Found Record: " << record << std::endl;
     std::cout << "Valuation Time: " << valuation_time << std::endl;
+    std::cout << "User Time: " << ru.user_time() << std::endl;
+    std::cout << "System Time: " << ru.system_time() << std::endl;
 }
 
 void get_scheduler_params(const IniSection &scheduler

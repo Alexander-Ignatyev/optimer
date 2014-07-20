@@ -24,6 +24,7 @@ class LineParser(object):
             return None
 
 def parse_task_name(task_name):
+    Separator = ', '
     lines = task_name.split(':')
     entries = {}
     for line in lines:
@@ -39,16 +40,22 @@ def parse_task_name(task_name):
         solver_settings.append('branching_rule='+entries['branching_rule'])
     val_type = entries['valuation_type']
     if 'num_threads' in entries:
-        val_type += ' [' + entries['num_threads'] + ']'
+        val_type += Separator + entries['num_threads']
+    else:
+        val_type += Separator + str(1)
     if 'type' in entries:
-        val_type += ':' + entries['type']
+        val_type += Separator + entries['type']
+    else:
+        val_type += Separator + 'none'
     if 'num_minimum_nodes' in entries:
         val_type += '(' + entries['num_minimum_nodes']
         if 'num_maximum_nodes' in entries:
             val_type += ':' + entries['num_maximum_nodes']
         val_type += ')'
     solver_settings.append(val_type)
-    return (problem_name, ':'.join(solver_settings))
+    return (problem_name, Separator.join(solver_settings))
+
+parse_task_name.header=['problem_name', 'container, branching_rule, type, num threads, scheduler']
 
 parsers = {}
 parsers['generated sets'] = LineParser(re.compile('\s*Generated sets:\s+(\d+)'), int, str)
@@ -97,7 +104,7 @@ def build_table_data(parsers, all_runs):
         row = [formatter(value) for formatter, value in zip(formatters, row)]
         rows.append(list(parse_task_name(task_name)) + row)
     rows = sorted(rows, key = lambda row: row[0]+row[1])
-    return TableData(['problem name', 'solver_settings']+header, rows)
+    return TableData(parse_task_name.header+header, rows)
 
 class HtmlWriter(object):
     MainHtml = """<html>
@@ -168,6 +175,15 @@ def create_html_table(table_data):
         rows.append(row % row_data)
     return table % '\n'.join(rows)
 
+def create_csv_table(table_data):
+    FieldSeparator = ', '
+    LineSeparator = '\n'
+    lines = []
+    lines.append(FieldSeparator.join(table_data.header))
+    for row in table_data.rows:
+        lines.append(FieldSeparator.join(row))
+    return LineSeparator.join(lines)
+
 def main(filename):
     JSFunction="""
 var show_log = function (problem_name, solver_settings, index) {
@@ -226,6 +242,8 @@ var show_log = function (problem_name, solver_settings, index) {
     writer.append_to_body(create_html_table(table_data))
     writer.append_to_body('<br /><div id="logrefs"></div> <br />')
     writer.append_to_body('<textarea id="logdata" cols="120" rows="20" readonly hidden> </textarea> <br />')
+    csv_data = create_csv_table(table_data)
+    writer.append_to_body('<textarea id="csvtable" cols="120" rows="5" readonly>' + csv_data + ' </textarea> <br />')
     with open(report_filename, 'w') as f:
         f.write(writer.str())
 

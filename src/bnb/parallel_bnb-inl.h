@@ -41,7 +41,9 @@ ParallelBNB<Solver, NodesContainer, Scheduler>::solve(
 
         Solution initSol;
         solver.get_initial_solution(&initSol);
-        record = initSol.value;
+        if (record > initSol.value) {
+            record = initSol.value;
+        }
 
         std::vector<Node<Set> * > tmp_nodes;
 

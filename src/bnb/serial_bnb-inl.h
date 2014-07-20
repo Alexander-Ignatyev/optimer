@@ -24,7 +24,9 @@ typename Solver::Solution
         solver.init(data, &search_tree);
         solver.get_initial_node(node);
         solver.get_initial_solution(&initSol);
-        record = initSol.value;
+        if (record > initSol.value) {
+            record = initSol.value;
+        }
 
         auto nodes = make_nodes_container<Solver>(NodesContainer());
         std::vector<Node<Set> * > tmp_nodes;
