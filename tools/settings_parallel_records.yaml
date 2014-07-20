@@ -1,0 +1,321 @@
+# common params
+module: build_g++-mp-4.8/atsp
+num_runs: 1
+timeout: 1200
+
+# problem settings generator
+section:
+    name: general
+    childs:
+        - property:
+            name: problem_path
+            values:
+                - data/ry48p.atsp
+            childs:
+                - property:
+                    name: record
+                    values: [14422]
+                    childs:
+                        - property:
+                            name: container_type
+                            values: [priority]
+                            childs:
+                                - property:
+                                    name: valuation_type
+                                    values: [serial]
+                                    childs:
+                                        - section:
+                                            name: tsp
+                                            childs:
+                                                - property:
+                                                    name: branching_rule
+                                                    values: [3]
+                                - property:
+                                    name: valuation_type
+                                    values: [parallel-lock]
+                                    childs:
+                                        - section:
+                                            name: tsp
+                                            childs:
+                                                - property:
+                                                    name: branching_rule
+                                                    values: [3]
+                                                    childs:
+                                                        - section:
+                                                            name: scheduler
+                                                            childs:
+                                                                - property:
+                                                                    name: type
+                                                                    values: [giving]
+                                                                    childs:
+                                                                        - property:
+                                                                            name: num_threads
+                                                                            values: [2,4,8]
+                                                                            childs:
+                                                                            childs:
+                                                                                - property:
+                                                                                    name: num_minimum_nodes
+                                                                                    values: [5]
+                                                                                    childs:
+                                                                                        - property:
+                                                                                            name: num_maximum_nodes
+                                                                                            values: [20, 40, 60]
+                                                                                - property:
+                                                                                    name: num_minimum_nodes
+                                                                                    values: [20]
+                                                                                    childs:
+                                                                                        - property:
+                                                                                            name: num_maximum_nodes
+                                                                                            values: [40, 60]
+                                                                                - property:
+                                                                                    name: num_minimum_nodes
+                                                                                    values: [40]
+                                                                                    childs:
+                                                                                        - property:
+                                                                                            name: num_maximum_nodes
+                                                                                            values: [60]
+                                                                - property:
+                                                                    name: type
+                                                                    values: [requesting]
+                                                                    childs:
+                                                                        - property:
+                                                                            name: num_threads
+                                                                            values: [2,4,8]
+                                                                            childs:
+                                                                                - property:
+                                                                                    name: num_minimum_nodes
+                                                                                    values: [5, 10, 20, 30]
+        - property:
+            name: problem_path
+            values:
+                - data/ft53.atsp
+            childs:
+                - property:
+                    name: record
+                    values: [6905]
+                    childs:
+                        - property:
+                            name: container_type
+                            values: [priority]
+                            childs:
+                                - property:
+                                    name: valuation_type
+                                    values: [serial]
+                                    childs:
+                                        - section:
+                                            name: tsp
+                                            childs:
+                                                - property:
+                                                    name: branching_rule
+                                                    values: [3]
+                                - property:
+                                    name: valuation_type
+                                    values: [parallel-lock]
+                                    childs:
+                                        - section:
+                                            name: tsp
+                                            childs:
+                                                - property:
+                                                    name: branching_rule
+                                                    values: [3]
+                                                    childs:
+                                                        - section:
+                                                            name: scheduler
+                                                            childs:
+                                                                - property:
+                                                                    name: type
+                                                                    values: [giving]
+                                                                    childs:
+                                                                        - property:
+                                                                            name: num_threads
+                                                                            values: [2,4,8]
+                                                                            childs:
+                                                                            childs:
+                                                                                - property:
+                                                                                    name: num_minimum_nodes
+                                                                                    values: [5]
+                                                                                    childs:
+                                                                                        - property:
+                                                                                            name: num_maximum_nodes
+                                                                                            values: [20, 40, 60]
+                                                                                - property:
+                                                                                    name: num_minimum_nodes
+                                                                                    values: [20]
+                                                                                    childs:
+                                                                                        - property:
+                                                                                            name: num_maximum_nodes
+                                                                                            values: [40, 60]
+                                                                                - property:
+                                                                                    name: num_minimum_nodes
+                                                                                    values: [40]
+                                                                                    childs:
+                                                                                        - property:
+                                                                                            name: num_maximum_nodes
+                                                                                            values: [60]
+                                                                - property:
+                                                                    name: type
+                                                                    values: [requesting]
+                                                                    childs:
+                                                                        - property:
+                                                                            name: num_threads
+                                                                            values: [2,4,8]
+                                                                            childs:
+                                                                                - property:
+                                                                                    name: num_minimum_nodes
+                                                                                    values: [5, 10, 20, 30]
+        - property:
+            name: problem_path
+            values:
+                - data/ftv170.atsp
+            childs:
+                - property:
+                    name: record
+                    values: [2755]
+                    childs:
+                        - property:
+                            name: container_type
+                            values: [priority]
+                            childs:
+                                - property:
+                                    name: valuation_type
+                                    values: [serial]
+                                    childs:
+                                        - section:
+                                            name: tsp
+                                            childs:
+                                                - property:
+                                                    name: branching_rule
+                                                    values: [3]
+                                - property:
+                                    name: valuation_type
+                                    values: [parallel-lock]
+                                    childs:
+                                        - section:
+                                            name: tsp
+                                            childs:
+                                                - property:
+                                                    name: branching_rule
+                                                    values: [3]
+                                                    childs:
+                                                        - section:
+                                                            name: scheduler
+                                                            childs:
+                                                                - property:
+                                                                    name: type
+                                                                    values: [giving]
+                                                                    childs:
+                                                                        - property:
+                                                                            name: num_threads
+                                                                            values: [2,4,8]
+                                                                            childs:
+                                                                            childs:
+                                                                                - property:
+                                                                                    name: num_minimum_nodes
+                                                                                    values: [5]
+                                                                                    childs:
+                                                                                        - property:
+                                                                                            name: num_maximum_nodes
+                                                                                            values: [20, 40, 60]
+                                                                                - property:
+                                                                                    name: num_minimum_nodes
+                                                                                    values: [20]
+                                                                                    childs:
+                                                                                        - property:
+                                                                                            name: num_maximum_nodes
+                                                                                            values: [40, 60]
+                                                                                - property:
+                                                                                    name: num_minimum_nodes
+                                                                                    values: [40]
+                                                                                    childs:
+                                                                                        - property:
+                                                                                            name: num_maximum_nodes
+                                                                                            values: [60]
+                                                                - property:
+                                                                    name: type
+                                                                    values: [requesting]
+                                                                    childs:
+                                                                        - property:
+                                                                            name: num_threads
+                                                                            values: [2,4,8]
+                                                                            childs:
+                                                                                - property:
+                                                                                    name: num_minimum_nodes
+                                                                                    values: [5, 10, 20, 30]
+        - property:
+            name: problem_path
+            values:
+                - data/kro124p.atsp
+            childs:
+                - property:
+                    name: record
+                    values: [36230]
+                    childs:
+                        - property:
+                            name: container_type
+                            values: [priority]
+                            childs:
+                                - property:
+                                    name: valuation_type
+                                    values: [serial]
+                                    childs:
+                                        - section:
+                                            name: tsp
+                                            childs:
+                                                - property:
+                                                    name: branching_rule
+                                                    values: [3]
+                                - property:
+                                    name: valuation_type
+                                    values: [parallel-lock]
+                                    childs:
+                                        - section:
+                                            name: tsp
+                                            childs:
+                                                - property:
+                                                    name: branching_rule
+                                                    values: [3]
+                                                    childs:
+                                                        - section:
+                                                            name: scheduler
+                                                            childs:
+                                                                - property:
+                                                                    name: type
+                                                                    values: [giving]
+                                                                    childs:
+                                                                        - property:
+                                                                            name: num_threads
+                                                                            values: [2,4,8]
+                                                                            childs:
+                                                                            childs:
+                                                                                - property:
+                                                                                    name: num_minimum_nodes
+                                                                                    values: [5]
+                                                                                    childs:
+                                                                                        - property:
+                                                                                            name: num_maximum_nodes
+                                                                                            values: [20, 40, 60]
+                                                                                - property:
+                                                                                    name: num_minimum_nodes
+                                                                                    values: [20]
+                                                                                    childs:
+                                                                                        - property:
+                                                                                            name: num_maximum_nodes
+                                                                                            values: [40, 60]
+                                                                                - property:
+                                                                                    name: num_minimum_nodes
+                                                                                    values: [40]
+                                                                                    childs:
+                                                                                        - property:
+                                                                                            name: num_maximum_nodes
+                                                                                            values: [60]
+                                                                - property:
+                                                                    name: type
+                                                                    values: [requesting]
+                                                                    childs:
+                                                                        - property:
+                                                                            name: num_threads
+                                                                            values: [2,4,8]
+                                                                            childs:
+                                                                                - property:
+                                                                                    name: num_minimum_nodes
+                                                                                    values: [5, 10, 20, 30]
