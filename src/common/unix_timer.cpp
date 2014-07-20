@@ -2,6 +2,7 @@
 
 #include "unix_timer.h"
 
+#include <cstddef>
 #include <sys/time.h>
 
 #include "unix_time_utils.h"
