@@ -32,7 +32,11 @@ size_t problem_size(const IniFile &ini) {
 
 value_type initial_record(const IniFile &ini) {
     std::string str_value = ini[g_general_param]["record"];
-    return static_cast<value_type>(string_to_double(str_value, M_VAL));
+    double record = static_cast<value_type>(string_to_double(str_value, M_VAL));
+    if (record < 0.001) {
+        record = M_VAL;
+    }
+    return record;
 }
 
 template <typename BNBSolver>
