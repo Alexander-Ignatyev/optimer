@@ -1,5 +1,5 @@
 # Optimer
-## Dicrete Optimization Library
+## Discrete Optimization Library
 
 ### Build instruction
 
