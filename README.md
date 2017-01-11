@@ -9,8 +9,9 @@
 % export CXX=clang++ # or another compiler that you wish to use
 % cmake ..
 % make
-% make test
-% ./atsp <path-to-config-file>
+% make test   # run unit tests
+% cd ../  # back to the project's root dir
+% ./build/atsp config/default.ini
 % cmake -DCMAKE_BUILD_TYPE=Release .. # to build release version
 ```
 
